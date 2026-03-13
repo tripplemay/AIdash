@@ -39,7 +39,18 @@ async function main() {
   // ── 创建第 1 课 ──
   const lesson = await prisma.lesson.upsert({
     where: { id: "lesson-01-my-magical-partner" },
-    update: {},
+    update: {
+      lessonNo: 1,
+      title: "我的神奇搭档",
+      durationMinutes: 45,
+      deliveryMode: "offline_small_group",
+      groupSize: "4-6",
+      aiRoundsCount: 3,
+      outputSummary: "《我的神奇搭档介绍页》",
+      entryFile: "index.html",
+      contentPath: "/course-packages/my-magical-partner/lessons/lesson-01/index.html",
+      status: "published",
+    },
     create: {
       id: "lesson-01-my-magical-partner",
       lessonNo: 1,
