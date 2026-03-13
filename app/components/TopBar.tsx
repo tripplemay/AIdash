@@ -15,9 +15,6 @@ interface TopBarProps {
 
 const defaultTabs: TopBarTab[] = [
   { label: "课程包列表", href: "/list" },
-  { label: "我的课程包", href: "/my-packages" },
-  { label: "教师中心", href: "/teacher" },
-  { label: "系统设置", href: "/settings" },
 ];
 
 export default function TopBar({ tabs = defaultTabs, userName = "张老师" }: TopBarProps) {

@@ -4,15 +4,27 @@ import { redirect } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
 import PackageGrid from "@/components/PackageGrid";
+import PackageFilters from "@/components/PackageFilters";
+import { Suspense } from "react";
 
-export default async function ListPage() {
+export default async function ListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; ageRange?: string }>;
+}) {
   const session = await auth();
   if (!session) redirect("/");
 
+  const { q = "", ageRange = "" } = await searchParams;
+
   const packages = await prisma.coursePackage.findMany({
-    where: { status: "published" },
+    where: {
+      status: "published",
+      ...(q && { title: { contains: q } }),
+      ...(ageRange && { ageRange }),
+    },
     include: {
-      lessons: { orderBy: { lessonNo: "asc" } },
+      lessons: { orderBy: { lessonNo: "asc" }, select: { lessonNo: true, title: true, outputSummary: true, durationMinutes: true, deliveryMode: true, groupSize: true, aiRoundsCount: true } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -48,29 +60,9 @@ export default async function ListPage() {
                 <div style={{ fontSize: 48, lineHeight: 1.05, fontWeight: 800, letterSpacing: -1, marginBottom: 6 }}>课程包列表</div>
                 <div style={{ fontSize: 14, color: "var(--muted)" }}>查看不同年龄段与级别下的课程包，并进入对应课程包详情。</div>
               </div>
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <input
-                  placeholder="搜索课程包"
-                  style={{
-                    height: 48, borderRadius: 14,
-                    border: "1px solid var(--line)",
-                    background: "rgba(240,244,255,0.76)",
-                    padding: "0 16px", fontSize: 14,
-                    color: "var(--text)", outline: "none",
-                    width: 220,
-                  }}
-                />
-                <div style={{
-                  height: 44, minWidth: 130, padding: "0 14px",
-                  borderRadius: 12,
-                  border: "1px solid var(--line)",
-                  background: "rgba(255,255,255,0.82)",
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  fontSize: 13, cursor: "pointer", gap: 8,
-                }}>
-                  <span>学科类型</span><span style={{ color: "var(--muted)" }}>▾</span>
-                </div>
-              </div>
+              <Suspense>
+                <PackageFilters q={q} ageRange={ageRange} />
+              </Suspense>
             </div>
 
             {/* 卡片区 */}

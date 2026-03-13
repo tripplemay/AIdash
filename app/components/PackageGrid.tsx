@@ -8,6 +8,9 @@ interface Lesson {
   title: string;
   outputSummary: string | null;
   durationMinutes: number;
+  deliveryMode: string;
+  groupSize: string | null;
+  aiRoundsCount: number | null;
 }
 
 interface CoursePackage {
@@ -96,7 +99,10 @@ export default function PackageGrid({ packages }: Props) {
                     进入详情
                   </Link>
                   <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                    {pkg.level} ｜ {firstLesson.durationMinutes} 分钟 ｜{" "}
+                    {pkg.level} ｜ {firstLesson.durationMinutes} 分钟
+                    {firstLesson.groupSize && ` ｜ ${firstLesson.groupSize} 人${firstLesson.deliveryMode === "offline_small_group" ? "线下小班" : firstLesson.deliveryMode}`}
+                    {firstLesson.aiRoundsCount && ` ｜ ${firstLesson.aiRoundsCount} 个 AI 回合`}
+                    {" ｜ "}
                     <span style={{
                       display: "inline-flex", alignItems: "center",
                       padding: "3px 7px", borderRadius: 999,

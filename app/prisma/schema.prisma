@@ -41,6 +41,8 @@ model Lesson {
   title           String
   durationMinutes Int      @default(45)
   deliveryMode    String   @default("offline_small_group")
+  groupSize       String?
+  aiRoundsCount   Int?
   outputSummary   String?
   entryFile       String   @default("index.html")
   contentPath     String?  // 单课包在 /public 下的相对路径

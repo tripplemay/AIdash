@@ -123,7 +123,10 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
                           {[
                             `${lesson.durationMinutes} 分钟`,
-                            lesson.deliveryMode === "offline_small_group" ? "线下小班" : lesson.deliveryMode,
+                            lesson.groupSize
+                              ? `${lesson.groupSize} 人${lesson.deliveryMode === "offline_small_group" ? "线下小班" : lesson.deliveryMode}`
+                              : lesson.deliveryMode === "offline_small_group" ? "线下小班" : lesson.deliveryMode,
+                            ...(lesson.aiRoundsCount ? [`${lesson.aiRoundsCount} 个 AI 回合`] : []),
                           ].map(tag => (
                             <span key={tag} style={{
                               display: "inline-flex", padding: "6px 10px", borderRadius: 999,

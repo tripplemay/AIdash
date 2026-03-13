@@ -46,6 +46,8 @@ async function main() {
       title: "我的神奇搭档",
       durationMinutes: 45,
       deliveryMode: "offline_small_group",
+      groupSize: "4-6",
+      aiRoundsCount: 3,
       outputSummary: "《我的神奇搭档介绍页》",
       entryFile: "index.html",
       contentPath: "/course-packages/my-magical-partner/lessons/lesson-01/index.html",

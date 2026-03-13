@@ -70,9 +70,6 @@ export default function Sidebar({ variant = "list", userName = "张老师" }: Si
         <nav style={{ padding: "10px 8px 8px", display: "grid", gap: 4 }}>
           {[
             { label: "课程包列表", href: "/list" },
-            { label: "我的课程包", href: "/my-packages" },
-            { label: "教师中心", href: "/teacher" },
-            { label: "系统设置", href: "/settings" },
           ].map(({ label, href }) => (
             <Link
               key={href}

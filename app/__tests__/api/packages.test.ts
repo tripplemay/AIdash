@@ -8,7 +8,7 @@ jest.mock("@/lib/prisma", () => ({
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-const mockAuth = auth as jest.MockedFunction<typeof auth>;
+const mockAuth = auth as jest.Mock;
 const mockFindMany = prisma.coursePackage.findMany as jest.MockedFunction<
   typeof prisma.coursePackage.findMany
 >;

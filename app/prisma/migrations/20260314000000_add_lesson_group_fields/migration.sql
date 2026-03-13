@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Lesson` ADD COLUMN `groupSize` VARCHAR(191) NULL;
+ALTER TABLE `Lesson` ADD COLUMN `aiRoundsCount` INTEGER NULL;

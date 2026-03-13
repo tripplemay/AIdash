@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const session = await auth();
+  const user = session?.user as { role?: string } | undefined;
+  if (!session || user?.role !== "admin") redirect("/");
   return (
     <div style={{ padding: 20, minHeight: "100vh" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
