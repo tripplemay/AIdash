@@ -92,6 +92,8 @@ mkdir -p "${DEPLOY_DIR}"
 cat > "${DEPLOY_DIR}/.env" <<ENV
 DATABASE_URL=${DATABASE_URL}
 AUTH_SECRET=${AUTH_SECRET}
+AUTH_TRUST_HOST=true
+AUTH_URL=https://${DOMAIN}
 NODE_ENV=production
 ENV
 echo "  写入完成"
