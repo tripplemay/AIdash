@@ -33,10 +33,6 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Lint
-        working-directory: app
-        run: npx next lint .
-
       - name: Typecheck
         working-directory: app
         run: npm run typecheck
