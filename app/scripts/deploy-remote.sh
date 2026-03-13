@@ -103,6 +103,9 @@ cd "${DEPLOY_DIR}"
 npm ci
 npx prisma generate
 npx prisma migrate deploy
+export DATABASE_URL="${DATABASE_URL}"
+export AUTH_SECRET="${AUTH_SECRET}"
+export NODE_ENV="production"
 npm run build
 echo "  构建完成"
 
