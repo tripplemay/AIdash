@@ -100,7 +100,7 @@ echo "  写入完成"
 # ── [8/9] 安装依赖 & 构建 ──────────────────────────────────────────────────
 echo "▶ [8/9] 安装依赖 & 构建..."
 cd "${DEPLOY_DIR}"
-npm ci --omit=dev
+npm ci
 npx prisma generate
 npx prisma migrate deploy
 npm run build
