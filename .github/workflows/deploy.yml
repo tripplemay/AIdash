@@ -9,7 +9,7 @@ on:
 
 jobs:
   deploy:
-    name: Lint → Typecheck → Deploy
+    name: Typecheck → Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -42,7 +42,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Install rsync
+      - name: Install rsync on runner
         run: sudo apt-get install -y rsync
 
       - name: Add server to known hosts
@@ -50,10 +50,10 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Prepare server
+      - name: Bootstrap server
         run: |
           ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "mkdir -p /opt/aidash/app"
+            "command -v rsync || apt-get install -y rsync; mkdir -p /opt/aidash/app"
 
       - name: Sync code to server
         run: |
