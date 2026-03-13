@@ -35,7 +35,7 @@ jobs:
 
       - name: Lint
         working-directory: app
-        run: npx next lint --dir .
+        run: npx next lint .
 
       - name: Typecheck
         working-directory: app
