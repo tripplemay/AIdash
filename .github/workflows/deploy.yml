@@ -42,6 +42,9 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Install rsync
+        run: sudo apt-get install -y rsync
+
       - name: Add server to known hosts
         run: |
           mkdir -p ~/.ssh
