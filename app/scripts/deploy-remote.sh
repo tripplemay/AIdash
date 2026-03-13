@@ -58,7 +58,7 @@ server {
     server_name ${DOMAIN};
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3002;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -71,7 +71,6 @@ server {
 }
 NGINX
   ln -sf /etc/nginx/sites-available/aidash /etc/nginx/sites-enabled/aidash
-  rm -f /etc/nginx/sites-enabled/default
   nginx -t && systemctl reload nginx
   echo "  配置完成"
 else
