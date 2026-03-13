@@ -1,0 +1,32 @@
+{
+  "lesson_no": 1,
+  "lesson_title": "我的神奇搭档",
+  "age_range": "8-12",
+  "level": "L1",
+  "duration_minutes": 45,
+  "delivery_mode": "offline_small_group",
+  "output_summary": "《我的神奇搭档介绍页》",
+  "entry_file": "index.html",
+  "attachments": [
+    {
+      "type": "teacher_screen",
+      "title": "教师投屏页",
+      "path": "attachments/teacher-screen/index.html"
+    },
+    {
+      "type": "student_ai_input_template",
+      "title": "学生 AI 输入模板单",
+      "path": "attachments/student-ai-template/template.pdf"
+    },
+    {
+      "type": "student_output_template",
+      "title": "学生成果模板",
+      "path": "attachments/student-output-template/template.pdf"
+    },
+    {
+      "type": "teacher_demo_case",
+      "title": "教师示范案例页",
+      "path": "attachments/teacher-demo/index.html"
+    }
+  ]
+}

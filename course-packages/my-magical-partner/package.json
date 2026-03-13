@@ -1,0 +1,14 @@
+{
+  "package_title": "我的神奇搭档课程包",
+  "package_slug": "my-magical-partner",
+  "age_range": "8-12",
+  "level": "L1",
+  "summary": "面向 8-12 岁学生的 AI 课程包，帮助学生通过 AI 互动创作「我的神奇搭档介绍页」。",
+  "cover_image": "cover.png",
+  "lessons": [
+    {
+      "lesson_no": 1,
+      "lesson_dir": "lessons/lesson-01"
+    }
+  ]
+}

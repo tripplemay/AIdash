@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理员后台 — AI Dash</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    body { padding: 20px; min-height: 100vh; }
+
+    .admin-shell {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .admin-header {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 28px;
+    }
+    .section-card {
+      background: rgba(255,255,255,0.86);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 22px 24px;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 17px; font-weight: 800; margin-bottom: 16px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--line);
+    }
+    .form-grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 600px) { .form-grid2 { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .status-row {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+
+    /* 附件绑定行 */
+    .attach-row {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 10px; align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .attach-row:last-child { border-bottom: none; }
+    .attach-type { font-size: 12px; font-weight: 700; color: var(--brand); }
+    .attach-path { font-size: 13px; font-family: monospace; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="admin-shell">
+
+    <div class="admin-header">
+      <div class="logo-mark"></div>
+      <div>
+        <div style="font-size:24px; font-weight:800;">管理员后台</div>
+        <div class="small muted">维护课程包与课次元信息，绑定单课入口文件与资源目录</div>
+      </div>
+      <div style="margin-left:auto;">
+        <a href="list.html" class="btn-soft" style="font-size:13px; padding:8px 14px; text-decoration:none; display:inline-block;">返回系统</a>
+      </div>
+    </div>
+
+    <!-- 课程包元信息 -->
+    <div class="section-card">
+      <div class="section-title">课程包元信息</div>
+      <div class="form-grid2">
+        <div class="form-group">
+          <label class="form-label">课程包名称</label>
+          <input class="input" value="我的神奇搭档课程包" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">课程包标识（slug）</label>
+          <input class="input" value="my-magical-partner" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">适用年龄段</label>
+          <input class="input" value="8-12" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">级别</label>
+          <input class="input" value="L1" />
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">课程包简介</label>
+          <input class="input" value="面向 8-12 岁学生的 AI 课程包，帮助学生通过 AI 互动创作「我的神奇搭档介绍页」。" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">封面图路径</label>
+          <input class="input" value="cover.png" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">发布状态</label>
+          <input class="input" value="published" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 课次元信息 -->
+    <div class="section-card">
+      <div class="section-title">课次元信息 — 第 1 课</div>
+      <div class="form-grid2">
+        <div class="form-group">
+          <label class="form-label">课次序号</label>
+          <input class="input" value="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">课次名称</label>
+          <input class="input" value="我的神奇搭档" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">时长（分钟）</label>
+          <input class="input" value="45" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">授课模式</label>
+          <input class="input" value="offline_small_group" />
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">本课成果描述</label>
+          <input class="input" value="《我的神奇搭档介绍页》" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 单课资源绑定 -->
+    <div class="section-card">
+      <div class="section-title">单课资源绑定</div>
+      <div class="form-grid2" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label class="form-label">入口文件</label>
+          <input class="input" value="index.html" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">元信息文件</label>
+          <input class="input" value="lesson.json" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">资源目录</label>
+          <input class="input" value="assets/" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">附件目录</label>
+          <input class="input" value="attachments/" />
+        </div>
+      </div>
+
+      <!-- 附件中心绑定 -->
+      <div style="font-size:14px; font-weight:700; margin-bottom:10px; color:var(--text);">附件中心绑定</div>
+      <div>
+        <div class="attach-row">
+          <div class="attach-type">教师投屏页</div>
+          <div class="attach-path">attachments/teacher-screen/index.html</div>
+          <span class="pill ok" style="font-size:11px; padding:3px 7px;">已绑定</span>
+        </div>
+        <div class="attach-row">
+          <div class="attach-type">学生 AI 输入模板单</div>
+          <div class="attach-path">attachments/student-ai-template/template.pdf</div>
+          <span class="pill" style="font-size:11px; padding:3px 7px;">待绑定</span>
+        </div>
+        <div class="attach-row">
+          <div class="attach-type">学生成果模板</div>
+          <div class="attach-path">attachments/student-output-template/template.pdf</div>
+          <span class="pill" style="font-size:11px; padding:3px 7px;">待绑定</span>
+        </div>
+        <div class="attach-row">
+          <div class="attach-type">教师示范案例页</div>
+          <div class="attach-path">attachments/teacher-demo/index.html</div>
+          <span class="pill" style="font-size:11px; padding:3px 7px;">待绑定</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="status-row" style="padding-bottom:8px;">
+      <button class="btn" style="height:44px; min-width:100px;">保存</button>
+      <button class="btn-soft" style="height:44px; min-width:120px;">保存并发布</button>
+      <button class="btn-soft" style="height:44px; min-width:80px; color:#c44; border-color:#f4d0d0;">下线</button>
+    </div>
+
+  </div>
+</body>
+</html>

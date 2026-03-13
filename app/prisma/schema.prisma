@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ─── 用户（老师 / 管理员） ───
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   @default("teacher") // "teacher" | "admin"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── 课程包 ───
+model CoursePackage {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  ageRange    String
+  level       String
+  summary     String?
+  coverImage  String?
+  status      String   @default("draft") // "draft" | "published" | "offline"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lessons     Lesson[]
+}
+
+// ─── 课次 ───
+model Lesson {
+  id              String   @id @default(cuid())
+  lessonNo        Int
+  title           String
+  durationMinutes Int      @default(45)
+  deliveryMode    String   @default("offline_small_group")
+  outputSummary   String?
+  entryFile       String   @default("index.html")
+  contentPath     String?  // 单课包在 /public 下的相对路径
+  status          String   @default("draft")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  packageId   String
+  package     CoursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+}
+
+// ─── 附件 ───
+model Attachment {
+  id        String @id @default(cuid())
+  type      String // "teacher_screen" | "student_ai_input_template" | "student_output_template" | "teacher_demo_case"
+  title     String
+  path      String
+
+  lessonId  String
+  lesson    Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
