@@ -105,10 +105,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "package.json 中 lessons 为空" }, { status: 400 });
   }
 
-  // 解压到 public/course-packages/{slug}/
-  const destPath = path.join(process.cwd(), "public", "course-packages", slug);
+  // 解压到 UPLOADS_DIR（持久目录，不随部署被 rsync 清除）
+  // 生产环境：/opt/aidash/uploads/course-packages/
+  // 开发环境：public/course-packages/（兜底）
+  const uploadsBase =
+    process.env.UPLOADS_DIR ?? path.join(process.cwd(), "public", "course-packages");
+  const destPath = path.join(uploadsBase, slug);
   try {
-    zip.extractAllTo(path.join(process.cwd(), "public", "course-packages"), true);
+    zip.extractAllTo(uploadsBase, true);
   } catch (e) {
     return NextResponse.json({ error: `文件解压失败：${e instanceof Error ? e.message : String(e)}` }, { status: 500 });
   }
@@ -121,7 +125,7 @@ export async function POST(request: Request) {
     await prisma.$transaction(async (tx) => {
       // upsert CoursePackage
       const coverImage = pkgManifest.cover_image
-        ? `/course-packages/${slug}/${pkgManifest.cover_image}`
+        ? `/api/course-files/${slug}/${pkgManifest.cover_image}`
         : null;
 
       const pkg = await tx.coursePackage.upsert({
@@ -161,7 +165,7 @@ export async function POST(request: Request) {
           throw new Error(`lesson.json 解析失败：lessons/${lessonRef.lesson_dir}/lesson.json`);
         }
 
-        const contentPath = `/course-packages/${slug}/lessons/${lessonRef.lesson_dir}/${lessonManifest.entry_file ?? "index.html"}`;
+        const contentPath = `/api/course-files/${slug}/lessons/${lessonRef.lesson_dir}/${lessonManifest.entry_file ?? "index.html"}`;
 
         const lesson = await tx.lesson.upsert({
           where: {
@@ -204,7 +208,7 @@ export async function POST(request: Request) {
             lessonId: lesson.id,
             type: a.type,
             title: a.title,
-            path: `/course-packages/${slug}/lessons/${lessonRef.lesson_dir}/${a.path}`,
+            path: `/api/course-files/${slug}/lessons/${lessonRef.lesson_dir}/${a.path}`,
           }));
           await tx.attachment.createMany({ data: attachmentData });
           attachmentsImported += attachmentData.length;

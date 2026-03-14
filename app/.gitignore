@@ -48,3 +48,6 @@ next-env.d.ts
 *.db-journal
 *.db-shm
 *.db-wal
+
+# course packages (managed via admin upload, not tracked in git)
+/public/course-packages/
