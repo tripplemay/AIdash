@@ -145,16 +145,16 @@ npm run seed
 export DATABASE_URL="${DATABASE_URL}"
 export AUTH_SECRET="${AUTH_SECRET}"
 export NODE_ENV="production"
+rm -rf .next
 npm run build
 echo "  构建完成"
 
 # ── [9/9] 启动/重载 PM2 ────────────────────────────────────────────────────
 echo "▶ [9/9] 启动服务..."
 if pm2 list | grep -q "aidash"; then
-  pm2 reload "${DEPLOY_DIR}/ecosystem.config.js" --env production
-else
-  pm2 start "${DEPLOY_DIR}/ecosystem.config.js" --env production
+  pm2 delete aidash
 fi
+pm2 start "${DEPLOY_DIR}/ecosystem.config.js" --env production
 pm2 save
 echo "  服务就绪"
 
