@@ -52,7 +52,42 @@ fi
 
 # ── [5/9] Nginx 配置 ───────────────────────────────────────────────────────
 echo "▶ [5/9] Nginx 配置..."
-cat > /etc/nginx/sites-available/aidash <<NGINX
+if [ -d "/etc/letsencrypt/live/${DOMAIN}" ]; then
+  # SSL 证书已存在，写入完整 HTTPS 配置
+  cat > /etc/nginx/sites-available/aidash <<NGINX
+server {
+    listen 80;
+    server_name ${DOMAIN};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name ${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    client_max_body_size 60m;
+
+    location / {
+        proxy_pass http://localhost:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+NGINX
+else
+  # 尚无证书，写入 HTTP 配置，等 certbot 申请后自动升级
+  cat > /etc/nginx/sites-available/aidash <<NGINX
 server {
     listen 80;
     server_name ${DOMAIN};
@@ -72,6 +107,7 @@ server {
     }
 }
 NGINX
+fi
 ln -sf /etc/nginx/sites-available/aidash /etc/nginx/sites-enabled/aidash
 nginx -t && systemctl reload nginx
 echo "  配置完成"
