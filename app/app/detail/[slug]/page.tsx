@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import EnterLessonButton from "@/components/EnterLessonButton";
 import Image from "next/image";
 import Link from "next/link";
+import { isLessonAccessible } from "@/lib/lesson-utils";
 
 export default async function DetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
@@ -157,7 +158,7 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
                         )}
                       </div>
 
-                      {lesson.contentPath || lesson.contentData ? (
+                      {isLessonAccessible(lesson) ? (
                         <EnterLessonButton slug={slug} lessonId={lesson.id} />
                       ) : (
                         <span style={{ fontSize: 13, color: "var(--muted)" }}>未接入</span>
