@@ -81,6 +81,20 @@ AIdash/
 - 重要方案需与用户充分讨论后确认，再开始实现
 - 方案确认后形成对应文档，链接记录进 `PROJECT_STATUS.md`
 
+### README 自动更新规则
+每次执行 git push 前，必须更新 `README.md` 中的动态区域，确保准确反映最新版本信息。
+
+**动态区域标记**（仅更新标记内的内容，固定章节不得覆盖）：
+- `<!-- DYNAMIC:FEATURES -->` ... `<!-- /DYNAMIC:FEATURES -->` — 功能概览
+- `<!-- DYNAMIC:TECH -->` ... `<!-- /DYNAMIC:TECH -->` — 技术栈版本
+- `<!-- DYNAMIC:STRUCTURE -->` ... `<!-- /DYNAMIC:STRUCTURE -->` — 目录结构
+
+**语言要求**：中英双语，中文在前，英文在后。
+
+**目标读者**：内部团队（开发 + 产品 + 运营），兼顾项目背景、功能说明和技术细节。
+
+**固定章节**（不得自动修改）：项目简介、部署说明、使用说明、开发指南。
+
 ## 关键参考文档
 
 - 接入规范 v1：`CLAUDE交接包/source_refs/teacher-pack-content-integration-spec-v1.md`
