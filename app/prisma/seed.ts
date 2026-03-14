@@ -5,10 +5,6 @@ import "dotenv/config";
 const prisma = new PrismaClient();
 
 async function main() {
-  // 迁移旧路径（/course-packages/ → /api/course-files/），幂等可重复执行
-  await prisma.$executeRaw`UPDATE \`Lesson\` SET \`contentPath\` = REPLACE(\`contentPath\`, '/course-packages/', '/api/course-files/') WHERE \`contentPath\` LIKE '/course-packages/%'`;
-  await prisma.$executeRaw`UPDATE \`Attachment\` SET \`path\` = REPLACE(\`path\`, '/course-packages/', '/api/course-files/') WHERE \`path\` LIKE '/course-packages/%'`;
-
   const hashedPassword = await bcrypt.hash("teacher123", 10);
   const adminPassword = await bcrypt.hash("admin123", 10);
 
