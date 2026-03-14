@@ -19,7 +19,6 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
     include: {
       lessons: {
         orderBy: { lessonNo: "asc" },
-        include: { attachments: true },
         select: {
           id: true, lessonNo: true, title: true, durationMinutes: true,
           deliveryMode: true, groupSize: true, aiRoundsCount: true,
