@@ -1,6 +1,6 @@
 # AI Dash 教师授课系统 — 项目进度总览
 
-> 最后更新：2026-03-14
+> 最后更新：2026-03-14（阶段五完成）
 
 ---
 
@@ -9,6 +9,8 @@
 **阶段一：纯 HTML 原型落地** ✅ 已完成
 **阶段二：迁移至 Next.js 框架** ✅ 已完成 — 全部 6 个 Phase 已完成并验收通过
 **阶段三：文档符合性修复** ✅ 已完成
+**阶段四：单课页体验优化** ✅ 已完成
+**阶段五：管理员模块** ✅ 已完成
 
 ---
 
@@ -81,6 +83,45 @@
 
 ---
 
+### 阶段四：单课页体验优化
+
+> 依据：用户需求讨论（2026-03-14），决策见 [ADR-002](decisions/ADR-002-lesson-iframe-approach.md)
+> 影响文件：`app/public/course-packages/my-magical-partner/lessons/lesson-01/index.html`、`app/app/lesson/[slug]/[lessonId]/page.tsx`、`app/components/EnterLessonButton.tsx`、`app/components/Sidebar.tsx`
+
+| # | 任务 | 状态 | 备注 |
+|---|------|------|------|
+| 4.1 | 修复布局 bug（`<br>` 导致 CSS Grid 错列） | ✅ 已完成 | 移除 `<aside>` 与 `<main>` 之间所有游离 `<br>` 标签 |
+| 4.2 | 目录导航升级（完整 15 节 + IntersectionObserver 高亮） | ✅ 已完成 | 含附件子菜单折叠展开、平滑滚动 + 节标题闪烁动效 |
+| 4.3 | 系统导航集成（iframe 方案替代 window.open） | ✅ 已完成 | 新增 `/lesson/[slug]/[lessonId]` 路由，Sidebar lesson 变体 + TopBar 式头部；依赖 ADR-002 |
+| 4.4 | AI 模板一键复制按钮 | ✅ 已完成 | `navigator.clipboard.writeText` + `execCommand` 降级兜底 |
+| 4.5 | 打印样式优化（`@media print`） | ✅ 已完成 | 隐藏目录/进度条/复制按钮，单列白底，`beforeprint` 展开 `<details>` |
+| 4.6 | 顶部阅读进度条 | ✅ 已完成 | `requestAnimationFrame` 节流，滚动时实时更新 |
+
+---
+
+### 阶段五：管理员模块
+
+> 需求文档：[admin-module-requirements.md](product/admin-module-requirements.md)
+> 开发计划：[admin-module-dev-plan.md](tech/admin-module-dev-plan.md)
+
+| # | 任务 | 状态 | 备注 |
+|---|------|------|------|
+| **Phase 1** | **数据库变更** | ✅ 已完成 | — |
+| 5.1 | Lesson 表增加 `@@unique([packageId, lessonNo])` 约束 | ✅ 已完成 | 迁移文件已创建，部署时自动应用 |
+| **Phase 2** | **课程包上传 API** | ✅ 已完成 | — |
+| 5.2 | 安装 adm-zip 依赖 | ✅ 已完成 | — |
+| 5.3 | `POST /api/admin/upload` — zip 解压 + upsert | ✅ 已完成 | 含路径穿越防护、事务回滚 |
+| **Phase 3** | **后台页面重构** | ✅ 已完成 | — |
+| 5.4 | Sidebar 补充 admin variant 菜单 | ✅ 已完成 | 含 adminSection active 状态 |
+| 5.5 | `/admin/page.tsx` 改为 redirect | ✅ 已完成 | — |
+| 5.6 | `/admin/packages/page.tsx` + `AdminPackageList` + `UploadModal` | ✅ 已完成 | — |
+| 5.7 | `/admin/users/page.tsx` + `AdminUserList` + `UserFormModal` | ✅ 已完成 | — |
+| **Phase 4** | **用户管理 API** | ✅ 已完成 | — |
+| 5.8 | `GET/POST /api/admin/users` | ✅ 已完成 | — |
+| 5.9 | `PATCH/DELETE /api/admin/users/[id]` | ✅ 已完成 | 含密码重置、禁删自身 |
+
+---
+
 ## 状态说明
 
 | 标记 | 含义 |
@@ -104,3 +145,6 @@
 | API 设计 | `docs/tech/api/overview.md`（待创建）|
 | 部署方案 | `docs/ops/vps-migration-guide.md` |
 | 文档符合性修复计划 | `docs/product/doc-compliance-fixes.md` |
+| 单课页 iframe 方案决策 | `docs/decisions/ADR-002-lesson-iframe-approach.md` |
+| 管理员模块需求文档 | `docs/product/admin-module-requirements.md` |
+| 管理员模块开发计划 | `docs/tech/admin-module-dev-plan.md` |

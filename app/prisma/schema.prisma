@@ -53,6 +53,8 @@ model Lesson {
   packageId   String
   package     CoursePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
   attachments Attachment[]
+
+  @@unique([packageId, lessonNo])
 }
 
 // ─── 附件 ───

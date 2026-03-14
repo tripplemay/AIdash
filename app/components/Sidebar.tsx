@@ -7,9 +7,10 @@ interface SidebarProps {
   variant?: "list" | "detail" | "admin" | "lesson";
   userName?: string;
   backHref?: string;
+  adminSection?: "packages" | "users";
 }
 
-export default function Sidebar({ variant = "list", userName = "张老师", backHref }: SidebarProps) {
+export default function Sidebar({ variant = "list", userName = "张老师", backHref, adminSection }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -96,6 +97,41 @@ export default function Sidebar({ variant = "list", userName = "张老师", back
               {label}
             </Link>
           ))}
+        </nav>
+      )}
+
+      {/* 管理员菜单 */}
+      {variant === "admin" && (
+        <nav style={{ padding: "18px 8px 8px", display: "grid", gap: 4 }}>
+          {[
+            { label: "课程包管理", href: "/admin/packages", key: "packages" },
+            { label: "用户管理", href: "/admin/users", key: "users" },
+          ].map(({ label, href, key }) => {
+            const active = adminSection === key;
+            return (
+              <Link
+                key={href}
+                href={href}
+                style={{
+                  height: 40,
+                  borderRadius: 12,
+                  color: active ? "#fff" : "#6074a9",
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "0 12px",
+                  fontSize: 14,
+                  fontWeight: active ? 800 : 600,
+                  textDecoration: "none",
+                  background: active
+                    ? "linear-gradient(90deg, #8bb1ff, #7ea5ff)"
+                    : "transparent",
+                  boxShadow: active ? "0 8px 18px rgba(126,149,255,0.16)" : "none",
+                }}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </nav>
       )}
 
@@ -195,7 +231,7 @@ export default function Sidebar({ variant = "list", userName = "张老师", back
 
       {/* 版权 */}
       <div style={{ padding: "8px 14px 14px", color: "#97a5ca", fontSize: 11 }}>
-        {variant === "detail" || variant === "lesson" ? "教师授课系统" : "© 2024 AI Dash"}
+        {variant === "admin" ? "管理员后台" : variant === "detail" || variant === "lesson" ? "教师授课系统" : "© 2024 AI Dash"}
       </div>
     </aside>
   );
