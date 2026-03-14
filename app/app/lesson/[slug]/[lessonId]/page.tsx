@@ -25,6 +25,7 @@ export default async function LessonPage({
   if (!lesson || !lesson.contentPath) notFound();
 
   const userName = session.user?.name ?? "老师";
+  const userRole = (session.user as { role?: string })?.role ?? "teacher";
 
   return (
     <div style={{ padding: 20 }}>
@@ -48,7 +49,7 @@ export default async function LessonPage({
           gridTemplateColumns: "var(--sidebar-w) 1fr",
           height: "calc(100vh - 40px)",
         }}>
-          <Sidebar variant="lesson" userName={userName} backHref={`/detail/${slug}`} />
+          <Sidebar variant="lesson" userName={userName} backHref={`/detail/${slug}`} userRole={userRole} />
 
           <main style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
             {/* TopBar */}

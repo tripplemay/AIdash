@@ -10,26 +10,52 @@ import { Suspense } from "react";
 export default async function ListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; ageRange?: string }>;
+  searchParams: Promise<{ q?: string; ageRange?: string; level?: string }>;
 }) {
   const session = await auth();
   if (!session) redirect("/");
 
-  const { q = "", ageRange = "" } = await searchParams;
-
-  const packages = await prisma.coursePackage.findMany({
-    where: {
-      status: "published",
-      ...(q && { title: { contains: q } }),
-      ...(ageRange && { ageRange }),
-    },
-    include: {
-      lessons: { orderBy: { lessonNo: "asc" }, select: { lessonNo: true, title: true, outputSummary: true, durationMinutes: true, deliveryMode: true, groupSize: true, aiRoundsCount: true } },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-
+  const { q = "", ageRange = "", level = "" } = await searchParams;
+  const userRole = (session.user as { role?: string })?.role ?? "teacher";
   const userName = session.user?.name ?? "老师";
+
+  const [packages, filterGroups] = await Promise.all([
+    prisma.coursePackage.findMany({
+      where: {
+        status: "published",
+        ...(q && { title: { contains: q } }),
+        ...(ageRange && { ageRange }),
+        ...(level && { level }),
+      },
+      include: {
+        lessons: {
+          orderBy: { lessonNo: "asc" },
+          select: {
+            lessonNo: true, title: true, outputSummary: true,
+            durationMinutes: true, deliveryMode: true,
+            groupSize: true, aiRoundsCount: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.coursePackage.groupBy({
+      by: ["ageRange", "level"],
+      where: { status: "published" },
+      orderBy: [{ ageRange: "asc" }, { level: "asc" }],
+    }),
+  ]);
+
+  // Group into { ageRange, levels[] }
+  const filterTreeMap = new Map<string, string[]>();
+  for (const row of filterGroups) {
+    if (!filterTreeMap.has(row.ageRange)) filterTreeMap.set(row.ageRange, []);
+    filterTreeMap.get(row.ageRange)!.push(row.level);
+  }
+  const filterTree = Array.from(filterTreeMap.entries()).map(([ar, levels]) => ({
+    ageRange: ar,
+    levels,
+  }));
 
   return (
     <div style={{ padding: 20 }}>
@@ -49,12 +75,18 @@ export default async function ListPage({
         }} />
 
         <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "var(--sidebar-w) 1fr", minHeight: 820 }}>
-          <Sidebar variant="list" userName={userName} />
+          <Sidebar
+            variant="list"
+            userName={userName}
+            userRole={userRole}
+            filterTree={filterTree}
+            activeAgeRange={ageRange}
+            activeLevel={level}
+          />
 
           <main style={{ display: "flex", flexDirection: "column" }}>
-            <TopBar userName={userName} />
+            <TopBar userName={userName} userRole={userRole} />
 
-            {/* 页面头部 */}
             <div style={{ padding: "22px 24px 10px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
               <div>
                 <div style={{ fontSize: 48, lineHeight: 1.05, fontWeight: 800, letterSpacing: -1, marginBottom: 6 }}>课程包列表</div>
@@ -65,7 +97,6 @@ export default async function ListPage({
               </Suspense>
             </div>
 
-            {/* 卡片区 */}
             <div style={{ flex: 1, padding: "8px 24px 16px" }}>
               <div style={{
                 background: "rgba(255,255,255,0.52)",
@@ -76,7 +107,6 @@ export default async function ListPage({
               </div>
             </div>
 
-            {/* 分页 */}
             <div style={{
               height: 68, borderTop: "1px solid var(--line)",
               display: "flex", alignItems: "center", justifyContent: "center",

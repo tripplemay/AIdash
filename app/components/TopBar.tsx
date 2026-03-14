@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import UserAvatarDropdown from "./UserAvatarDropdown";
 
 interface TopBarTab {
   label: string;
@@ -11,13 +12,18 @@ interface TopBarTab {
 interface TopBarProps {
   tabs?: TopBarTab[];
   userName?: string;
+  userRole?: string;
 }
 
 const defaultTabs: TopBarTab[] = [
   { label: "课程包列表", href: "/list" },
 ];
 
-export default function TopBar({ tabs = defaultTabs, userName = "张老师" }: TopBarProps) {
+export default function TopBar({
+  tabs = defaultTabs,
+  userName = "张老师",
+  userRole = "teacher",
+}: TopBarProps) {
   const pathname = usePathname();
 
   return (
@@ -61,7 +67,7 @@ export default function TopBar({ tabs = defaultTabs, userName = "张老师" }: T
           );
         })}
       </div>
-      <div style={{ fontSize: 13, color: "var(--muted)" }}>{userName}</div>
+      <UserAvatarDropdown userName={userName} userRole={userRole} />
     </div>
   );
 }

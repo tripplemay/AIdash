@@ -2,16 +2,35 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BookOpen, Package, Users, Settings, ChevronLeft } from "lucide-react";
+import { Suspense } from "react";
+import SidebarNavItem from "./SidebarNavItem";
+import DetailSidebarNav from "./DetailSidebarNav";
+import SidebarFilterTree, { type FilterGroup } from "./SidebarFilterTree";
 
 interface SidebarProps {
   variant?: "list" | "detail" | "admin" | "lesson";
   userName?: string;
   backHref?: string;
   adminSection?: "packages" | "users";
+  userRole?: string;
+  filterTree?: FilterGroup[];
+  activeAgeRange?: string;
+  activeLevel?: string;
 }
 
-export default function Sidebar({ variant = "list", userName = "张老师", backHref, adminSection }: SidebarProps) {
+export default function Sidebar({
+  variant = "list",
+  userName = "张老师",
+  backHref,
+  adminSection,
+  userRole,
+  filterTree,
+  activeAgeRange = "",
+  activeLevel = "",
+}: SidebarProps) {
   const pathname = usePathname();
+  const isAdmin = userRole === "admin";
 
   return (
     <aside style={{
@@ -19,7 +38,7 @@ export default function Sidebar({ variant = "list", userName = "张老师", back
       borderRight: "1px solid var(--line)",
       background: "linear-gradient(180deg, rgba(240,244,255,0.78), rgba(234,239,255,0.78))",
       display: "grid",
-      gridTemplateRows: "auto auto auto 1fr auto",
+      gridTemplateRows: "auto auto auto 1fr auto auto",
       minHeight: "100%",
     }}>
       {/* Logo */}
@@ -41,7 +60,7 @@ export default function Sidebar({ variant = "list", userName = "张老师", back
       </div>
 
       {/* 用户卡（仅列表页显示） */}
-      {variant === "list" && (
+      {variant === "list" ? (
         <div style={{ padding: "12px 10px 0" }}>
           <div style={{
             padding: "10px 12px",
@@ -65,173 +84,91 @@ export default function Sidebar({ variant = "list", userName = "张老师", back
             </div>
           </div>
         </div>
+      ) : (
+        <div />
       )}
 
       {/* 导航菜单 */}
       {variant === "list" && (
         <nav style={{ padding: "10px 8px 8px", display: "grid", gap: 4 }}>
-          {[
-            { label: "课程包列表", href: "/list" },
-          ].map(({ label, href }) => (
-            <Link
-              key={href}
-              href={href}
-              style={{
-                height: 40,
-                borderRadius: 12,
-                color: pathname === href ? "#fff" : "#6074a9",
-                display: "flex",
-                alignItems: "center",
-                padding: "0 12px",
-                fontSize: 14,
-                fontWeight: pathname === href ? 800 : 600,
-                textDecoration: "none",
-                background: pathname === href
-                  ? "linear-gradient(90deg, #8bb1ff, #7ea5ff)"
-                  : "transparent",
-                boxShadow: pathname === href
-                  ? "0 8px 18px rgba(126,149,255,0.16)"
-                  : "none",
-              }}
-            >
-              {label}
-            </Link>
-          ))}
+          <SidebarNavItem
+            icon={BookOpen}
+            label="课程包列表"
+            href="/list"
+            active={pathname === "/list"}
+          />
         </nav>
       )}
 
-      {/* 管理员菜单 */}
       {variant === "admin" && (
         <nav style={{ padding: "18px 8px 8px", display: "grid", gap: 4 }}>
-          {[
-            { label: "课程包管理", href: "/admin/packages", key: "packages" },
-            { label: "用户管理", href: "/admin/users", key: "users" },
-          ].map(({ label, href, key }) => {
-            const active = adminSection === key;
-            return (
-              <Link
-                key={href}
-                href={href}
-                style={{
-                  height: 40,
-                  borderRadius: 12,
-                  color: active ? "#fff" : "#6074a9",
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "0 12px",
-                  fontSize: 14,
-                  fontWeight: active ? 800 : 600,
-                  textDecoration: "none",
-                  background: active
-                    ? "linear-gradient(90deg, #8bb1ff, #7ea5ff)"
-                    : "transparent",
-                  boxShadow: active ? "0 8px 18px rgba(126,149,255,0.16)" : "none",
-                }}
-              >
-                {label}
-              </Link>
-            );
-          })}
+          <SidebarNavItem
+            icon={Package}
+            label="课程包管理"
+            href="/admin/packages"
+            active={adminSection === "packages"}
+          />
+          <SidebarNavItem
+            icon={Users}
+            label="用户管理"
+            href="/admin/users"
+            active={adminSection === "users"}
+          />
         </nav>
       )}
 
-      {/* 详情页导航 */}
-      {variant === "detail" && (
-        <nav style={{ padding: "18px 8px 8px", display: "grid", gap: 4 }}>
-          {[
-            { label: "课程包详情", href: "#" },
-            { label: "课次列表", href: "#" },
-          ].map(({ label, href }, i) => (
-            <Link
-              key={label}
-              href={href}
-              style={{
-                height: 40,
-                borderRadius: 12,
-                color: i === 0 ? "#fff" : "#6074a9",
-                display: "flex",
-                alignItems: "center",
-                padding: "0 12px",
-                fontSize: 14,
-                fontWeight: i === 0 ? 800 : 600,
-                textDecoration: "none",
-                background: i === 0
-                  ? "linear-gradient(90deg, #8bb1ff, #7ea5ff)"
-                  : "transparent",
-              }}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-      )}
+      {variant === "detail" && <DetailSidebarNav />}
 
-      {/* 课程包树（仅列表页） */}
-      {variant === "list" && (
-        <div style={{ padding: "0 8px 8px" }}>
-          <div style={{
-            background: "rgba(255,255,255,0.42)",
-            border: "1px solid #e6ecff",
-            borderRadius: 14,
-            padding: 12,
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 6 }}>课程包</div>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>按年龄段与级别浏览</div>
-            <div style={{ padding: "7px 10px", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#5f79ef", background: "#eef3ff", marginBottom: 4 }}>8–12 岁</div>
-            <div style={{ paddingLeft: 10, borderLeft: "1px solid #dfe7ff", marginLeft: 8, marginBottom: 4, display: "grid", gap: 3 }}>
-              <div style={{ padding: "6px 10px", borderRadius: 9, fontSize: 12, fontWeight: 700, color: "#5f79ef", background: "#eef3ff" }}>L1</div>
-              <div style={{ padding: "6px 10px", borderRadius: 9, fontSize: 12, color: "var(--muted)" }}>L2</div>
-            </div>
-            <div style={{ padding: "7px 10px", borderRadius: 10, fontSize: 13, color: "var(--muted)", background: "rgba(255,255,255,0.6)" }}>6–7 岁</div>
-          </div>
-        </div>
-      )}
-
-      {/* 单课页导航 */}
       {variant === "lesson" && (
         <nav style={{ padding: "18px 8px 8px", display: "grid", gap: 4 }}>
           {backHref && (
-            <Link
+            <SidebarNavItem
+              icon={ChevronLeft}
+              label="返回课程包"
               href={backHref}
-              style={{
-                height: 40,
-                borderRadius: 12,
-                color: "#fff",
-                display: "flex",
-                alignItems: "center",
-                padding: "0 12px",
-                fontSize: 14,
-                fontWeight: 800,
-                textDecoration: "none",
-                background: "linear-gradient(90deg, #8bb1ff, #7ea5ff)",
-                boxShadow: "0 8px 18px rgba(126,149,255,0.16)",
-              }}
-            >
-              ← 返回课程包
-            </Link>
+              active
+            />
           )}
-          <Link
+          <SidebarNavItem
+            icon={BookOpen}
+            label="课程包列表"
             href="/list"
-            style={{
-              height: 40,
-              borderRadius: 12,
-              color: "#6074a9",
-              display: "flex",
-              alignItems: "center",
-              padding: "0 12px",
-              fontSize: 14,
-              fontWeight: 600,
-              textDecoration: "none",
-            }}
-          >
-            课程包列表
-          </Link>
+            active={pathname === "/list"}
+          />
         </nav>
+      )}
+
+      {/* 课程包树（仅列表页，有数据时显示） */}
+      {variant === "list" && filterTree && filterTree.length > 0 ? (
+        <Suspense fallback={null}>
+          <SidebarFilterTree
+            filterTree={filterTree}
+            activeAgeRange={activeAgeRange}
+            activeLevel={activeLevel}
+          />
+        </Suspense>
+      ) : (
+        <div />
+      )}
+
+      {/* 管理后台入口（管理员在非 admin 页面显示） */}
+      {isAdmin && variant !== "admin" && (
+        <div style={{ padding: "0 8px 8px" }}>
+          <SidebarNavItem
+            icon={Settings}
+            label="管理后台"
+            href="/admin/packages"
+          />
+        </div>
       )}
 
       {/* 版权 */}
       <div style={{ padding: "8px 14px 14px", color: "#97a5ca", fontSize: 11 }}>
-        {variant === "admin" ? "管理员后台" : variant === "detail" || variant === "lesson" ? "教师授课系统" : "© 2024 AI Dash"}
+        {variant === "admin"
+          ? "管理员后台"
+          : variant === "detail" || variant === "lesson"
+          ? "教师授课系统"
+          : "© 2024 AI Dash"}
       </div>
     </aside>
   );

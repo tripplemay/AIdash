@@ -183,11 +183,6 @@ export default function LoginForm() {
                 </div>
               )}
 
-              <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 0 18px", fontSize: 13, color: "var(--muted)" }}>
-                <span style={{ cursor: "pointer" }}>验证码登录</span>
-                <span style={{ cursor: "pointer" }}>忘记密码？</span>
-              </div>
-
               <button
                 type="submit"
                 disabled={loading}
@@ -214,25 +209,27 @@ export default function LoginForm() {
               </div>
 
               <div style={{ display: "flex", gap: 10 }}>
-                <button type="button" style={{
+                <button type="button" title="即将上线" style={{
                   flex: 1, height: 44,
                   border: "1px solid var(--line)",
                   borderRadius: 12,
                   background: "rgba(255,255,255,0.78)",
                   color: "var(--text)",
                   fontSize: 13, fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: "not-allowed",
+                  opacity: 0.5,
                 }}>
                   企业微信登录
                 </button>
-                <button type="button" style={{
+                <button type="button" title="即将上线" style={{
                   flex: 1, height: 44,
                   border: "1px solid #d9f0df",
                   borderRadius: 12,
                   background: "rgba(238,252,244,0.82)",
                   color: "#4f8d5a",
                   fontSize: 13, fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: "not-allowed",
+                  opacity: 0.5,
                 }}>
                   微信登录
                 </button>

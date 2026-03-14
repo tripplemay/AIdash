@@ -11,6 +11,7 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
   if (!session) redirect("/");
 
   const { slug } = await params;
+  const userRole = (session.user as { role?: string })?.role ?? "teacher";
 
   const pkg = await prisma.coursePackage.findUnique({
     where: { slug },
@@ -35,7 +36,7 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "radial-gradient(circle at 78% 12%, rgba(161,196,255,0.15), transparent 18%), radial-gradient(circle at 12% 84%, rgba(186,201,255,0.16), transparent 26%)" }} />
 
         <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "var(--sidebar-w) 1fr", minHeight: 820 }}>
-          <Sidebar variant="detail" />
+          <Sidebar variant="detail" userRole={userRole} />
 
           <main style={{ padding: "20px 24px 28px" }}>
             {/* 面包屑 */}
@@ -45,22 +46,23 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
             </div>
 
             {/* 课程包信息卡 */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "320px 1fr",
-              gap: 20, padding: 20,
-              background: "linear-gradient(180deg, rgba(238,243,255,0.95), rgba(255,255,255,0.92))",
-              border: "1px solid var(--line)",
-              borderRadius: 22, marginBottom: 16,
-            }}>
-              {/* 主图：严格使用已确认最终版 */}
+            <div
+              id="package-info"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "320px 1fr",
+                gap: 20, padding: 20,
+                background: "linear-gradient(180deg, rgba(238,243,255,0.95), rgba(255,255,255,0.92))",
+                border: "1px solid var(--line)",
+                borderRadius: 22, marginBottom: 16,
+              }}
+            >
               <div style={{ borderRadius: 18, overflow: "hidden", border: "1px solid #dde6ff", background: "#eef3ff", minHeight: 240, position: "relative" }}>
                 {pkg.coverImage && (
                   <Image src={pkg.coverImage} alt={`${pkg.title}主图`} fill style={{ objectFit: "cover" }} />
                 )}
               </div>
 
-              {/* 文字信息 */}
               <div>
                 <span style={{
                   display: "inline-flex", alignItems: "center",
@@ -74,7 +76,6 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
                   <div style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, marginBottom: 16 }}>{pkg.summary}</div>
                 )}
 
-                {/* 元信息格 */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
                   {[
                     { label: "适用年龄段", value: `${pkg.ageRange} 岁` },
@@ -98,7 +99,10 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
             </div>
 
             {/* 课次列表 */}
-            <div style={{ background: "rgba(255,255,255,0.82)", border: "1px solid var(--line)", borderRadius: 22, padding: 18 }}>
+            <div
+              id="lesson-list"
+              style={{ background: "rgba(255,255,255,0.82)", border: "1px solid var(--line)", borderRadius: 22, padding: 18 }}
+            >
               <div style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>课次列表</div>
                 <div style={{ fontSize: 13, color: "var(--muted)" }}>点击「进入本课」直接打开已确认原型内容</div>
@@ -147,7 +151,6 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
                         )}
                       </div>
 
-                      {/* 进入本课：符合接入规范 v1，window.open 新标签 */}
                       {lesson.contentPath ? (
                         <EnterLessonButton slug={slug} lessonId={lesson.id} />
                       ) : (

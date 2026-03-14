@@ -26,7 +26,7 @@ export default async function AdminPackagesPage() {
       }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "radial-gradient(circle at 78% 12%, rgba(161,196,255,0.15), transparent 18%), radial-gradient(circle at 12% 84%, rgba(186,201,255,0.16), transparent 26%)" }} />
         <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "var(--sidebar-w) 1fr", minHeight: 820 }}>
-          <Sidebar variant="admin" adminSection="packages" />
+          <Sidebar variant="admin" adminSection="packages" userRole="admin" />
           <main style={{ padding: "28px 28px 32px" }}>
             <AdminPackageList packages={packages} />
           </main>
