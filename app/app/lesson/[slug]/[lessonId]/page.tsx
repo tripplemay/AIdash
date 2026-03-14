@@ -86,7 +86,7 @@ export default async function LessonPage({
             <iframe
               id="lesson-iframe"
               src={lesson.contentPath}
-              sandbox="allow-scripts allow-same-origin"
+              sandbox="allow-scripts allow-same-origin allow-modals"
               style={{
                 flex: 1,
                 width: "100%",
