@@ -52,11 +52,12 @@ fi
 
 # ── [5/9] Nginx 配置 ───────────────────────────────────────────────────────
 echo "▶ [5/9] Nginx 配置..."
-if [ ! -f /etc/nginx/sites-available/aidash ]; then
-  cat > /etc/nginx/sites-available/aidash <<NGINX
+cat > /etc/nginx/sites-available/aidash <<NGINX
 server {
     listen 80;
     server_name ${DOMAIN};
+
+    client_max_body_size 60m;
 
     location / {
         proxy_pass http://localhost:3002;
@@ -71,12 +72,9 @@ server {
     }
 }
 NGINX
-  ln -sf /etc/nginx/sites-available/aidash /etc/nginx/sites-enabled/aidash
-  nginx -t && systemctl reload nginx
-  echo "  配置完成"
-else
-  echo "  已配置，跳过"
-fi
+ln -sf /etc/nginx/sites-available/aidash /etc/nginx/sites-enabled/aidash
+nginx -t && systemctl reload nginx
+echo "  配置完成"
 
 # ── [6/9] SSL 证书 ─────────────────────────────────────────────────────────
 echo "▶ [6/9] SSL 证书..."
