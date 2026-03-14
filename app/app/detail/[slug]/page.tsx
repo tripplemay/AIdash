@@ -19,6 +19,12 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
       lessons: {
         orderBy: { lessonNo: "asc" },
         include: { attachments: true },
+        select: {
+          id: true, lessonNo: true, title: true, durationMinutes: true,
+          deliveryMode: true, groupSize: true, aiRoundsCount: true,
+          outputSummary: true, contentPath: true, contentData: true, status: true,
+          attachments: true,
+        },
       },
     },
   });
@@ -151,7 +157,7 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
                         )}
                       </div>
 
-                      {lesson.contentPath ? (
+                      {lesson.contentPath || lesson.contentData ? (
                         <EnterLessonButton slug={slug} lessonId={lesson.id} />
                       ) : (
                         <span style={{ fontSize: 13, color: "var(--muted)" }}>未接入</span>
