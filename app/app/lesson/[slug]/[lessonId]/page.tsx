@@ -21,23 +21,20 @@ export default async function LessonPage({
 
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
-    select: { id: true, title: true, contentPath: true, contentData: true, packageId: true },
+    select: { id: true, title: true, contentData: true },
   });
 
-  if (!lesson || (!lesson.contentPath && !lesson.contentData)) notFound();
+  if (!lesson?.contentData) notFound();
+
+  let lessonContent: LessonContent;
+  try {
+    lessonContent = JSON.parse(lesson.contentData) as LessonContent;
+  } catch {
+    notFound();
+  }
 
   const userName = session.user?.name ?? "老师";
   const userRole = (session.user as { role?: string })?.role ?? "teacher";
-
-  // v2: parse JSON content
-  let lessonContent: LessonContent | null = null;
-  if (lesson.contentData) {
-    try {
-      lessonContent = JSON.parse(lesson.contentData) as LessonContent;
-    } catch {
-      // fall through to iframe if parse fails
-    }
-  }
 
   return (
     <div style={{ padding: 20 }}>
@@ -64,7 +61,6 @@ export default async function LessonPage({
           <Sidebar variant="lesson" userName={userName} backHref={`/detail/${slug}`} userRole={userRole} />
 
           <main style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            {/* TopBar */}
             <div style={{
               height: 54,
               borderBottom: "1px solid var(--line)",
@@ -82,7 +78,6 @@ export default async function LessonPage({
                   style={{
                     fontSize: 13, color: "var(--brand)",
                     textDecoration: "none", fontWeight: 600,
-                    display: "flex", alignItems: "center", gap: 4,
                   }}
                 >
                   ← 返回课程包
@@ -95,19 +90,9 @@ export default async function LessonPage({
               <PrintLessonButton />
             </div>
 
-            {/* 主内容：v2 渲染器 or v1 iframe */}
-            {lessonContent ? (
-              <div style={{ flex: 1, overflowY: "auto" }}>
-                <LessonRenderer content={lessonContent} />
-              </div>
-            ) : (
-              <iframe
-                id="lesson-iframe"
-                src={lesson.contentPath!}
-                sandbox="allow-scripts allow-same-origin allow-modals"
-                style={{ flex: 1, width: "100%", border: "none", display: "block" }}
-              />
-            )}
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              <LessonRenderer content={lessonContent} />
+            </div>
           </main>
         </div>
       </div>

@@ -36,11 +36,9 @@ interface LessonManifest {
   group_size?: string;
   ai_rounds_count?: number;
   output_summary?: string;
-  entry_file?: string | null;
   attachments?: Array<{ type: string; title: string; path: string }>;
-  // v2 fields
   hero?: unknown;
-  sections?: unknown[];
+  sections: unknown[];
 }
 
 // POST /api/admin/upload — 上传课程包 zip
@@ -168,16 +166,14 @@ export async function POST(request: Request) {
           throw new Error(`lesson.json 解析失败：lessons/${lessonRef.lesson_dir}/lesson.json`);
         }
 
-        // v2: lesson.json has sections → system renders, no index.html needed
-        const isV2 = Array.isArray(lessonManifest.sections) && lessonManifest.sections.length > 0;
+        if (!Array.isArray(lessonManifest.sections) || lessonManifest.sections.length === 0) {
+          throw new Error(`lesson.json 缺少 sections 字段（需要 v2 格式）：lessons/${lessonRef.lesson_dir}/lesson.json`);
+        }
 
-        const contentPath = isV2
-          ? null
-          : `/api/course-files/${slug}/lessons/${lessonRef.lesson_dir}/${lessonManifest.entry_file ?? "index.html"}`;
-
-        const contentData = isV2
-          ? JSON.stringify({ hero: lessonManifest.hero ?? null, sections: lessonManifest.sections })
-          : null;
+        const contentData = JSON.stringify({
+          hero: lessonManifest.hero ?? null,
+          sections: lessonManifest.sections,
+        });
 
         const lesson = await tx.lesson.upsert({
           where: {
@@ -195,8 +191,6 @@ export async function POST(request: Request) {
             groupSize: lessonManifest.group_size ?? null,
             aiRoundsCount: lessonManifest.ai_rounds_count ?? null,
             outputSummary: lessonManifest.output_summary ?? null,
-            entryFile: lessonManifest.entry_file ?? "index.html",
-            contentPath,
             contentData,
             status: "published",
           },
@@ -207,8 +201,6 @@ export async function POST(request: Request) {
             groupSize: lessonManifest.group_size ?? null,
             aiRoundsCount: lessonManifest.ai_rounds_count ?? null,
             outputSummary: lessonManifest.output_summary ?? null,
-            entryFile: lessonManifest.entry_file ?? "index.html",
-            contentPath,
             contentData,
             status: "published",
           },
