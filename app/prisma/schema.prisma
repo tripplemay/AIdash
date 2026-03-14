@@ -45,7 +45,8 @@ model Lesson {
   aiRoundsCount   Int?
   outputSummary   String?
   entryFile       String   @default("index.html")
-  contentPath     String?  // 单课包在 /public 下的相对路径
+  contentPath     String?  // v1: 单课 HTML 路径
+  contentData     String?  @db.LongText // v2: JSON { hero, sections }
   status          String   @default("draft")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

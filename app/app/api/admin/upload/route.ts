@@ -36,8 +36,11 @@ interface LessonManifest {
   group_size?: string;
   ai_rounds_count?: number;
   output_summary?: string;
-  entry_file?: string;
+  entry_file?: string | null;
   attachments?: Array<{ type: string; title: string; path: string }>;
+  // v2 fields
+  hero?: unknown;
+  sections?: unknown[];
 }
 
 // POST /api/admin/upload — 上传课程包 zip
@@ -165,7 +168,16 @@ export async function POST(request: Request) {
           throw new Error(`lesson.json 解析失败：lessons/${lessonRef.lesson_dir}/lesson.json`);
         }
 
-        const contentPath = `/api/course-files/${slug}/lessons/${lessonRef.lesson_dir}/${lessonManifest.entry_file ?? "index.html"}`;
+        // v2: lesson.json has sections → system renders, no index.html needed
+        const isV2 = Array.isArray(lessonManifest.sections) && lessonManifest.sections.length > 0;
+
+        const contentPath = isV2
+          ? null
+          : `/api/course-files/${slug}/lessons/${lessonRef.lesson_dir}/${lessonManifest.entry_file ?? "index.html"}`;
+
+        const contentData = isV2
+          ? JSON.stringify({ hero: lessonManifest.hero ?? null, sections: lessonManifest.sections })
+          : null;
 
         const lesson = await tx.lesson.upsert({
           where: {
@@ -185,6 +197,7 @@ export async function POST(request: Request) {
             outputSummary: lessonManifest.output_summary ?? null,
             entryFile: lessonManifest.entry_file ?? "index.html",
             contentPath,
+            contentData,
             status: "published",
           },
           update: {
@@ -196,6 +209,7 @@ export async function POST(request: Request) {
             outputSummary: lessonManifest.output_summary ?? null,
             entryFile: lessonManifest.entry_file ?? "index.html",
             contentPath,
+            contentData,
             status: "published",
           },
         });
