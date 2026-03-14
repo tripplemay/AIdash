@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 interface SidebarProps {
-  variant?: "list" | "detail" | "admin";
+  variant?: "list" | "detail" | "admin" | "lesson";
   userName?: string;
+  backHref?: string;
 }
 
-export default function Sidebar({ variant = "list", userName = "张老师" }: SidebarProps) {
+export default function Sidebar({ variant = "list", userName = "张老师", backHref }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -150,9 +151,51 @@ export default function Sidebar({ variant = "list", userName = "张老师" }: Si
         </div>
       )}
 
+      {/* 单课页导航 */}
+      {variant === "lesson" && (
+        <nav style={{ padding: "18px 8px 8px", display: "grid", gap: 4 }}>
+          {backHref && (
+            <Link
+              href={backHref}
+              style={{
+                height: 40,
+                borderRadius: 12,
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                padding: "0 12px",
+                fontSize: 14,
+                fontWeight: 800,
+                textDecoration: "none",
+                background: "linear-gradient(90deg, #8bb1ff, #7ea5ff)",
+                boxShadow: "0 8px 18px rgba(126,149,255,0.16)",
+              }}
+            >
+              ← 返回课程包
+            </Link>
+          )}
+          <Link
+            href="/list"
+            style={{
+              height: 40,
+              borderRadius: 12,
+              color: "#6074a9",
+              display: "flex",
+              alignItems: "center",
+              padding: "0 12px",
+              fontSize: 14,
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            课程包列表
+          </Link>
+        </nav>
+      )}
+
       {/* 版权 */}
       <div style={{ padding: "8px 14px 14px", color: "#97a5ca", fontSize: 11 }}>
-        {variant === "detail" ? "教师授课系统" : "© 2024 AI Dash"}
+        {variant === "detail" || variant === "lesson" ? "教师授课系统" : "© 2024 AI Dash"}
       </div>
     </aside>
   );

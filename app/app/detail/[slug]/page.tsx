@@ -149,7 +149,7 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
 
                       {/* 进入本课：符合接入规范 v1，window.open 新标签 */}
                       {lesson.contentPath ? (
-                        <EnterLessonButton entryPath={lesson.contentPath} />
+                        <EnterLessonButton slug={slug} lessonId={lesson.id} />
                       ) : (
                         <span style={{ fontSize: 13, color: "var(--muted)" }}>未接入</span>
                       )}

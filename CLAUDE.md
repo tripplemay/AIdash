@@ -17,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 冻结约束（不得擅自修改）
 
 1. **主链路不得增加层级**：`登录页 → 课程包列表页 → 课程包详情页 → 进入本课 → 已确认原型页`
-2. **"进入本课"行为**：必须用 `window.open` 新标签打开独立 HTML，不得用 iframe 包壳或动态渲染
+2. **"进入本课"行为**：通过 Next.js router 跳转至 `/lesson/[slug]/[lessonId]` 页面，主内容区用 `<iframe>` 加载单课 HTML，保持完整系统导航（Sidebar + TopBar）。单课 HTML 本身保持可独立运行能力不变。（2026-03-14 经用户确认，由 `window.open` 方案迁移至 iframe 方案）
 3. **样板课内容不得替换**：第一个课程包必须是《我的神奇搭档课程包》真实内容，主图严格使用 `assets/images/my-magical-partner-cover.png`
 4. **视觉风格不得偏移**：浅蓝紫雾光科技感，CSS 变量体系定义在 `assets/style.css`
 5. **废弃页面不得恢复**：~~单课教师课包接入页~~已废弃

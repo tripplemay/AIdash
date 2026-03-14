@@ -1,0 +1,102 @@
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { redirect, notFound } from "next/navigation";
+import Sidebar from "@/components/Sidebar";
+import PrintLessonButton from "@/components/PrintLessonButton";
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
+export default async function LessonPage({
+  params,
+}: {
+  params: Promise<{ slug: string; lessonId: string }>;
+}) {
+  const session = await auth();
+  if (!session) redirect("/");
+
+  const { slug, lessonId } = await params;
+
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: { id: true, title: true, contentPath: true, packageId: true },
+  });
+
+  if (!lesson || !lesson.contentPath) notFound();
+
+  const userName = session.user?.name ?? "老师";
+
+  return (
+    <div style={{ padding: 20 }}>
+      <div style={{
+        borderRadius: 28,
+        background: "linear-gradient(135deg, rgba(244,247,255,0.96), rgba(238,242,255,0.96))",
+        overflow: "hidden",
+        position: "relative",
+      }}>
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: `
+            radial-gradient(circle at 78% 12%, rgba(161,196,255,0.15), transparent 18%),
+            radial-gradient(circle at 12% 84%, rgba(186,201,255,0.16), transparent 26%)
+          `,
+        }} />
+
+        <div style={{
+          position: "relative", zIndex: 1,
+          display: "grid",
+          gridTemplateColumns: "var(--sidebar-w) 1fr",
+          height: "calc(100vh - 40px)",
+        }}>
+          <Sidebar variant="lesson" userName={userName} backHref={`/detail/${slug}`} />
+
+          <main style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            {/* TopBar */}
+            <div style={{
+              height: 54,
+              borderBottom: "1px solid var(--line)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 20px",
+              background: "rgba(255,255,255,0.6)",
+              backdropFilter: "blur(8px)",
+              flexShrink: 0,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <Link
+                  href={`/detail/${slug}`}
+                  style={{
+                    fontSize: 13, color: "var(--brand)",
+                    textDecoration: "none", fontWeight: 600,
+                    display: "flex", alignItems: "center", gap: 4,
+                  }}
+                >
+                  ← 返回课程包
+                </Link>
+                <span style={{ color: "var(--line)" }}>|</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
+                  {lesson.title}
+                </span>
+              </div>
+              <PrintLessonButton />
+            </div>
+
+            {/* iframe 主内容 */}
+            <iframe
+              id="lesson-iframe"
+              src={lesson.contentPath}
+              sandbox="allow-scripts allow-same-origin"
+              style={{
+                flex: 1,
+                width: "100%",
+                border: "none",
+                display: "block",
+              }}
+            />
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}

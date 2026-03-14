@@ -1,13 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 interface Props {
-  entryPath: string;
+  slug: string;
+  lessonId: string;
 }
 
-export default function EnterLessonButton({ entryPath }: Props) {
+export default function EnterLessonButton({ slug, lessonId }: Props) {
+  const router = useRouter();
+
   return (
     <button
-      onClick={() => window.open(entryPath, "_blank")}
+      onClick={() => router.push(`/lesson/${slug}/${lessonId}`)}
       style={{
         border: "none", borderRadius: 999,
         padding: "11px 20px",

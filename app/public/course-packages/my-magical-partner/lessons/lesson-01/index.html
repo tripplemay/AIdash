@@ -25,6 +25,7 @@
       --max: 1180px;
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -32,10 +33,27 @@
       color: var(--text);
       line-height: 1.6;
     }
+
+    /* ── 顶部进度条 ── */
+    .progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 3px;
+      background: rgba(0,0,0,0.06);
+      z-index: 9999;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--blue-deep), var(--violet-deep));
+      transition: width 0.1s linear;
+      border-radius: 0 2px 2px 0;
+    }
+
     .shell {
       max-width: var(--max);
       margin: 0 auto;
-      padding: 28px 20px 64px;
+      padding: 36px 20px 64px;
     }
     .hero {
       background: linear-gradient(135deg, rgba(142,208,255,0.9), rgba(203,183,255,0.92));
@@ -93,27 +111,71 @@
       margin-top: 24px;
       align-items: start;
     }
+
+    /* ── 目录导航 ── */
     .toc {
       position: sticky;
       top: 20px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.88);
       backdrop-filter: blur(10px);
       border: 1px solid var(--line);
       box-shadow: var(--shadow);
       border-radius: 22px;
       padding: 18px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
     }
     .toc h3 { font-size: 16px; margin-bottom: 12px; }
     .toc a {
       display: block;
       color: var(--text);
       text-decoration: none;
-      padding: 9px 10px;
+      padding: 8px 10px;
       border-radius: 12px;
-      font-size: 14px;
-      margin-bottom: 6px;
+      font-size: 13px;
+      margin-bottom: 3px;
+      transition: background 0.15s, color 0.15s;
+      border-left: 3px solid transparent;
     }
     .toc a:hover { background: #f3f4f6; }
+    .toc a.toc-active {
+      background: linear-gradient(90deg, rgba(142,208,255,0.18), rgba(203,183,255,0.12));
+      color: var(--violet-deep);
+      font-weight: 700;
+      border-left: 3px solid var(--violet-deep);
+    }
+    /* 附件子菜单 */
+    .toc-submenu {
+      border: none;
+      background: transparent;
+      margin-top: 2px;
+    }
+    .toc-submenu summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: transparent;
+      border-bottom: none;
+      margin-bottom: 3px;
+      transition: background 0.15s;
+    }
+    .toc-submenu summary::-webkit-details-marker { display: none; }
+    .toc-submenu summary:hover { background: #f3f4f6; border-radius: 12px; }
+    .toc-submenu summary.toc-active {
+      background: linear-gradient(90deg, rgba(142,208,255,0.18), rgba(203,183,255,0.12));
+      color: var(--violet-deep);
+      font-weight: 700;
+    }
+    .toc-sub-links { padding-left: 12px; }
+    .toc-sub-links a { font-size: 12px; color: var(--muted); padding: 6px 10px; }
+
     .content { display: grid; gap: 18px; }
     .panel {
       background: var(--panel);
@@ -121,7 +183,16 @@
       border-radius: var(--radius-xl);
       box-shadow: var(--shadow);
       overflow: hidden;
+      scroll-margin-top: 14px;
     }
+    /* 点击目录时目标 section 的高亮闪烁 */
+    @keyframes section-flash {
+      0%   { box-shadow: var(--shadow); }
+      30%  { box-shadow: 0 0 0 3px rgba(139,114,246,0.35), var(--shadow); }
+      100% { box-shadow: var(--shadow); }
+    }
+    .panel.flash { animation: section-flash 0.7s ease; }
+
     .panel-head {
       padding: 18px 22px;
       border-bottom: 1px solid var(--line);
@@ -178,7 +249,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid transparent;
     }
+    details[open] > summary { border-bottom-color: var(--line); }
     summary::-webkit-details-marker { display: none; }
     .detail-body { padding: 0 18px 18px; }
     .time-chip {
@@ -194,28 +267,85 @@
     .danger { background: #fff1f1; border-color: #ffd6d6; }
     .success { background: #eefcf1; border-color: #d2f3da; }
     .note { background: #fff9eb; border-color: #ffe8a6; }
+
+    /* ── AI 模板 + 复制按钮 ── */
+    .template-wrapper {
+      position: relative;
+    }
     .template {
       background: #fafbff;
       border: 1px dashed #c7d2fe;
       border-radius: 18px;
-      padding: 16px;
+      padding: 16px 48px 16px 16px;
       white-space: pre-line;
       font-size: 14px;
     }
+    .copy-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      padding: 5px 10px;
+      border-radius: 10px;
+      border: 1px solid #c7d2fe;
+      background: rgba(255,255,255,0.9);
+      color: #6c4fe0;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { background: #f1edff; }
+    .copy-btn.copied { background: #ebfaef; color: #19733a; border-color: #d2f3da; }
+
     .footer-note {
       text-align: center;
       color: var(--muted);
       font-size: 13px;
       margin-top: 18px;
     }
+
     @media (max-width: 980px) {
       .layout, .hero-grid, .grid-2, .grid-3 { grid-template-columns: 1fr; }
-      .toc { position: static; }
+      .toc { position: static; max-height: none; }
       .hero h1 { font-size: 32px; }
+    }
+
+    /* ── 打印样式 ── */
+    @media print {
+      .progress-bar,
+      .toc,
+      .copy-btn { display: none !important; }
+
+      body {
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .shell { padding: 0; }
+      .hero {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        box-shadow: none !important;
+      }
+      .panel, .box, .single-quote, .template {
+        border-color: #ccc !important;
+        background: #fff !important;
+        box-shadow: none !important;
+      }
+      .panel-head {
+        background: #f5f5f5 !important;
+      }
+      .layout { grid-template-columns: 1fr !important; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
+      .panel { break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px; }
+      .hero { break-after: page; }
+      .template { padding: 16px !important; }
     }
   </style>
 </head>
 <body>
+  <!-- 顶部进度条 -->
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
   <div class="shell">
     <section class="hero" id="top">
       <div class="tag-row">
@@ -228,7 +358,7 @@
       <div class="hero-grid">
         <div class="hero-card">
           <div class="label">一句话目标</div>
-          <div class="big">用 3 个短 AI 回合，帮助学生从“模糊想法”更快走到“完整作品”。</div>
+          <div class="big">用 3 个短 AI 回合，帮助学生从"模糊想法"更快走到"完整作品"。</div>
         </div>
         <div class="hero-card">
           <div class="label">唯一核心成果</div>
@@ -236,7 +366,7 @@
         </div>
       </div>
     </section>
-<br>
+
     <div class="layout">
       <aside class="toc">
         <h3>目录导航</h3>
@@ -247,8 +377,21 @@
         <a href="#issues">5. 学生卡点应对表</a>
         <a href="#materials">6. 本课附件与模板</a>
         <a href="#review">7. 课后复盘记录区</a>
+        <a href="#attachments">8. 整包附件中心</a>
+        <details class="toc-submenu" id="toc-attachments-menu">
+          <summary>附件详情 ▾</summary>
+          <div class="toc-sub-links">
+            <a href="#proj-1">附件 A · 投屏页第 1 页</a>
+            <a href="#proj-2">附件 A · 投屏页第 2 页</a>
+            <a href="#proj-3">附件 A · 投屏页第 3 页</a>
+            <a href="#proj-4">附件 A · 投屏页第 4 页</a>
+            <a href="#student-ai-sheet">附件 B · 学生 AI 模板单</a>
+            <a href="#student-output-sheet">附件 C · 学生成果模板</a>
+            <a href="#demo-case">附件 D · 教师示范案例</a>
+          </div>
+        </details>
       </aside>
-<br>
+
       <main class="content">
         <section class="panel" id="core">
           <div class="panel-head"><h2>1. 本课核心信息</h2></div>
@@ -297,7 +440,7 @@
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="ai-value">
           <div class="panel-head"><h2>2. 本课 AI 环节价值说明</h2></div>
           <div class="panel-body">
@@ -305,11 +448,11 @@
             <div class="grid-3" style="margin-top:16px;">
               <div class="box">
                 <div class="pill blue">AI 环节 1：名字</div>
-                <p>帮助学生更快获得几个可选名字，让搭档从“模糊想法”变成“有名字的角色”。</p>
+                <p>帮助学生更快获得几个可选名字，让搭档从"模糊想法"变成"有名字的角色"。</p>
               </div>
               <div class="box">
                 <div class="pill violet">AI 环节 2：本领</div>
-                <p>帮助学生把“它很厉害”这种模糊想法变成一个更具体、更鲜明的本领。</p>
+                <p>帮助学生把"它很厉害"这种模糊想法变成一个更具体、更鲜明的本领。</p>
               </div>
               <div class="box">
                 <div class="pill yellow">AI 环节 3：一句介绍</div>
@@ -321,7 +464,7 @@
                 <h3>如果没有 AI，学生可能会遇到的困难</h3>
                 <ul>
                   <li>长时间卡在起名</li>
-                  <li>本领写得很空，比如“很厉害”“很聪明”</li>
+                  <li>本领写得很空，比如"很厉害""很聪明"</li>
                   <li>不知道怎么写一句完整介绍</li>
                   <li>在 45 分钟内很难把想法整理成完整作品</li>
                 </ul>
@@ -338,7 +481,7 @@
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="prep">
           <div class="panel-head"><h2>3. 课前备课提示单</h2></div>
           <div class="panel-body">
@@ -368,25 +511,25 @@
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="flow">
           <div class="panel-head"><h2>4. 45 分钟课堂执行清单</h2></div>
           <div class="panel-body">
             <details open>
               <summary><span>环节 1：开场进入</span><span class="time-chip">0–5 分钟</span></summary>
               <div class="detail-body">
-                <p><strong>目标：</strong>快速把学生带入“神奇搭档”主题。</p>
+                <p><strong>目标：</strong>快速把学生带入"神奇搭档"主题。</p>
                 <p><strong>你要做什么：</strong>抛一个问题，给两个轻示例，直接宣布今天任务。</p>
                 <p><strong>你可以直接说：</strong></p>
                 <ul>
-                  <li>“如果今天开始，你可以拥有一个神奇搭档，你希望它像什么？”</li>
-                  <li>“它可以像动物、机器人，也可以像你想出来的神奇生物。”</li>
-                  <li>“今天每个人都要做出自己的神奇搭档介绍页。”</li>
+                  <li>"如果今天开始，你可以拥有一个神奇搭档，你希望它像什么？"</li>
+                  <li>"它可以像动物、机器人，也可以像你想出来的神奇生物。"</li>
+                  <li>"今天每个人都要做出自己的神奇搭档介绍页。"</li>
                 </ul>
                 <p><strong>这一段结束时要看到：</strong>每个学生脑中有一个初步方向。</p>
               </div>
             </details>
-<br>
+
             <details open>
               <summary><span>环节 2：任务说明 + 教师示范</span><span class="time-chip">5–12 分钟</span></summary>
               <div class="detail-body">
@@ -394,96 +537,105 @@
                 <p><strong>你要做什么：</strong>展示成果模板，明确 3 个必填项，快速示范一次完整流程。</p>
                 <p><strong>你可以直接说：</strong></p>
                 <ul>
-                  <li>“今天我们只保 3 个核心内容：名字、本领、一句介绍。”</li>
-                  <li>“我们会真的用 3 次 AI，但每次只解决一个小问题。”</li>
-                  <li>“最后交的是你的作品，不是 AI 对话。”</li>
+                  <li>"今天我们只保 3 个核心内容：名字、本领、一句介绍。"</li>
+                  <li>"我们会真的用 3 次 AI，但每次只解决一个小问题。"</li>
+                  <li>"最后交的是你的作品，不是 AI 对话。"</li>
                 </ul>
               </div>
             </details>
-<br>
+
             <details open>
               <summary><span>环节 3：AI 回合 1 —— 想名字</span><span class="time-chip">12–20 分钟</span></summary>
               <div class="detail-body">
                 <p><strong>输入模板：</strong></p>
-                <div class="template">我想设计一个神奇搭档，它像______。请帮我想 3 个适合小学生理解、好记又有趣的搭档名字。</div>
-                <p><strong>你要做什么：</strong>让学生先写“它像什么”，统一进入名字回合，只保留 1 个名字并马上写进成果模板。</p>
+                <div class="template-wrapper">
+                  <div class="template" id="ai-tpl-1">我想设计一个神奇搭档，它像______。请帮我想 3 个适合小学生理解、好记又有趣的搭档名字。</div>
+                  <button class="copy-btn" data-target="ai-tpl-1">复制</button>
+                </div>
+                <p><strong>你要做什么：</strong>让学生先写"它像什么"，统一进入名字回合，只保留 1 个名字并马上写进成果模板。</p>
                 <p><strong>你可以直接说：</strong></p>
                 <ul>
-                  <li>“这一轮只做名字，不要顺手继续问本领。”</li>
-                  <li>“名字只保留一个。”</li>
-                  <li>“先定下来，后面还能小改。”</li>
+                  <li>"这一轮只做名字，不要顺手继续问本领。"</li>
+                  <li>"名字只保留一个。"</li>
+                  <li>"先定下来，后面还能小改。"</li>
                 </ul>
                 <p><strong>第 20 分钟前必须做到：</strong>大部分学生有名字。</p>
               </div>
             </details>
-<br>
+
             <details open>
               <summary><span>环节 4：AI 回合 2 —— 想本领</span><span class="time-chip">20–28 分钟</span></summary>
               <div class="detail-body">
                 <p><strong>输入模板：</strong></p>
-                <div class="template">我的神奇搭档名字是______。它像______。请帮我想 3 个适合小学生理解、又很特别的本领。</div>
+                <div class="template-wrapper">
+                  <div class="template" id="ai-tpl-2">我的神奇搭档名字是______。它像______。请帮我想 3 个适合小学生理解、又很特别的本领。</div>
+                  <button class="copy-btn" data-target="ai-tpl-2">复制</button>
+                </div>
                 <p><strong>你要做什么：</strong>统一进入本领回合，只保留 1 个本领，要求至少改 1 个词，再写进成果模板。</p>
                 <p><strong>你可以直接说：</strong></p>
                 <ul>
-                  <li>“今天只保留一个最特别的本领。”</li>
-                  <li>“不要贪多，首课先做清楚。”</li>
-                  <li>“把一个词改成你自己的表达。”</li>
+                  <li>"今天只保留一个最特别的本领。"</li>
+                  <li>"不要贪多，首课先做清楚。"</li>
+                  <li>"把一个词改成你自己的表达。"</li>
                 </ul>
                 <p><strong>第 28 分钟前必须做到：</strong>大部分学生有 1 个本领。</p>
               </div>
             </details>
-<br>
+
             <details open>
               <summary><span>环节 5：AI 回合 3 —— 润色一句介绍</span><span class="time-chip">28–35 分钟</span></summary>
               <div class="detail-body">
                 <p><strong>输入模板：</strong></p>
-                <div class="template">请帮我把这句话说得更适合写在小学生作品上，语气简单、清楚、像孩子说的话：这是我的搭档，它会______。</div>
+                <div class="template-wrapper">
+                  <div class="template" id="ai-tpl-3">请帮我把这句话说得更适合写在小学生作品上，语气简单、清楚、像孩子说的话：这是我的搭档，它会______。</div>
+                  <button class="copy-btn" data-target="ai-tpl-3">复制</button>
+                </div>
                 <p><strong>你要做什么：</strong>先让学生自己写一句朴素的话，再统一进入润色回合，选 1 句并改一点，写进成果模板。</p>
                 <p><strong>你可以直接说：</strong></p>
                 <ul>
-                  <li>“不要选最厉害的句子，选最像你会说的话。”</li>
-                  <li>“改一点，它才是你的作品。”</li>
-                  <li>“这一步做完，我们就不继续问 AI 了。”</li>
+                  <li>"不要选最厉害的句子，选最像你会说的话。"</li>
+                  <li>"改一点，它才是你的作品。"</li>
+                  <li>"这一步做完，我们就不继续问 AI 了。"</li>
                 </ul>
                 <p><strong>第 35 分钟前必须做到：</strong>大部分学生有一句搭档介绍。</p>
               </div>
             </details>
-<br>
+
             <details open>
               <summary><span>环节 6：整理、展示与收束</span><span class="time-chip">35–45 分钟</span></summary>
               <div class="detail-body">
-                <p><strong>整理作品（35–40 分钟）：</strong>统一停 AI，让学生把 3 个核心内容整理进介绍页；可选补“它长什么样”。</p>
-                <p><strong>你必须说：</strong><br><strong>“现在停止继续问 AI，开始整理你的作品。”</strong></p>
+                <p><strong>整理作品（35–40 分钟）：</strong>统一停 AI，让学生把 3 个核心内容整理进介绍页；可选补"它长什么样"。</p>
+                <p><strong>你必须说：</strong><br><strong>"现在停止继续问 AI，开始整理你的作品。"</strong></p>
                 <p><strong>展示与收束（40–45 分钟）：</strong>展示 2–3 份作品，每位学生只讲两件事：我的搭档叫什么、它最特别的本领是什么。</p>
               </div>
             </details>
           </div>
         </section>
-<br>
+
         <section class="panel" id="issues">
           <div class="panel-head"><h2>5. 学生卡点应对表</h2></div>
           <div class="panel-body">
             <div class="grid-2">
               <div class="box danger">
                 <h3>不知道它像什么</h3>
-                <p>“先从三个里选一个：动物、机器人、神奇生物。”</p>
+                <p>"先从三个里选一个：动物、机器人、神奇生物。"</p>
               </div>
               <div class="box danger">
                 <h3>想做现成角色</h3>
-                <p>“你可以借一点感觉，但它必须变成你的版本。至少要改名字和本领。”</p>
+                <p>"你可以借一点感觉，但它必须变成你的版本。至少要改名字和本领。"</p>
               </div>
               <div class="box danger">
                 <h3>一直纠结名字</h3>
-                <p>“这一轮最多保留两个候选，30 秒后必须选一个。”</p>
+                <p>"这一轮最多保留两个候选，30 秒后必须选一个。"</p>
               </div>
               <div class="box danger">
                 <h3>直接复制 AI</h3>
-                <p>“改一个词，让它更像你会说的话；删一句，再换成你的表达。”</p>
+                <p>"改一个词，让它更像你会说的话；删一句，再换成你的表达。"</p>
               </div>
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="materials">
           <div class="panel-head"><h2>6. 本课附件与模板</h2></div>
           <div class="panel-body">
@@ -491,16 +643,16 @@
               <div class="box">
                 <div class="pill blue">成果模板</div>
                 <div class="template">《我的神奇搭档介绍页》
-<br>
+
 我的搭档名字：
 ________________
-<br>
+
 它最特别的一个本领：
 ________________
-<br>
+
 一句搭档介绍：
 ________________
-<br>
+
 可选：它长什么样
 ________________</div>
               </div>
@@ -517,7 +669,7 @@ ________________</div>
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="review">
           <div class="panel-head"><h2>7. 课后复盘记录区</h2></div>
           <div class="panel-body">
@@ -528,7 +680,7 @@ ________________</div>
                   <li>学生最容易卡在哪个 AI 回合？</li>
                   <li>哪一段最拖时间？</li>
                   <li>哪类学生最需要更多引导？</li>
-                  <li>学生是否真的感受到了“这是我的搭档”？</li>
+                  <li>学生是否真的感受到了"这是我的搭档"？</li>
                 </ol>
               </div>
               <div class="box note">
@@ -538,7 +690,8 @@ ________________</div>
             </div>
           </div>
         </section>
-              <section class="panel" id="attachments">
+
+        <section class="panel" id="attachments">
           <div class="panel-head"><h2>8. 第一节课整包附件中心</h2></div>
           <div class="panel-body">
             <div class="single-quote">从同一路径进入：老师打开这一份教师包后，可以直接在本页继续查看并使用全部附件，不需要跳到其他文件。</div>
@@ -563,7 +716,7 @@ ________________</div>
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="proj-1">
           <div class="panel-head"><h2>附件 A · 教师投屏页（第 1 页：开场引导页）</h2></div>
           <div class="panel-body">
@@ -584,7 +737,7 @@ ________________</div>
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="proj-2">
           <div class="panel-head"><h2>附件 A · 教师投屏页（第 2 页：今日任务页）</h2></div>
           <div class="panel-body">
@@ -609,7 +762,7 @@ ________________</div>
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="proj-3">
           <div class="panel-head"><h2>附件 A · 教师投屏页（第 3 页：AI 输入模板页）</h2></div>
           <div class="panel-body">
@@ -641,7 +794,7 @@ ________________</div>
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="proj-4">
           <div class="panel-head"><h2>附件 A · 教师投屏页（第 4 页：收束与展示页）</h2></div>
           <div class="panel-body">
@@ -669,7 +822,7 @@ ________________</div>
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="student-ai-sheet">
           <div class="panel-head"><h2>附件 B · 学生 AI 输入模板单</h2></div>
           <div class="panel-body">
@@ -708,7 +861,7 @@ ________________</div>
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="student-output-sheet">
           <div class="panel-head"><h2>附件 C · 学生成果模板</h2></div>
           <div class="panel-body">
@@ -751,7 +904,7 @@ ________________</div>
             </div>
           </div>
         </section>
-<br>
+
         <section class="panel" id="demo-case">
           <div class="panel-head"><h2>附件 D · 教师示范案例页</h2></div>
           <div class="panel-body">
@@ -783,8 +936,123 @@ ________________</div>
         </section>
       </main>
     </div>
-<br>
+
     <div class="footer-note">教师主文件建议形态：HTML 为主，PDF 为同步导出版本。</div>
   </div>
+
+  <script>
+    // ── 顶部进度条 ──
+    const progressFill = document.getElementById('progressFill');
+    let rafPending = false;
+    function updateProgress() {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const pct = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+      progressFill.style.width = pct + '%';
+      rafPending = false;
+    }
+    window.addEventListener('scroll', function() {
+      if (!rafPending) {
+        rafPending = true;
+        requestAnimationFrame(updateProgress);
+      }
+    }, { passive: true });
+
+    // ── 目录导航：平滑滚动 + 点击闪烁 ──
+    document.querySelectorAll('.toc a, .toc-sub-links a').forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (!href || !href.startsWith('#')) return;
+        e.preventDefault();
+        const target = document.querySelector(href);
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // 闪烁动画
+        target.classList.remove('flash');
+        void target.offsetWidth; // reflow
+        target.classList.add('flash');
+        target.addEventListener('animationend', function() {
+          target.classList.remove('flash');
+        }, { once: true });
+      });
+    });
+
+    // ── 目录导航：IntersectionObserver 自动高亮 ──
+    const tocLinks = {};
+    document.querySelectorAll('.toc a[href^="#"], .toc-sub-links a[href^="#"]').forEach(function(a) {
+      tocLinks[a.getAttribute('href').slice(1)] = a;
+    });
+    const attachmentIds = new Set(['proj-1','proj-2','proj-3','proj-4','student-ai-sheet','student-output-sheet','demo-case','attachments']);
+    const tocSubmenuEl = document.getElementById('toc-attachments-menu');
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          // 清除所有高亮
+          Object.values(tocLinks).forEach(function(a) { a.classList.remove('toc-active'); });
+          // 高亮当前
+          if (tocLinks[id]) {
+            tocLinks[id].classList.add('toc-active');
+            // 附件子菜单自动展开
+            if (attachmentIds.has(id) && tocSubmenuEl) {
+              tocSubmenuEl.open = true;
+            }
+          }
+        }
+      });
+    }, { rootMargin: '-10% 0px -75% 0px', threshold: 0 });
+
+    document.querySelectorAll('section[id]').forEach(function(section) {
+      observer.observe(section);
+    });
+
+    // ── AI 模板一键复制 ──
+    document.querySelectorAll('.copy-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const tplEl = document.getElementById(targetId);
+        if (!tplEl) return;
+        const text = tplEl.textContent.trim();
+        const self = this;
+
+        function showCopied() {
+          self.textContent = '已复制 ✓';
+          self.classList.add('copied');
+          setTimeout(function() {
+            self.textContent = '复制';
+            self.classList.remove('copied');
+          }, 1500);
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(showCopied).catch(function() {
+            fallbackCopy(text, showCopied);
+          });
+        } else {
+          fallbackCopy(text, showCopied);
+        }
+      });
+    });
+
+    function fallbackCopy(text, callback) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy');
+        callback();
+      } catch(e) {}
+      document.body.removeChild(ta);
+    }
+
+    // ── 打印：展开所有 details ──
+    window.addEventListener('beforeprint', function() {
+      document.querySelectorAll('details').forEach(function(d) { d.open = true; });
+    });
+  </script>
 </body>
 </html>
