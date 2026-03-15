@@ -16,10 +16,11 @@ import { auth } from "@/auth";
 const mockAuth = auth as jest.Mock;
 const adminSession = { user: { role: "admin" }, expires: "" };
 
-function makeUploadReq(file?: { name: string; content: Buffer; type?: string }) {
+function makeUploadReq(file?: { name: string; size?: number; type?: string }) {
   const formData = new FormData();
   if (file) {
-    const blob = new Blob([file.content], { type: file.type ?? "application/zip" });
+    const content = file.size ? "x".repeat(file.size) : "";
+    const blob = new Blob([content], { type: file.type ?? "application/zip" });
     formData.append("file", blob, file.name);
   }
   return new Request("http://localhost/api/admin/upload", {
@@ -33,13 +34,13 @@ beforeEach(() => jest.clearAllMocks());
 describe("POST /api/admin/upload", () => {
   it("returns 403 when unauthenticated", async () => {
     mockAuth.mockResolvedValue(null);
-    const res = await POST(makeUploadReq({ name: "test.zip", content: Buffer.from("") }));
+    const res = await POST(makeUploadReq({ name: "test.zip",  }));
     expect(res.status).toBe(403);
   });
 
   it("returns 403 for non-admin", async () => {
     mockAuth.mockResolvedValue({ user: { role: "teacher" }, expires: "" });
-    const res = await POST(makeUploadReq({ name: "test.zip", content: Buffer.from("") }));
+    const res = await POST(makeUploadReq({ name: "test.zip",  }));
     expect(res.status).toBe(403);
   });
 
@@ -56,15 +57,14 @@ describe("POST /api/admin/upload", () => {
 
   it("returns 400 for non-zip file", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    const res = await POST(makeUploadReq({ name: "test.txt", content: Buffer.from("hello") }));
+    const res = await POST(makeUploadReq({ name: "test.txt" }));
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain("zip");
   });
 
   it("returns 400 for oversized file", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    const bigBuffer = Buffer.alloc(51 * 1024 * 1024);
-    const res = await POST(makeUploadReq({ name: "big.zip", content: bigBuffer }));
+    const res = await POST(makeUploadReq({ name: "big.zip", size: 51 * 1024 * 1024 }));
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain("50MB");
   });
