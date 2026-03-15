@@ -11,6 +11,7 @@ module.exports = createJestConfig({
   collectCoverageFrom: [
     "app/api/**/*.ts",
     "auth.config.ts",
+    "!app/api/auth/**",
     "!**/*.d.ts",
     "!**/node_modules/**",
   ],

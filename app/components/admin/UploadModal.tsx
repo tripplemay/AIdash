@@ -51,23 +51,18 @@ export default function UploadModal({ onClose, onSuccess }: Props) {
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: "#fff", borderRadius: 24, padding: "32px 36px", width: 480, boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
-        <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>上传课程包 zip</div>
-        <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 24, lineHeight: 1.7 }}>
-          选择由 ChatGPT 按接入规范 v1 生成的压缩包。上传后系统自动解压并导入数据库，课程包将立即发布。
-        </div>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h3 className="modal__title">上传课程包 zip</h3>
+        <p className="muted small" style={{ marginBottom: "var(--sp-6)", lineHeight: 1.7 }}>
+          选择由 ChatGPT 按接入规范 v2 生成的压缩包。上传后系统自动解压并导入数据库，课程包将立即发布。
+        </p>
 
-        {/* 文件选择区 */}
         {status !== "success" && (
           <div
+            className={`upload-zone${fileName ? " upload-zone--has-file" : ""}`}
             onClick={() => fileRef.current?.click()}
-            style={{
-              border: "2px dashed #c5d3ff", borderRadius: 16, padding: "28px 24px",
-              textAlign: "center", cursor: "pointer", marginBottom: 20,
-              background: fileName ? "#f5f8ff" : "rgba(238,243,255,0.4)",
-              transition: "background 0.2s",
-            }}
+            style={{ marginBottom: "var(--sp-5)" }}
           >
             <input
               ref={fileRef}
@@ -78,32 +73,28 @@ export default function UploadModal({ onClose, onSuccess }: Props) {
             />
             {fileName ? (
               <>
-                <div style={{ fontSize: 24, marginBottom: 6 }}>📦</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{fileName}</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>点击重新选择</div>
+                <div style={{ fontSize: 24, marginBottom: "var(--sp-1)" }}>📦</div>
+                <div className="bold" style={{ fontSize: 14 }}>{fileName}</div>
+                <div className="muted small" style={{ marginTop: "var(--sp-1)" }}>点击重新选择</div>
               </>
             ) : (
               <>
-                <div style={{ fontSize: 24, marginBottom: 6 }}>☁️</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#6278b2" }}>点击选择 .zip 文件</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>最大 50MB</div>
+                <div style={{ fontSize: 24, marginBottom: "var(--sp-1)" }}>☁️</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>点击选择 .zip 文件</div>
+                <div className="muted small" style={{ marginTop: "var(--sp-1)" }}>最大 50MB</div>
               </>
             )}
           </div>
         )}
 
-        {/* 上传中 */}
         {status === "uploading" && (
-          <div style={{ textAlign: "center", padding: "16px 0", color: "var(--muted)", fontSize: 14 }}>
-            正在上传并处理，请稍候…
-          </div>
+          <div className="text-center muted" style={{ padding: "var(--sp-4) 0" }}>正在上传并处理，请稍候…</div>
         )}
 
-        {/* 成功 */}
         {status === "success" && result && (
-          <div style={{ background: "#eefaf2", border: "1px solid #d7f0e0", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#228654", marginBottom: 12 }}>✓ 导入成功</div>
-            <div style={{ display: "grid", gap: 6 }}>
+          <div className="upload-result upload-result--success" style={{ marginBottom: "var(--sp-5)" }}>
+            <div className="bold text-success" style={{ fontSize: 16, marginBottom: "var(--sp-3)" }}>✓ 导入成功</div>
+            <div style={{ display: "grid", gap: "var(--sp-1)" }}>
               {[
                 ["课程包", result.title],
                 ["Slug", result.slug],
@@ -111,38 +102,29 @@ export default function UploadModal({ onClose, onSuccess }: Props) {
                 ["导入附件", `${result.attachmentsImported} 个`],
               ].map(([label, value]) => (
                 <div key={label} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                  <span style={{ color: "var(--muted)" }}>{label}</span>
-                  <span style={{ fontWeight: 700 }}>{value}</span>
+                  <span className="muted">{label}</span>
+                  <span className="bold">{value}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* 错误 */}
         {status === "error" && (
-          <div style={{ background: "#fff5f5", border: "1px solid #fdd", borderRadius: 14, padding: "14px 18px", marginBottom: 20, fontSize: 13, color: "#c44" }}>
+          <div className="upload-result upload-result--error" style={{ marginBottom: "var(--sp-5)" }}>
             {errorMsg}
           </div>
         )}
 
-        {/* 操作按钮 */}
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <button
-            onClick={status === "success" ? onSuccess : onClose}
-            style={{ height: 40, padding: "0 18px", borderRadius: 999, border: "1px solid var(--line)", background: "rgba(255,255,255,0.78)", fontWeight: 600, cursor: "pointer" }}
-          >
+        <div className="modal__actions">
+          <button className="btn btn--soft" onClick={status === "success" ? onSuccess : onClose}>
             {status === "success" ? "关闭" : "取消"}
           </button>
           {status !== "success" && (
             <button
+              className="btn"
               onClick={handleUpload}
               disabled={!fileName || status === "uploading"}
-              style={{
-                height: 40, padding: "0 22px", borderRadius: 999, border: "none",
-                background: !fileName || status === "uploading" ? "#ccc" : "linear-gradient(90deg,#6f86ff,#61d1ff)",
-                color: "#fff", fontWeight: 700, cursor: !fileName || status === "uploading" ? "not-allowed" : "pointer",
-              }}
             >
               {status === "uploading" ? "上传中…" : "开始上传"}
             </button>

@@ -28,7 +28,6 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/adm-zip": "^0.5.7",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
@@ -36,7 +35,6 @@
     "@types/react-dom": "^19",
     "jest": "^30.3.0",
     "jest-environment-node": "^30.3.0",
-    "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
   }

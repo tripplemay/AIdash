@@ -75,101 +75,58 @@ export default function UserFormModal({ mode, onClose, onSuccess }: Props) {
   const title = isCreate ? "新建用户" : isReset ? "重置密码" : "编辑用户";
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: "#fff", borderRadius: 24, padding: "32px 36px", width: 440, boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
-        <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 24 }}>{title}</div>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h3 className="modal__title">{title}</h3>
 
-        {error && (
-          <div style={{ background: "#fff5f5", border: "1px solid #fdd", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "#c44", marginBottom: 16 }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="field-error" style={{ marginBottom: "var(--sp-4)" }}>{error}</div>}
 
-        <div style={{ display: "grid", gap: 16 }}>
-          {/* 姓名 */}
+        <div className="modal__body" style={{ display: "grid", gap: "var(--sp-4)" }}>
           {!isReset && (
-            <Field label="姓名" required>
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="例：张老师"
-                style={inputStyle}
-              />
-            </Field>
+            <div>
+              <label className="field-label">姓名 <span className="field-required">*</span></label>
+              <input className="input input--sm" value={name} onChange={e => setName(e.target.value)} placeholder="例：张老师" />
+            </div>
           )}
 
-          {/* 用户名 */}
           {isCreate && (
-            <Field label="用户名" required>
-              <input
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                placeholder="登录用，创建后不可修改"
-                style={inputStyle}
-              />
-            </Field>
+            <div>
+              <label className="field-label">用户名 <span className="field-required">*</span></label>
+              <input className="input input--sm" value={username} onChange={e => setUsername(e.target.value)} placeholder="登录用，创建后不可修改" />
+            </div>
           )}
           {!isCreate && !isReset && (
-            <Field label="用户名">
-              <input value={editUser!.username} disabled style={{ ...inputStyle, background: "#f5f5f5", color: "#999" }} />
-            </Field>
+            <div>
+              <label className="field-label">用户名</label>
+              <input className="input input--sm" value={editUser!.username} disabled />
+            </div>
           )}
 
-          {/* 角色 */}
           {!isReset && (
-            <Field label="角色" required>
-              <select value={role} onChange={e => setRole(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+            <div>
+              <label className="field-label">角色 <span className="field-required">*</span></label>
+              <select className="select" value={role} onChange={e => setRole(e.target.value)}>
                 <option value="teacher">老师</option>
                 <option value="admin">管理员</option>
               </select>
-            </Field>
+            </div>
           )}
 
-          {/* 密码 */}
           {(isCreate || isReset) && (
-            <Field label={isReset ? "新密码" : "初始密码"} required>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="最少 6 位"
-                style={inputStyle}
-              />
-            </Field>
+            <div>
+              <label className="field-label">{isReset ? "新密码" : "初始密码"} <span className="field-required">*</span></label>
+              <input className="input input--sm" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="最少 6 位" />
+            </div>
           )}
         </div>
 
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 28 }}>
-          <button onClick={onClose} style={{ height: 40, padding: "0 18px", borderRadius: 999, border: "1px solid var(--line)", background: "rgba(255,255,255,0.78)", fontWeight: 600, cursor: "pointer" }}>
-            取消
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            style={{ height: 40, padding: "0 22px", borderRadius: 999, border: "none", background: submitting ? "#ccc" : "linear-gradient(90deg,#6f86ff,#61d1ff)", color: "#fff", fontWeight: 700, cursor: submitting ? "not-allowed" : "pointer" }}
-          >
+        <div className="modal__actions" style={{ marginTop: "var(--sp-6)" }}>
+          <button className="btn btn--soft" onClick={onClose}>取消</button>
+          <button className="btn" onClick={handleSubmit} disabled={submitting}>
             {submitting ? "提交中…" : "确认"}
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-const inputStyle: React.CSSProperties = {
-  width: "100%", height: 44, borderRadius: 12,
-  border: "1px solid #dde5fb", background: "rgba(255,255,255,0.72)",
-  padding: "0 14px", fontSize: 14, color: "var(--text)", outline: "none",
-  boxSizing: "border-box",
-};
-
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--text)" }}>
-        {label}{required && <span style={{ color: "#e55", marginLeft: 4 }}>*</span>}
-      </div>
-      {children}
     </div>
   );
 }

@@ -36,85 +36,55 @@ const PLACEHOLDER_COLORS: Record<number, string> = {
 export default function PackageGrid({ packages }: Props) {
   if (packages.length === 0) {
     return (
-      <div style={{ textAlign: "center", padding: "60px 0", color: "var(--muted)", fontSize: 15 }}>
+      <div className="text-center muted" style={{ padding: "var(--sp-12) 0", fontSize: 15 }}>
         暂无已发布的课程包
       </div>
     );
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18 }}>
+    <div className="pkg-grid">
       {packages.map((pkg, i) => {
         const firstLesson = pkg.lessons[0];
         return (
           <div
             key={pkg.id}
-            style={{
-              borderRadius: 22, overflow: "hidden",
-              background: "rgba(255,255,255,0.82)",
-              border: "1px solid var(--line)",
-              transition: "box-shadow 0.2s, transform 0.2s",
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 12px 32px rgba(112,134,210,0.14)";
-              (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = "none";
-              (e.currentTarget as HTMLElement).style.transform = "none";
-            }}
+            className="pkg-card"
+            style={{ animationDelay: `${i * 60}ms` }}
           >
             {/* 封面 */}
-            <div style={{ height: 200, position: "relative", overflow: "hidden", background: PLACEHOLDER_COLORS[i % 3] ?? "#edf5ff" }}>
+            <div className="pkg-card__cover" style={{ background: PLACEHOLDER_COLORS[i % 3] ?? "#edf5ff" }}>
               {pkg.coverImage && (
                 <Image src={pkg.coverImage} alt={pkg.title} fill style={{ objectFit: "cover" }} />
               )}
+              <span className="pkg-card__badge">{pkg.ageRange}岁 · {pkg.level}</span>
             </div>
 
             {/* 内容 */}
-            <div style={{ padding: "16px 18px" }}>
-              <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 10 }}>{pkg.title}</div>
+            <div className="pkg-card__body">
+              <div className="pkg-card__title">{pkg.title}</div>
               {firstLesson ? (
                 <>
-                  <div style={{ display: "grid", gap: 6, color: "#6b7daf", fontSize: 14, marginBottom: 16 }}>
+                  <div className="pkg-card__meta">
                     <div>● 适用年龄：{pkg.ageRange} 岁</div>
                     <div>● 第 {firstLesson.lessonNo} 课《{firstLesson.title}》</div>
                     {firstLesson.outputSummary && (
                       <div>● 本课成果：{firstLesson.outputSummary}</div>
                     )}
                   </div>
-                  <Link
-                    href={`/detail/${pkg.slug}`}
-                    style={{
-                      display: "block", width: "100%", height: 44,
-                      borderRadius: 999, textAlign: "center", lineHeight: "44px",
-                      fontSize: 14, fontWeight: 700,
-                      color: "#fff",
-                      background: "linear-gradient(90deg, #6f86ff, #61d1ff)",
-                      boxShadow: "0 10px 22px rgba(111,134,255,.18)",
-                      textDecoration: "none",
-                      marginBottom: 10,
-                    }}
-                  >
+                  <Link href={`/detail/${pkg.slug}`} className="btn btn--block" style={{ marginBottom: "var(--sp-2)" }}>
                     进入详情
                   </Link>
-                  <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                  <div className="pkg-card__footer">
                     {pkg.level} ｜ {firstLesson.durationMinutes} 分钟
                     {firstLesson.groupSize && ` ｜ ${firstLesson.groupSize} 人${firstLesson.deliveryMode === "offline_small_group" ? "线下小班" : firstLesson.deliveryMode}`}
                     {firstLesson.aiRoundsCount && ` ｜ ${firstLesson.aiRoundsCount} 个 AI 回合`}
                     {" ｜ "}
-                    <span style={{
-                      display: "inline-flex", alignItems: "center",
-                      padding: "3px 7px", borderRadius: 999,
-                      background: "#eefaf2", color: "#228654",
-                      border: "1px solid #d7f0e0", fontSize: 11, fontWeight: 600,
-                    }}>
-                      已按规范接入
-                    </span>
+                    <span className="pill pill--ok" style={{ fontSize: 11, padding: "3px 7px" }}>已按规范接入</span>
                   </div>
                 </>
               ) : (
-                <div style={{ fontSize: 13, color: "var(--muted)" }}>暂无课次</div>
+                <div className="muted small">暂无课次</div>
               )}
             </div>
           </div>

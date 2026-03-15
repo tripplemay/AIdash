@@ -1,175 +1,225 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BookOpen, Package, Users, Settings, ChevronLeft } from "lucide-react";
-import { Suspense } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { BookOpen, Settings, Package, Users } from "lucide-react";
 import SidebarNavItem from "./SidebarNavItem";
-import DetailSidebarNav from "./DetailSidebarNav";
-import SidebarFilterTree, { type FilterGroup } from "./SidebarFilterTree";
+import type { FilterGroup } from "./SidebarFilterTree";
+import SidebarFilterTree from "./SidebarFilterTree";
 
 interface SidebarProps {
-  variant?: "list" | "detail" | "admin" | "lesson";
-  userName?: string;
-  backHref?: string;
-  adminSection?: "packages" | "users";
-  userRole?: string;
-  filterTree?: FilterGroup[];
-  activeAgeRange?: string;
-  activeLevel?: string;
+  userName: string;
+  userRole: string;
 }
 
-export default function Sidebar({
-  variant = "list",
-  userName = "张老师",
-  backHref,
-  adminSection,
-  userRole,
-  filterTree,
-  activeAgeRange = "",
-  activeLevel = "",
-}: SidebarProps) {
+interface LessonNavData {
+  title: string;
+  slug: string;
+  lessons: { id: string; lessonNo: number; title: string }[];
+}
+
+export default function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isAdmin = userRole === "admin";
+  const initial = userName.charAt(0).toUpperCase();
+
+  // 路由检测
+  const isListPage = pathname === "/list";
+  const isListActive = isListPage || pathname.startsWith("/detail") || pathname.startsWith("/lesson");
+  const isAdminActive = pathname.startsWith("/admin");
+  const isDetailPage = pathname.startsWith("/detail/");
+  const isLessonPage = pathname.startsWith("/lesson/");
+
+  // admin 子页面自动检测
+  const adminSection = pathname.includes("/admin/packages") ? "packages"
+    : pathname.includes("/admin/users") ? "users"
+    : undefined;
+
+  // 筛选状态
+  const urlAgeRange = searchParams.get("ageRange") ?? "";
+  const urlLevel = searchParams.get("level") ?? "";
+  const [activeAgeRange, setActiveAgeRange] = useState(urlAgeRange);
+  const [activeLevel, setActiveLevel] = useState(urlLevel);
+
+  const hasActiveFilter = !!(activeAgeRange || activeLevel);
+  const listParentActive = isListActive && !hasActiveFilter;
+  const adminParentActive = isAdminActive && !adminSection;
+
+  // 筛选树数据
+  const [filterTree, setFilterTree] = useState<FilterGroup[]>([]);
+  const [listExpanded, setListExpanded] = useState(false);
+  const [adminExpanded, setAdminExpanded] = useState(false);
+
+  // 课次导航数据
+  const [lessonNav, setLessonNav] = useState<LessonNavData | null>(null);
+
+  // 初始化：从缓存恢复 + 后台刷新
+  useEffect(() => {
+    // 恢复筛选状态
+    if (!isListPage) {
+      setActiveAgeRange(localStorage.getItem("sidebar_ageRange") ?? "");
+      setActiveLevel(localStorage.getItem("sidebar_level") ?? "");
+    }
+
+    // 恢复筛选树
+    try {
+      const cached = localStorage.getItem("sidebar_filterTree");
+      if (cached) {
+        const data = JSON.parse(cached) as FilterGroup[];
+        setFilterTree(data);
+        if (data.length > 0 && isListActive) setListExpanded(true);
+      }
+    } catch {}
+
+    if (isAdminActive) setAdminExpanded(true);
+
+    // 后台刷新筛选树
+    fetch("/api/filter-tree")
+      .then(r => r.json())
+      .then((data: FilterGroup[]) => {
+        setFilterTree(data);
+        localStorage.setItem("sidebar_filterTree", JSON.stringify(data));
+        if (data.length > 0 && isListActive) setListExpanded(true);
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 课次页：获取课次导航数据
+  useEffect(() => {
+    if (isLessonPage) {
+      const parts = pathname.split("/");
+      const lessonId = parts[parts.length - 1];
+      if (lessonId) {
+        fetch(`/api/lesson-nav?lessonId=${lessonId}`)
+          .then(r => r.json())
+          .then((data: LessonNavData | null) => setLessonNav(data))
+          .catch(() => {});
+      }
+    } else {
+      setLessonNav(null);
+    }
+  }, [pathname, isLessonPage]);
+
+  // URL 变化时同步筛选状态
+  useEffect(() => {
+    if (isListPage) {
+      setActiveAgeRange(urlAgeRange);
+      setActiveLevel(urlLevel);
+      localStorage.setItem("sidebar_ageRange", urlAgeRange);
+      localStorage.setItem("sidebar_level", urlLevel);
+    }
+  }, [isListPage, urlAgeRange, urlLevel]);
+
+  function handleListClick() {
+    setListExpanded(v => !v);
+  }
+
+  function handleAdminClick() {
+    setAdminExpanded(v => !v);
+  }
+
+
+  // 课次页：当前 lessonId
+  const currentLessonId = isLessonPage ? pathname.split("/").pop() ?? "" : "";
+  const currentSlug = isLessonPage ? pathname.split("/")[2] ?? "" : "";
 
   return (
-    <aside style={{
-      width: "var(--sidebar-w)",
-      borderRight: "1px solid var(--line)",
-      background: "linear-gradient(180deg, rgba(240,244,255,0.78), rgba(234,239,255,0.78))",
-      display: "grid",
-      gridTemplateRows: "auto auto auto 1fr auto auto",
-      minHeight: "100%",
-    }}>
-      {/* Logo */}
-      <div style={{
-        padding: "18px 14px 14px",
-        borderBottom: "1px solid var(--line)",
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-      }}>
-        <div style={{
-          width: 36, height: 36,
-          borderRadius: 12,
-          background: "linear-gradient(135deg, #7e95ff, #9ad8ff)",
-          boxShadow: "0 8px 18px rgba(126,149,255,0.22)",
-          flexShrink: 0,
-        }} />
-        <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text)" }}>AI Dash</div>
-      </div>
+    <aside className="sidebar">
+      <Link href="/list" className="sidebar__logo">
+        <div className="sidebar__logo-mark" />
+        <span className="sidebar__logo-text">AI Dash</span>
+      </Link>
 
-      {/* 用户卡（仅列表页显示） */}
-      {variant === "list" ? (
-        <div style={{ padding: "12px 10px 0" }}>
-          <div style={{
-            padding: "10px 12px",
-            borderRadius: 14,
-            background: "rgba(255,255,255,0.52)",
-            border: "1px solid #e6ecff",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}>
-            <div style={{
-              width: 36, height: 36,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #f5d0c2, #fff4ef)",
-              border: "2px solid rgba(255,255,255,0.7)",
-              flexShrink: 0,
-            }} />
-            <div>
-              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 2 }}>欢迎回来</div>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>{userName}</div>
-            </div>
+      <div className="sidebar__user-wrap">
+        <div className="sidebar__user-card">
+          <div className="sidebar__avatar">{initial}</div>
+          <div>
+            <div className="sidebar__user-name">{userName}</div>
+            <div className="sidebar__user-role">{isAdmin ? "管理员" : "教师"}</div>
           </div>
         </div>
-      ) : (
-        <div />
-      )}
-
-      {/* 导航菜单 */}
-      {variant === "list" && (
-        <nav style={{ padding: "10px 8px 8px", display: "grid", gap: 4 }}>
-          <SidebarNavItem
-            icon={BookOpen}
-            label="课程包列表"
-            href="/list"
-            active={pathname === "/list"}
-          />
-        </nav>
-      )}
-
-      {variant === "admin" && (
-        <nav style={{ padding: "18px 8px 8px", display: "grid", gap: 4 }}>
-          <SidebarNavItem
-            icon={Package}
-            label="课程包管理"
-            href="/admin/packages"
-            active={adminSection === "packages"}
-          />
-          <SidebarNavItem
-            icon={Users}
-            label="用户管理"
-            href="/admin/users"
-            active={adminSection === "users"}
-          />
-        </nav>
-      )}
-
-      {variant === "detail" && <DetailSidebarNav />}
-
-      {variant === "lesson" && (
-        <nav style={{ padding: "18px 8px 8px", display: "grid", gap: 4 }}>
-          {backHref && (
-            <SidebarNavItem
-              icon={ChevronLeft}
-              label="返回课程包"
-              href={backHref}
-              active
-            />
-          )}
-          <SidebarNavItem
-            icon={BookOpen}
-            label="课程包列表"
-            href="/list"
-            active={pathname === "/list"}
-          />
-        </nav>
-      )}
-
-      {/* 课程包树（仅列表页，有数据时显示） */}
-      {variant === "list" && filterTree && filterTree.length > 0 ? (
-        <Suspense fallback={null}>
-          <SidebarFilterTree
-            filterTree={filterTree}
-            activeAgeRange={activeAgeRange}
-            activeLevel={activeLevel}
-          />
-        </Suspense>
-      ) : (
-        <div />
-      )}
-
-      {/* 管理后台入口（管理员在非 admin 页面显示） */}
-      {isAdmin && variant !== "admin" && (
-        <div style={{ padding: "0 8px 8px" }}>
-          <SidebarNavItem
-            icon={Settings}
-            label="管理后台"
-            href="/admin/packages"
-          />
-        </div>
-      )}
-
-      {/* 版权 */}
-      <div style={{ padding: "8px 14px 14px", color: "#97a5ca", fontSize: 11 }}>
-        {variant === "admin"
-          ? "管理员后台"
-          : variant === "detail" || variant === "lesson"
-          ? "教师授课系统"
-          : "© 2024 AI Dash"}
       </div>
+
+      <nav className="sidebar__nav">
+        {/* 课程包列表 */}
+        <div>
+          <SidebarNavItem
+            icon={BookOpen}
+            label="课程包列表"
+            active={listParentActive}
+            onClick={handleListClick}
+          />
+          {listExpanded && filterTree.length > 0 && (
+            <div className="sidebar__sub-content">
+              <SidebarFilterTree
+                filterTree={filterTree}
+                activeAgeRange={activeAgeRange}
+                activeLevel={activeLevel}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 管理后台 */}
+        {isAdmin && (
+          <div>
+            <SidebarNavItem
+              icon={Settings}
+              label="管理后台"
+              active={adminParentActive}
+              onClick={handleAdminClick}
+            />
+            {adminExpanded && (
+              <div className="sidebar__sub-content">
+                <Link
+                  href="/admin/packages"
+                  className={`sidebar__sub-item${adminSection === "packages" ? " sidebar__sub-item--active" : ""}`}
+                >
+                  <Package size={14} />
+                  课程包管理
+                </Link>
+                <Link
+                  href="/admin/users"
+                  className={`sidebar__sub-item${adminSection === "users" ? " sidebar__sub-item--active" : ""}`}
+                >
+                  <Users size={14} />
+                  用户管理
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+      </nav>
+
+      {/* 上下文区域 — 根据路由自动渲染 */}
+      {isLessonPage && lessonNav && (
+        <>
+          <hr className="sidebar__divider" />
+          <div className="sidebar__context">
+            {/* 课次页：课次导航 */}
+            {isLessonPage && lessonNav && (
+              <div className="sidebar__context-card">
+                {lessonNav.lessons.map((lesson) => (
+                  <Link
+                    key={lesson.id}
+                    href={`/lesson/${lessonNav.slug}/${lesson.id}`}
+                    className={`sidebar__sub-item${lesson.id === currentLessonId ? " sidebar__sub-item--active" : ""}`}
+                  >
+                    <span style={{ opacity: 0.6, minWidth: 36, fontSize: 12 }}>第 {lesson.lessonNo} 课</span>
+                    <span style={{ flex: 1 }}>{lesson.title}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {!isLessonPage && <div style={{ flex: 1 }} />}
+
+      <div className="sidebar__footer">&copy; 2025 AI Dash</div>
     </aside>
   );
 }

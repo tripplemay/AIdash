@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
 export type FilterGroup = { ageRange: string; levels: string[] };
@@ -15,88 +15,66 @@ export default function SidebarFilterTree({
   activeLevel: string;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const navigate = useCallback(
     (ageRange: string, level: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (ageRange) {
-        params.set("ageRange", ageRange);
-      } else {
-        params.delete("ageRange");
-      }
-      if (level) {
-        params.set("level", level);
-      } else {
-        params.delete("level");
-      }
-      router.replace(`${pathname}?${params.toString()}`);
+      const params = new URLSearchParams();
+      if (ageRange) params.set("ageRange", ageRange);
+      if (level) params.set("level", level);
+      const qs = params.toString();
+      router.push(`/list${qs ? `?${qs}` : ""}`);
     },
-    [pathname, router, searchParams]
+    [router]
   );
 
+  const noFilter = !activeAgeRange && !activeLevel;
+
   return (
-    <div style={{ padding: "0 8px 8px" }}>
-      <div style={{
-        background: "rgba(255,255,255,0.42)",
-        border: "1px solid #e6ecff",
-        borderRadius: 14,
-        padding: 12,
-      }}>
-        <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 6 }}>课程包</div>
-        <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>按年龄段与级别浏览</div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* 全部课程 */}
+      <button
+        className={`sidebar__sub-item${noFilter ? " sidebar__sub-item--active" : ""}`}
+        onClick={() => { if (!noFilter) navigate("", ""); }}
+      >
+        全部课程
+      </button>
 
-        {filterTree.map(({ ageRange, levels }) => {
-          const ageActive = activeAgeRange === ageRange;
-          return (
-            <div key={ageRange}>
-              <button
-                onClick={() => navigate(ageActive ? "" : ageRange, "")}
-                style={{
-                  width: "100%", textAlign: "left",
-                  padding: "7px 10px", borderRadius: 10,
-                  fontSize: 13, fontWeight: 700,
-                  color: ageActive ? "#5f79ef" : "var(--muted)",
-                  background: ageActive ? "#eef3ff" : "rgba(255,255,255,0.6)",
-                  border: "none", cursor: "pointer",
-                  marginBottom: 4, transition: "all 0.15s ease",
-                }}
-              >
-                {ageRange} 岁
-              </button>
+      {filterTree.map(({ ageRange, levels }) => {
+        const ageActive = activeAgeRange === ageRange;
+        const ageHighlight = ageActive && !activeLevel;
 
-              {ageActive && levels.length > 0 && (
-                <div style={{
-                  paddingLeft: 10, borderLeft: "1px solid #dfe7ff",
-                  marginLeft: 8, marginBottom: 4, display: "grid", gap: 3,
-                }}>
-                  {levels.map(level => {
-                    const levelActive = activeLevel === level;
-                    return (
-                      <button
-                        key={level}
-                        onClick={() => navigate(ageRange, levelActive ? "" : level)}
-                        style={{
-                          width: "100%", textAlign: "left",
-                          padding: "6px 10px", borderRadius: 9,
-                          fontSize: 12, fontWeight: levelActive ? 700 : 400,
-                          color: levelActive ? "#5f79ef" : "var(--muted)",
-                          background: levelActive ? "#eef3ff" : "transparent",
-                          border: "none", cursor: "pointer",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        {level}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+        return (
+          <div key={ageRange}>
+            <button
+              className={`sidebar__sub-item${ageHighlight ? " sidebar__sub-item--active" : ""}`}
+              onClick={() => {
+                if (ageActive && !activeLevel) return;
+                navigate(ageRange, "");
+              }}
+            >
+              {ageRange} 岁
+            </button>
+
+            {ageActive && levels.length > 0 && (
+              <div style={{ paddingLeft: "var(--sp-3)", display: "flex", flexDirection: "column", gap: 2 }}>
+                {levels.map(level => {
+                  const levelActive = activeLevel === level;
+                  return (
+                    <button
+                      key={level}
+                      className={`sidebar__sub-item${levelActive ? " sidebar__sub-item--active" : ""}`}
+                      onClick={() => { if (!levelActive) navigate(ageRange, level); }}
+                    >
+                      {level}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
