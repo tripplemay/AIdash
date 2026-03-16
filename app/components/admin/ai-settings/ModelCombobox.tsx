@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 interface ModelOption {
   id: string;
   name: string;
+  outputModalities?: string[];
   pricing?: { inputPerM: number; outputPerM: number };
 }
 
@@ -12,11 +13,12 @@ interface Props {
   models: ModelOption[];
   value: string;
   onChange: (value: string) => void;
+  actionType?: "text" | "image";
   placeholder?: string;
   loading?: boolean;
 }
 
-export default function ModelCombobox({ models, value, onChange, placeholder = "搜索或输入模型 ID", loading }: Props) {
+export default function ModelCombobox({ models, value, onChange, actionType, placeholder = "搜索或输入模型 ID", loading }: Props) {
   const [query, setQuery] = useState(value);
   const [open, setOpen] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(-1);
@@ -26,7 +28,17 @@ export default function ModelCombobox({ models, value, onChange, placeholder = "
   // Sync external value
   useEffect(() => { setQuery(value); }, [value]);
 
-  const filtered = models.filter(m =>
+  // Filter by actionType (output modalities) then by search query
+  const availableModels = useMemo(() => {
+    if (!actionType) return models;
+    const requiredModality = actionType === "image" ? "image" : "text";
+    return models.filter(m => {
+      const modalities = m.outputModalities ?? ["text"];
+      return modalities.includes(requiredModality);
+    });
+  }, [models, actionType]);
+
+  const filtered = availableModels.filter(m =>
     m.id.toLowerCase().includes(query.toLowerCase()) ||
     m.name.toLowerCase().includes(query.toLowerCase())
   );
@@ -85,13 +97,17 @@ export default function ModelCombobox({ models, value, onChange, placeholder = "
     return () => document.removeEventListener("mousedown", handle);
   }, []);
 
+  const emptyMessage = actionType === "image"
+    ? "该服务商暂无支持图片生成的模型"
+    : "未匹配到模型，将使用输入的 ID";
+
   return (
     <div ref={wrapperRef} className="combobox">
       <input
         className="combobox__input"
         value={query}
         onChange={e => handleInputChange(e.target.value)}
-        onFocus={() => { if (models.length > 0) setOpen(true); }}
+        onFocus={() => { if (availableModels.length > 0) setOpen(true); }}
         onKeyDown={handleKeyDown}
         placeholder={loading ? "加载模型列表..." : placeholder}
         disabled={loading}
@@ -107,6 +123,7 @@ export default function ModelCombobox({ models, value, onChange, placeholder = "
               className={`combobox__item${i === highlightIdx ? " combobox__item--highlighted" : ""}`}
               role="option"
               aria-selected={i === highlightIdx}
+              title={m.id}
               onMouseDown={() => handleSelect(m.id)}
               onMouseEnter={() => setHighlightIdx(i)}
             >
@@ -123,9 +140,14 @@ export default function ModelCombobox({ models, value, onChange, placeholder = "
           )}
         </div>
       )}
-      {open && query && filtered.length === 0 && models.length > 0 && (
+      {open && availableModels.length > 0 && filtered.length === 0 && query && (
         <div className="combobox__dropdown">
-          <div className="combobox__empty">未匹配到模型，将使用输入的 ID</div>
+          <div className="combobox__empty">{emptyMessage}</div>
+        </div>
+      )}
+      {open && availableModels.length === 0 && models.length > 0 && (
+        <div className="combobox__dropdown">
+          <div className="combobox__empty">{emptyMessage}</div>
         </div>
       )}
     </div>

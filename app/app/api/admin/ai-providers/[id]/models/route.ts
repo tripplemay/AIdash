@@ -38,12 +38,19 @@ export async function GET(
       id: string;
       name?: string;
       pricing?: { prompt?: string; completion?: string };
+      architecture?: { output_modalities?: string[] };
     }
 
     const models = (json.data ?? []).map((m: RawModel) => {
-      const result: { id: string; name: string; pricing?: { inputPerM: number; outputPerM: number } } = {
+      const result: {
+        id: string;
+        name: string;
+        outputModalities: string[];
+        pricing?: { inputPerM: number; outputPerM: number };
+      } = {
         id: m.id,
         name: m.name ?? m.id,
+        outputModalities: m.architecture?.output_modalities ?? ["text"],
       };
 
       // 解析价格（OpenRouter 返回 USD per token）

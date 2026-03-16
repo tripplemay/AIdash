@@ -13,6 +13,7 @@ interface Provider {
 interface ModelOption {
   id: string;
   name: string;
+  outputModalities?: string[];
   pricing?: { inputPerM: number; outputPerM: number };
 }
 
@@ -115,6 +116,7 @@ export default function ActionMappingRow({
           models={models}
           value={modelName}
           onChange={setModelName}
+          actionType={actionType as "text" | "image"}
           loading={loadingModels}
         />
         <button
