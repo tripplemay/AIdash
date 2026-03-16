@@ -72,6 +72,19 @@ server {
 
     client_max_body_size 60m;
 
+    # SSE + 图片生成等长耗时端点：关闭缓冲，延长超时
+    location ~ ^/api/course-rnd/ {
+        proxy_pass http://localhost:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 180s;
+    }
+
     location / {
         proxy_pass http://localhost:3002;
         proxy_http_version 1.1;
@@ -93,6 +106,18 @@ server {
     server_name ${DOMAIN};
 
     client_max_body_size 60m;
+
+    location ~ ^/api/course-rnd/ {
+        proxy_pass http://localhost:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 180s;
+    }
 
     location / {
         proxy_pass http://localhost:3002;
