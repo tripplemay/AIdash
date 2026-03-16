@@ -213,12 +213,23 @@ model AiProvider {
 
 // ─── AI 动作配置（动作→服务商+模型映射） ───
 model AiActionConfig {
-  id          String @id @default(cuid())
-  actionKey   String @unique // "generate_framework", "regenerate_lesson", etc.
-  actionLabel String
-  actionType  String // "text" | "image"
-  providerId  String
-  modelName   String
+  id               String    @id @default(cuid())
+  actionKey        String    @unique // "generate_framework", "regenerate_lesson", etc.
+  actionLabel      String
+  actionType       String    // "text" | "image"
+  providerId       String
+  modelName        String
+  inputPricePerM   Float?    // 输入价格 USD/百万token
+  outputPricePerM  Float?    // 输出价格 USD/百万token
+  pricingSource    String?   // "auto" | "manual"
+  pricingUpdatedAt DateTime?
 
   provider AiProvider @relation(fields: [providerId], references: [id])
+}
+
+// ─── 系统配置（Key-Value） ───
+model SystemConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }

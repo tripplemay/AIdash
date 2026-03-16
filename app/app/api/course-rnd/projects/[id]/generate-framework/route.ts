@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { COURSE_RND_ROLES } from "@/lib/permissions";
-import { getProviderAndModel, calculateCallCost } from "@/lib/ai/provider";
+import { getProviderAndModel } from "@/lib/ai/provider";
+import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { generateFrameworkPrompt, getBaselinePrompt } from "@/lib/ai/prompts";
 
 // POST /api/course-rnd/projects/[id]/generate-framework
@@ -125,7 +126,7 @@ export async function POST(
   });
 
   // 记录 AI 调用日志
-  const cost = calculateCallCost(result.model, result.inputTokens, result.outputTokens);
+  const cost = await calculateCallCostFromDb("generate_framework", result.inputTokens, result.outputTokens);
   await prisma.courseRndAiCallLog.create({
     data: {
       projectId: id,

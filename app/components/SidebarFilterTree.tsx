@@ -35,7 +35,7 @@ export default function SidebarFilterTree({
       {/* 全部课程 */}
       <button
         className={`sidebar__sub-item${noFilter ? " sidebar__sub-item--active" : ""}`}
-        onClick={() => { if (!noFilter) navigate("", ""); }}
+        onClick={() => navigate("", "")}
       >
         全部课程
       </button>
@@ -48,10 +48,7 @@ export default function SidebarFilterTree({
           <div key={ageRange}>
             <button
               className={`sidebar__sub-item${ageHighlight ? " sidebar__sub-item--active" : ""}`}
-              onClick={() => {
-                if (ageActive && !activeLevel) return;
-                navigate(ageRange, "");
-              }}
+              onClick={() => navigate(ageRange, "")}
             >
               {ageRange} 岁
             </button>
@@ -64,7 +61,7 @@ export default function SidebarFilterTree({
                     <button
                       key={level}
                       className={`sidebar__sub-item${levelActive ? " sidebar__sub-item--active" : ""}`}
-                      onClick={() => { if (!levelActive) navigate(ageRange, level); }}
+                      onClick={() => navigate(ageRange, level)}
                     >
                       {level}
                     </button>

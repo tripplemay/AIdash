@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { COURSE_RND_ROLES } from "@/lib/permissions";
-import { getProviderAndModel, calculateCallCost } from "@/lib/ai/provider";
+import { getProviderAndModel } from "@/lib/ai/provider";
+import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-data";
 import { getBaselinePrompt } from "@/lib/ai/prompts";
 
@@ -132,7 +133,7 @@ ${draft.draftJson}
   });
 
   // 记录 AI 调用
-  const cost = calculateCallCost(result.model, result.inputTokens, result.outputTokens);
+  const cost = await calculateCallCostFromDb("revise_lesson", result.inputTokens, result.outputTokens);
   await prisma.courseRndAiCallLog.create({
     data: {
       projectId: id,

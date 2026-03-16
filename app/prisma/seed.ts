@@ -27,6 +27,13 @@ async function main() {
     create: { username: "rd01", password: rdPassword, name: "王主管", role: "rd_manager" },
   });
 
+  // 系统配置：初始汇率
+  await prisma.systemConfig.upsert({
+    where: { key: "usd_to_cny" },
+    update: {},
+    create: { key: "usd_to_cny", value: "7.24" },
+  });
+
   console.log("✅ 种子数据写入完成");
   console.log("   教师账号: teacher01 / teacher123");
   console.log("   管理员账号: admin / admin123");

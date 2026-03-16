@@ -6,7 +6,7 @@ import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { ROLES } from "@/lib/roles";
 import { decryptApiKey } from "@/lib/crypto";
 
-// GET /api/admin/ai-providers/[id]/models — 从服务商 API 拉取可用模型列表
+// GET /api/admin/ai-providers/[id]/models — 从服务商 API 拉取可用模型列表（含价格）
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -32,12 +32,35 @@ export async function GET(
     }
 
     const json = await res.json();
-    const models: Array<{ id: string; name: string }> = (json.data ?? []).map((m: { id: string; name?: string }) => ({
-      id: m.id,
-      name: m.name ?? m.id,
-    }));
 
-    models.sort((a, b) => a.id.localeCompare(b.id));
+    interface RawModel {
+      id: string;
+      name?: string;
+      pricing?: { prompt?: string; completion?: string };
+    }
+
+    const models = (json.data ?? []).map((m: RawModel) => {
+      const result: { id: string; name: string; pricing?: { inputPerM: number; outputPerM: number } } = {
+        id: m.id,
+        name: m.name ?? m.id,
+      };
+
+      // 解析价格（OpenRouter 返回 USD per token）
+      if (m.pricing?.prompt && m.pricing?.completion) {
+        const inputPerToken = parseFloat(m.pricing.prompt);
+        const outputPerToken = parseFloat(m.pricing.completion);
+        if (!isNaN(inputPerToken) && !isNaN(outputPerToken)) {
+          result.pricing = {
+            inputPerM: inputPerToken * 1_000_000,
+            outputPerM: outputPerToken * 1_000_000,
+          };
+        }
+      }
+
+      return result;
+    });
+
+    models.sort((a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id));
 
     return NextResponse.json({ data: models });
   } catch (e) {

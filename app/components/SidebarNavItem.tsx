@@ -27,6 +27,14 @@ export default function SidebarNavItem({
     </>
   );
 
+  if (href) {
+    return (
+      <Link href={href} className={cls} onClick={onClick}>
+        {content}
+      </Link>
+    );
+  }
+
   if (onClick) {
     return (
       <button className={cls} onClick={onClick}>
@@ -36,8 +44,6 @@ export default function SidebarNavItem({
   }
 
   return (
-    <Link href={href ?? "#"} className={cls}>
-      {content}
-    </Link>
+    <span className={cls}>{content}</span>
   );
 }

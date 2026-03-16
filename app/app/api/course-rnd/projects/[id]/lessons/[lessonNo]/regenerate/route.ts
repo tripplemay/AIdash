@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { COURSE_RND_ROLES } from "@/lib/permissions";
-import { getProviderAndModel, calculateCallCost } from "@/lib/ai/provider";
+import { getProviderAndModel } from "@/lib/ai/provider";
+import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-data";
 import { getBaselinePrompt } from "@/lib/ai/prompts";
 import { saveImageFromUrl } from "@/lib/ai/image-store";
@@ -237,7 +238,7 @@ ${allDrafts.map(d => `第 ${d.lessonNo} 课：${d.title}`).join("\n")}
           },
         });
 
-        const cost = lastResult ? calculateCallCost(lastResult.model, lastResult.inputTokens, lastResult.outputTokens) : 0;
+        const cost = lastResult ? await calculateCallCostFromDb("regenerate_lesson", lastResult.inputTokens, lastResult.outputTokens) : 0;
         await prisma.courseRndAiCallLog.create({
           data: {
             projectId: id,

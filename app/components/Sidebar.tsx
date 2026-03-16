@@ -152,6 +152,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
           <SidebarNavItem
             icon={BookOpen}
             label="课程包列表"
+            href="/list"
             active={listParentActive}
             onClick={handleListClick}
           />

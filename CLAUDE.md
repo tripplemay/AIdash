@@ -34,14 +34,14 @@ npm test                       # Jest 运行全部测试
 npm run test:coverage          # 测试覆盖率报告
 npx jest __tests__/api/admin-users.test.ts  # 运行单个测试文件
 
-# 数据库
-npx prisma db push             # 同步 schema 到数据库（本地开发用）
-npx prisma db seed             # 初始化默认账号（teacher01/teacher123、admin/admin123）
+# 数据库（本地与生产统一使用 MySQL）
+npx prisma migrate dev         # 修改 schema 后生成 migration 并应用
+npx prisma migrate deploy      # 仅应用已有 migration（生产部署用）
+npx prisma db seed             # 初始化默认账号（teacher01/teacher123、admin/admin123、rd01/rd123456）
 npx prisma studio              # GUI 数据库管理
 
-# 本地开发注意：
-# schema.prisma 中 provider 需改为 "sqlite"，.env 使用 "file:./dev.db"
-# 提交前必须还原为 "mysql" + @db.LongText
+# 本地开发数据库：mysql://root@localhost:3306/aidash_dev
+# 启动 MySQL：brew services start mysql
 ```
 
 ## 架构
