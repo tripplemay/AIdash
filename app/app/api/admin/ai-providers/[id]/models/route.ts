@@ -32,6 +32,11 @@ export async function GET(
       return NextResponse.json({ error: `获取模型列表失败：${res.status}` }, { status: 502 });
     }
 
+    const contentType = res.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      return NextResponse.json({ error: "API 返回非 JSON 响应，请检查 API 地址是否正确" }, { status: 502 });
+    }
+
     const json = await res.json();
 
     interface RawModel {

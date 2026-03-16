@@ -42,6 +42,14 @@ export async function POST(
       });
     }
 
+    const contentType = res.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      return NextResponse.json({
+        success: false,
+        error: `API 返回非 JSON 响应（${contentType || "未知类型"}），请检查 API 地址是否正确`,
+      });
+    }
+
     const json = await res.json();
     const modelCount = Array.isArray(json.data) ? json.data.length : 0;
 
