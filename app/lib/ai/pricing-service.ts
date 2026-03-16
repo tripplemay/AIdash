@@ -151,7 +151,7 @@ export async function testModel(
       body: JSON.stringify({
         model: modelName,
         messages: [{ role: "user", content: "reply ok" }],
-        max_tokens: 5,
+        max_tokens: 16,
       }),
       signal: AbortSignal.timeout(15_000),
       proxyUrl,
