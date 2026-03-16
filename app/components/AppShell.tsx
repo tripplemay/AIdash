@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { TopBarProvider } from "./TopBarContext";
+import { ToastProvider } from "./Toast";
 
 interface AppShellProps {
   userName: string;
@@ -17,6 +18,7 @@ export default function AppShell({ userName, userRole, children }: AppShellProps
 
   return (
     <TopBarProvider>
+      <ToastProvider>
       <div className="page-wrap">
         <div className="page-shell">
           {!isLessonPage && (
@@ -44,6 +46,7 @@ export default function AppShell({ userName, userRole, children }: AppShellProps
           </div>
         </div>
       </div>
+    </ToastProvider>
     </TopBarProvider>
   );
 }

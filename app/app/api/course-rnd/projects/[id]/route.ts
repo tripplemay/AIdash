@@ -34,6 +34,36 @@ export async function GET(
   return NextResponse.json({ data: project });
 }
 
+// DELETE /api/course-rnd/projects/[id] — 删除项目
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await requireRole(COURSE_RND_ROLES);
+  if (!session) return forbiddenResponse();
+
+  const { id } = await params;
+
+  const project = await prisma.courseRndProject.findUnique({
+    where: { id },
+    include: { _count: { select: { publishRecords: true } } },
+  });
+
+  if (!project) {
+    return NextResponse.json({ error: "项目不存在" }, { status: 404 });
+  }
+
+  // 已发布的项目不允许直接删除
+  if (project._count.publishRecords > 0) {
+    return NextResponse.json({
+      error: "该项目已发布课程包，请先在课程包管理中下架后再删除",
+    }, { status: 409 });
+  }
+
+  await prisma.courseRndProject.delete({ where: { id } });
+  return NextResponse.json({ data: { id } });
+}
+
 // PATCH /api/course-rnd/projects/[id] — 更新项目（自动保存草稿）
 export async function PATCH(
   request: Request,

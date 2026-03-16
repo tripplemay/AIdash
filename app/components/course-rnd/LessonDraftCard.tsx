@@ -61,6 +61,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
   }, [generating, draft.contentData]);
 
   const [regeneratingImage, setRegeneratingImage] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   // 解析 contentData
   let hero: { title?: string; subtitle?: string; goal?: string; outcome?: string; imageUrl?: string } | null = null;
@@ -133,7 +134,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
       <div style={{ marginBottom: "var(--sp-3)" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: "var(--sp-2)", marginBottom: "var(--sp-1)" }}>
           <span className="pill" style={{ fontSize: 11 }}>第 {draft.lessonNo} 课</span>
-          <span style={{ fontSize: 18, fontWeight: 800 }}>{draft.title}</span>
+          <span style={{ fontSize: 14, fontWeight: 700 }}>{draft.title}</span>
         </div>
         {hero?.subtitle && (
           <p className="muted" style={{ fontSize: 14, lineHeight: 1.6 }}>{hero.subtitle}</p>
@@ -174,7 +175,10 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
               width: 140, border: "1px solid var(--line)", borderRadius: "var(--radius-md)",
               overflow: "hidden", background: "var(--bg-faint)",
             }}>
-              <div style={{ height: 100, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              <div
+                style={{ height: 100, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: img.url ? "pointer" : "default" }}
+                onClick={() => { if (img.url) setLightboxUrl(img.url); }}
+              >
                 {img.url ? (
                   <img src={img.url} alt={img.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
@@ -265,8 +269,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                   borderRadius: "var(--radius-md)",
                   border: "1px solid var(--line)",
                   background: "var(--panel-solid)",
-                  maxHeight: 600,
-                  overflowY: "auto",
+                  overflowY: "visible",
                   cursor: "default",
                 }}
               >
@@ -384,6 +387,22 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
       {draft.lastFeedback && (
         <div className="muted small" style={{ marginTop: "var(--sp-2)" }}>
           上次修改意见：{draft.lastFeedback}
+        </div>
+      )}
+
+      {/* 图片放大灯箱 */}
+      {lightboxUrl && (
+        <div
+          className="modal-overlay"
+          onClick={() => setLightboxUrl(null)}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", cursor: "zoom-out" }}
+        >
+          <img
+            src={lightboxUrl}
+            alt="放大查看"
+            style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)" }}
+            onClick={e => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

@@ -175,7 +175,7 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
   }
 
   return (
-    <div style={{ maxWidth: 960, margin: "0 auto" }}>
+    <div>
       <SetTopBar
         breadcrumb="研发进度"
         title={projectId ? "课程方向确认" : "创建新课程"}

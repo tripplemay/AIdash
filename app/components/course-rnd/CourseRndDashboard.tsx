@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { SetTopBar } from "@/components/TopBarContext";
+import { useToast } from "@/components/Toast";
+import { ConfirmModal } from "./CourseRndModal";
 
 interface LessonDraftSummary {
   lessonNo: number;
@@ -21,6 +24,7 @@ interface ProjectSummary {
   lessonCount: number | null;
   updatedAt: Date;
   planVersions: PlanVersionSummary[];
+  _count?: { publishRecords: number };
 }
 
 interface Props {
@@ -34,9 +38,17 @@ const STATUS_CONFIG: Record<string, { label: string; icon: string; color: string
   direction: { label: "方向确认中", icon: "🔵", color: "var(--brand)" },
   workbench: { label: "方案打磨中", icon: "🔵", color: "var(--brand)" },
   finalized: { label: "已定稿 · 待发布", icon: "✅", color: "var(--green)" },
+  published: { label: "已发布", icon: "📦", color: "var(--green)" },
   paused: { label: "已暂停", icon: "⏸", color: "var(--muted)" },
   archived: { label: "已废弃", icon: "🗑", color: "var(--muted)" },
 };
+
+function getStatusConfig(project: ProjectSummary) {
+  if (project.status === "finalized" && (project._count?.publishRecords ?? 0) > 0) {
+    return STATUS_CONFIG.published;
+  }
+  return STATUS_CONFIG[project.status] ?? STATUS_CONFIG.direction;
+}
 
 function getProjectLink(project: ProjectSummary): string {
   if (project.status === "workbench" || project.status === "finalized") {
@@ -69,58 +81,108 @@ function timeAgo(date: Date): string {
   return new Date(date).toLocaleDateString("zh-CN");
 }
 
-function ProjectCard({ project, cost }: { project: ProjectSummary; cost: number }) {
-  const config = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.direction;
+function ProjectCard({ project, cost, onDelete }: { project: ProjectSummary; cost: number; onDelete: (id: string) => void }) {
+  const config = getStatusConfig(project);
   const progress = getProgress(project);
   const link = getProjectLink(project);
 
   return (
-    <Link
-      href={link}
-      style={{
-        display: "block",
-        padding: "var(--sp-4)",
-        background: "var(--panel-solid)",
-        border: "1px solid var(--line)",
-        borderRadius: "var(--radius-md)",
-        textDecoration: "none",
-        color: "inherit",
-        transition: "box-shadow var(--transition-fast), transform var(--transition-fast)",
-      }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = "var(--shadow-sm)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; }}
-    >
-      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: "var(--sp-1)" }}>{project.title}</div>
-      {(project.ageRange || project.level || project.lessonCount) && (
-        <div className="muted" style={{ fontSize: 12, marginBottom: "var(--sp-2)" }}>
-          {[
-            project.ageRange && `${project.ageRange} 岁`,
-            project.level,
-            project.lessonCount && `${project.lessonCount} 节课`,
-          ].filter(Boolean).join(" · ")}
+    <div style={{
+      padding: "var(--sp-4)",
+      background: "var(--panel-solid)",
+      border: "1px solid var(--line)",
+      borderRadius: "var(--radius-md)",
+      transition: "box-shadow var(--transition-fast)",
+      position: "relative",
+    }}>
+      <Link
+        href={link}
+        style={{ textDecoration: "none", color: "inherit", display: "block" }}
+      >
+        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: "var(--sp-1)" }}>{project.title}</div>
+        {(project.ageRange || project.level || project.lessonCount) && (
+          <div className="muted" style={{ fontSize: 12, marginBottom: "var(--sp-2)" }}>
+            {[
+              project.ageRange && `${project.ageRange} 岁`,
+              project.level,
+              project.lessonCount && `${project.lessonCount} 节课`,
+            ].filter(Boolean).join(" · ")}
+          </div>
+        )}
+        <div style={{ fontSize: 12, color: config.color, fontWeight: 600, marginBottom: "var(--sp-1)" }}>
+          {config.icon} {config.label}
         </div>
-      )}
-      <div style={{ fontSize: 12, color: config.color, fontWeight: 600, marginBottom: "var(--sp-1)" }}>
-        {config.icon} {config.label}
-      </div>
-      {progress && (
-        <div className="muted" style={{ fontSize: 12, marginBottom: "var(--sp-1)" }}>{progress}</div>
-      )}
-      <div className="muted" style={{ fontSize: 11 }}>
-        {timeAgo(project.updatedAt)}{cost > 0 && ` · ¥${cost.toFixed(2)}`}
-      </div>
-    </Link>
+        {progress && (
+          <div className="muted" style={{ fontSize: 12, marginBottom: "var(--sp-1)" }}>{progress}</div>
+        )}
+        <div className="muted" style={{ fontSize: 11 }}>
+          {timeAgo(project.updatedAt)}{cost > 0 && ` · ¥${cost.toFixed(2)}`}
+        </div>
+      </Link>
+      <button
+        className="btn btn--soft btn--xs btn--danger"
+        style={{ position: "absolute", top: "var(--sp-2)", right: "var(--sp-2)", fontSize: 10, padding: "1px 6px" }}
+        onClick={e => { e.preventDefault(); onDelete(project.id); }}
+      >
+        删除
+      </button>
+    </div>
   );
 }
 
-export default function CourseRndDashboard({ projects, projectCosts, totalCost, totalCalls }: Props) {
-  // 分组
+export default function CourseRndDashboard({ projects: initialProjects, projectCosts, totalCost, totalCalls }: Props) {
+  const [projects, setProjects] = useState(initialProjects);
+  const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null);
+  const { showToast } = useToast();
+
   const inProgress = projects.filter(p => p.status === "direction" || p.status === "workbench");
   const finalized = projects.filter(p => p.status === "finalized");
   const ended = projects.filter(p => p.status === "paused" || p.status === "archived");
 
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleteTarget(null);
+    try {
+      const res = await fetch(`/api/course-rnd/projects/${deleteTarget.id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (res.ok) {
+        setProjects(prev => prev.filter(p => p.id !== deleteTarget.id));
+        showToast("项目已删除");
+      } else {
+        showToast(json.error ?? "删除失败", "error");
+      }
+    } catch {
+      showToast("网络错误", "error");
+    }
+  }
+
+  function renderColumn(title: string, color: string, items: ProjectSummary[]) {
+    return (
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: "var(--sp-3)", color }}>
+          {title} ({items.length})
+        </div>
+        <div style={{ display: "grid", gap: "var(--sp-3)" }}>
+          {items.length === 0 && (
+            <div className="muted" style={{ fontSize: 13, padding: "var(--sp-5) 0", textAlign: "center", border: "1px dashed var(--line)", borderRadius: "var(--radius-md)" }}>
+              暂无{title}的项目
+            </div>
+          )}
+          {items.map(p => (
+            <ProjectCard
+              key={p.id}
+              project={p}
+              cost={projectCosts[p.id] ?? 0}
+              onDelete={id => setDeleteTarget(projects.find(pp => pp.id === id) ?? null)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+    <div>
       <SetTopBar
         breadcrumb="课程研发"
         title="研发进度管理"
@@ -147,45 +209,21 @@ export default function CourseRndDashboard({ projects, projectCosts, totalCost, 
 
       {/* 看板 */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--sp-4)", alignItems: "start" }}>
-        {/* 进行中 */}
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: "var(--sp-3)", color: "var(--brand)" }}>
-            进行中 ({inProgress.length})
-          </div>
-          <div style={{ display: "grid", gap: "var(--sp-3)" }}>
-            {inProgress.length === 0 && (
-              <div className="muted" style={{ fontSize: 13, padding: "var(--sp-5) 0", textAlign: "center" }}>暂无进行中的项目</div>
-            )}
-            {inProgress.map(p => <ProjectCard key={p.id} project={p} cost={projectCosts[p.id] ?? 0} />)}
-          </div>
-        </div>
-
-        {/* 已定稿 */}
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: "var(--sp-3)", color: "var(--green)" }}>
-            已定稿 ({finalized.length})
-          </div>
-          <div style={{ display: "grid", gap: "var(--sp-3)" }}>
-            {finalized.length === 0 && (
-              <div className="muted" style={{ fontSize: 13, padding: "var(--sp-5) 0", textAlign: "center" }}>暂无已定稿的项目</div>
-            )}
-            {finalized.map(p => <ProjectCard key={p.id} project={p} cost={projectCosts[p.id] ?? 0} />)}
-          </div>
-        </div>
-
-        {/* 已结束 */}
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: "var(--sp-3)", color: "var(--muted)" }}>
-            已结束 ({ended.length})
-          </div>
-          <div style={{ display: "grid", gap: "var(--sp-3)" }}>
-            {ended.length === 0 && (
-              <div className="muted" style={{ fontSize: 13, padding: "var(--sp-5) 0", textAlign: "center" }}>暂无已结束的项目</div>
-            )}
-            {ended.map(p => <ProjectCard key={p.id} project={p} cost={projectCosts[p.id] ?? 0} />)}
-          </div>
-        </div>
+        {renderColumn("进行中", "var(--brand)", inProgress)}
+        {renderColumn("已定稿", "var(--green)", finalized)}
+        {renderColumn("已结束", "var(--muted)", ended)}
       </div>
+
+      {deleteTarget && (
+        <ConfirmModal
+          title="确认删除"
+          message={`确认永久删除项目「${deleteTarget.title}」？删除后所有数据（框架、方案、草稿、AI 调用记录）将不可恢复。`}
+          confirmLabel="确认删除"
+          danger
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   );
 }

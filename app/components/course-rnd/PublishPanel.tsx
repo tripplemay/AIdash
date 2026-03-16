@@ -91,8 +91,8 @@ export default function PublishPanel({ projectId, projectTitle, ageRange, level,
   }
 
   return (
-    <div className="card--glass" style={{ padding: "var(--sp-6)", marginTop: "var(--sp-5)" }}>
-      <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: "var(--sp-4)" }}>一键发布到课程库</h2>
+    <div className="card--glass" style={{ padding: "var(--sp-5)", marginTop: "var(--sp-5)" }}>
+      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: "var(--sp-4)" }}>一键发布到课程库</h2>
 
       {!allReady && (
         <div className="field-error" style={{ marginBottom: "var(--sp-4)" }}>

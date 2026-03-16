@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import LessonDraftCard from "./LessonDraftCard";
 import AiCostPanel from "./AiCostPanel";
 import PublishPanel from "./PublishPanel";
-import { ConfirmModal, AlertModal } from "./CourseRndModal";
+import { ConfirmModal } from "./CourseRndModal";
 import { SetTopBar } from "@/components/TopBarContext";
+import { useToast } from "@/components/Toast";
 
 interface LessonDraft {
   id: string;
@@ -55,7 +56,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   const [planVersion, setPlanVersion] = useState(currentPlan);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   // 每课独立的进度状态
   type ProgressState = { step: number; total: number; label: string; tokenCount: number };
@@ -178,7 +179,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? "保存失败"); return; }
       setPlanVersion({ id: json.data.planVersionId, versionNo: json.data.versionNo });
-      setAlertMessage(`已保存为版本 v${json.data.versionNo}`);
+      showToast(`已保存为版本 v${json.data.versionNo}`);
     } catch {
       setError("网络错误");
     } finally {
@@ -237,7 +238,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   }
 
   return (
-    <div style={{ maxWidth: 960, margin: "0 auto" }}>
+    <div>
       <SetTopBar
         breadcrumb="研发进度"
         title={project.title}
@@ -253,7 +254,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
       {error && <div className="field-error" style={{ marginBottom: "var(--sp-4)" }}>{error}</div>}
 
       {/* AI 费用面板 */}
-      <AiCostPanel costs={aiCosts} />
+      <AiCostPanel costs={aiCosts} lessonCount={drafts.filter(d => d.contentData).length || 1} />
 
       {/* 无草稿时显示生成按钮 */}
       {drafts.length === 0 && (
@@ -352,13 +353,6 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
         />
       )}
 
-      {alertMessage && (
-        <AlertModal
-          title="操作成功"
-          message={alertMessage}
-          onClose={() => setAlertMessage(null)}
-        />
-      )}
     </div>
   );
 }

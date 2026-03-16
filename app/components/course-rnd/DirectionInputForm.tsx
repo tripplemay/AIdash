@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface FormData {
   title: string;
   targetAudience: string;
@@ -21,18 +23,29 @@ interface Props {
 }
 
 export default function DirectionInputForm({ formData, onChange, onGenerate, loading }: Props) {
+  const [touched, setTouched] = useState(false);
+
   const update = (key: keyof FormData, value: string | number) => {
     onChange({ ...formData, [key]: value });
   };
 
+  function handleGenerate() {
+    setTouched(true);
+    if (!formData.title.trim()) return;
+    onGenerate();
+  }
+
+  const titleError = touched && !formData.title.trim();
+
   return (
-    <div className="card--glass" style={{ padding: "var(--sp-6)", marginBottom: "var(--sp-6)" }}>
-      <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: "var(--sp-5)" }}>课程信息</h2>
+    <div className="card--glass" style={{ padding: "var(--sp-5)", marginBottom: "var(--sp-5)" }}>
+      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: "var(--sp-4)" }}>课程信息</h2>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--sp-4)", marginBottom: "var(--sp-4)" }}>
         <div>
-          <label className="field-label">项目标题 <span className="field-required">*</span></label>
-          <input className="input" value={formData.title} onChange={e => update("title", e.target.value)} placeholder="如：AI 故事表达创作课" />
+          <label className="field-label">项目标题 <span style={{ color: "var(--red)" }}>*</span></label>
+          <input className={`input${titleError ? " input--error" : ""}`} value={formData.title} onChange={e => update("title", e.target.value)} placeholder="如：AI 故事表达创作课" />
+          {titleError && <div className="field-error-text">请输入项目标题</div>}
         </div>
         <div>
           <label className="field-label">课程对象</label>
@@ -67,35 +80,17 @@ export default function DirectionInputForm({ formData, onChange, onGenerate, loa
 
       <div style={{ marginBottom: "var(--sp-4)" }}>
         <label className="field-label">大致框架（选填）</label>
-        <textarea
-          className="input"
-          style={{ height: 80, paddingTop: "var(--sp-2)", resize: "vertical" }}
-          value={formData.roughFramework}
-          onChange={e => update("roughFramework", e.target.value)}
-          placeholder="对课程结构的初步想法"
-        />
+        <textarea className="input" style={{ height: 80, paddingTop: "var(--sp-2)", resize: "vertical" }} value={formData.roughFramework} onChange={e => update("roughFramework", e.target.value)} placeholder="对课程结构的初步想法" />
       </div>
 
       <div style={{ marginBottom: "var(--sp-4)" }}>
         <label className="field-label">核心诉求（选填）</label>
-        <textarea
-          className="input"
-          style={{ height: 60, paddingTop: "var(--sp-2)", resize: "vertical" }}
-          value={formData.coreNeeds}
-          onChange={e => update("coreNeeds", e.target.value)}
-          placeholder="对课程设计的核心要求"
-        />
+        <textarea className="input" style={{ height: 80, paddingTop: "var(--sp-2)", resize: "vertical" }} value={formData.coreNeeds} onChange={e => update("coreNeeds", e.target.value)} placeholder="对课程设计的核心要求" />
       </div>
 
       <div style={{ marginBottom: "var(--sp-5)" }}>
         <label className="field-label">补充约束（选填）</label>
-        <textarea
-          className="input"
-          style={{ height: 60, paddingTop: "var(--sp-2)", resize: "vertical" }}
-          value={formData.constraints}
-          onChange={e => update("constraints", e.target.value)}
-          placeholder="其他限制条件"
-        />
+        <textarea className="input" style={{ height: 80, paddingTop: "var(--sp-2)", resize: "vertical" }} value={formData.constraints} onChange={e => update("constraints", e.target.value)} placeholder="其他限制条件" />
       </div>
 
       {loading ? (
@@ -104,7 +99,7 @@ export default function DirectionInputForm({ formData, onChange, onGenerate, loa
           <span className="ai-progress__step--current">AI 正在生成课程框架...</span>
         </div>
       ) : (
-        <button className="btn btn--lg" onClick={onGenerate} disabled={!formData.title}>
+        <button className="btn btn--lg" onClick={handleGenerate} disabled={loading}>
           生成课程框架
         </button>
       )}

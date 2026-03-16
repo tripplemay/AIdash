@@ -35,6 +35,9 @@ export default async function CourseRndPage() {
               },
             },
           },
+          _count: {
+            select: { publishRecords: true },
+          },
         },
       })
     : [];
