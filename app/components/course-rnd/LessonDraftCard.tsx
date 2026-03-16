@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import LessonRenderer from "@/components/lesson/LessonRenderer";
 import type { LessonContent } from "@/types/lesson-content";
+import { useToast } from "@/components/Toast";
 
 interface LessonDraft {
   id: string;
@@ -48,6 +49,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
   const [expanded, setExpanded] = useState(!!draft.contentData && !generating);
   const [targetSection, setTargetSection] = useState<{ id: string; title: string } | null>(null);
   const wasGenerating = useRef(generating);
+  const { showToast } = useToast();
 
   // 生成开始时收起，生成完成时展开
   useEffect(() => {
@@ -96,8 +98,13 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
       const json = await res.json();
       if (res.ok && json.data?.contentData) {
         onContentUpdate?.(draft.lessonNo, JSON.stringify(json.data.contentData));
+        showToast("图片已更新");
+      } else {
+        showToast(json.error ?? "图片生成失败", "error");
       }
-    } catch {}
+    } catch {
+      showToast("网络错误", "error");
+    }
     setRegeneratingImage(null);
   }
 

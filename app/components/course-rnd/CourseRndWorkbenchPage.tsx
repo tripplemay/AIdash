@@ -157,15 +157,16 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
         body: JSON.stringify({ feedback, planVersionId: planVersion.id, targetSection }),
       });
       const json = await res.json();
-      if (!res.ok) { setError(json.error ?? "修改失败"); return; }
+      if (!res.ok) { showToast(json.error ?? "修改失败", "error"); return; }
 
       setDrafts(prev => prev.map(d =>
         d.lessonNo === lessonNo
           ? { ...d, contentData: JSON.stringify(json.data.contentData), lastFeedback: feedback }
           : d
       ));
+      showToast("修改意见已应用");
     } catch {
-      setError("网络错误，请重试");
+      showToast("网络错误", "error");
     } finally {
       setRevisingLessons(prev => { const next = new Set(prev); next.delete(lessonNo); return next; });
     }
