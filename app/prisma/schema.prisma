@@ -201,7 +201,7 @@ model AiProvider {
   id           String   @id @default(cuid())
   name         String
   baseUrl      String
-  apiKeyEnc    String   // AES-256-GCM 加密
+  apiKeyEnc    String   @db.Text // AES-256-GCM 加密，长度超 191
   protocol     String   @default("openai")
   supportText  Boolean  @default(true)
   supportImage Boolean  @default(false)
