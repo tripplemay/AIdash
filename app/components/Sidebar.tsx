@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { BookOpen, Settings, Package, Users } from "lucide-react";
+import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu } from "lucide-react";
+import { ROLE_LABELS, type Role } from "@/lib/roles";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import SidebarNavItem from "./SidebarNavItem";
 import type { FilterGroup } from "./SidebarFilterTree";
 import SidebarFilterTree from "./SidebarFilterTree";
@@ -22,7 +24,8 @@ interface LessonNavData {
 export default function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isAdmin = userRole === "admin";
+  const canAccessAdmin = hasPermission(userRole, PERMISSIONS.MANAGE_PACKAGES) || hasPermission(userRole, PERMISSIONS.MANAGE_USERS);
+  const canAccessRnd = hasPermission(userRole, PERMISSIONS.COURSE_RND);
   const initial = userName.charAt(0).toUpperCase();
 
   // 路由检测
@@ -31,6 +34,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
   const isAdminActive = pathname.startsWith("/admin");
   const isDetailPage = pathname.startsWith("/detail/");
   const isLessonPage = pathname.startsWith("/lesson/");
+  const isRndActive = pathname.startsWith("/course-rnd");
 
   // admin 子页面自动检测
   const adminSection = pathname.includes("/admin/packages") ? "packages"
@@ -137,7 +141,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
           <div className="sidebar__avatar">{initial}</div>
           <div>
             <div className="sidebar__user-name">{userName}</div>
-            <div className="sidebar__user-role">{isAdmin ? "管理员" : "教师"}</div>
+            <div className="sidebar__user-role">{ROLE_LABELS[userRole as Role] ?? "教师"}</div>
           </div>
         </div>
       </div>
@@ -162,8 +166,20 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
           )}
         </div>
 
+        {/* 课程研发 */}
+        {canAccessRnd && (
+          <div>
+            <SidebarNavItem
+              icon={FlaskConical}
+              label="课程研发"
+              href="/course-rnd"
+              active={isRndActive}
+            />
+          </div>
+        )}
+
         {/* 管理后台 */}
-        {isAdmin && (
+        {canAccessAdmin && (
           <div>
             <SidebarNavItem
               icon={Settings}
@@ -180,13 +196,31 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
                   <Package size={14} />
                   课程包管理
                 </Link>
+                {hasPermission(userRole, PERMISSIONS.MANAGE_USERS) && (
+                  <Link
+                    href="/admin/users"
+                    className={`sidebar__sub-item${adminSection === "users" ? " sidebar__sub-item--active" : ""}`}
+                  >
+                    <Users size={14} />
+                    用户管理
+                  </Link>
+                )}
                 <Link
-                  href="/admin/users"
-                  className={`sidebar__sub-item${adminSection === "users" ? " sidebar__sub-item--active" : ""}`}
+                  href="/admin/operation-logs"
+                  className={`sidebar__sub-item${pathname.includes("/admin/operation-logs") ? " sidebar__sub-item--active" : ""}`}
                 >
-                  <Users size={14} />
-                  用户管理
+                  <FileText size={14} />
+                  操作日志
                 </Link>
+                {hasPermission(userRole, PERMISSIONS.AI_SETTINGS) && (
+                  <Link
+                    href="/admin/ai-settings"
+                    className={`sidebar__sub-item${pathname.includes("/admin/ai-settings") ? " sidebar__sub-item--active" : ""}`}
+                  >
+                    <Cpu size={14} />
+                    AI 服务配置
+                  </Link>
+                )}
               </div>
             )}
           </div>
@@ -207,8 +241,8 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
                     href={`/lesson/${lessonNav.slug}/${lesson.id}`}
                     className={`sidebar__sub-item${lesson.id === currentLessonId ? " sidebar__sub-item--active" : ""}`}
                   >
-                    <span style={{ opacity: 0.6, minWidth: 36, fontSize: 12 }}>第 {lesson.lessonNo} 课</span>
-                    <span style={{ flex: 1 }}>{lesson.title}</span>
+                    <span className="sidebar__lesson-no">第 {lesson.lessonNo} 课</span>
+                    <span className="sidebar__lesson-title">{lesson.title}</span>
                   </Link>
                 ))}
               </div>
@@ -217,7 +251,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
         </>
       )}
 
-      {!isLessonPage && <div style={{ flex: 1 }} />}
+      {!isLessonPage && <div className="sidebar__spacer" />}
 
       <div className="sidebar__footer">&copy; 2025 AI Dash</div>
     </aside>

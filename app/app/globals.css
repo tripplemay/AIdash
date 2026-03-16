@@ -584,8 +584,9 @@ img { display: block; max-width: 100%; }
   font-size: 11px;
   font-weight: 600;
 }
-.badge-role--admin   { background: #f1edff; color: #6c4fe0; }
-.badge-role--teacher { background: #eef3ff; color: #6278b2; }
+.badge-role--admin      { background: #f1edff; color: #6c4fe0; }
+.badge-role--rd-manager { background: #e6f5ff; color: #0f6fb8; }
+.badge-role--teacher    { background: #eef3ff; color: #6278b2; }
 
 
 /* ━━━ 10. 模态框 ━━━ */
@@ -1415,6 +1416,41 @@ img { display: block; max-width: 100%; }
   margin: 0 0 8px;
 }
 
+/* Block: grid */
+.lesson-block--grid {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 8px 0;
+}
+.lesson-block--grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lesson-block--grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Accordion time pill */
+.lesson-accordion__time {
+  background: #e8f6ff;
+  color: #0f6fb8;
+}
+
+/* Section scroll anchor offset */
+.lesson-section {
+  scroll-margin-top: 20px;
+}
+
+/* Sidebar lesson list */
+.sidebar__lesson-no {
+  opacity: 0.6;
+  min-width: 36px;
+  font-size: 12px;
+}
+
+.sidebar__lesson-title {
+  flex: 1;
+}
+
+.sidebar__spacer {
+  flex: 1;
+}
+
 /* Block: accordion */
 .lesson-block--accordion {
   border: 1px solid var(--line);
@@ -1690,6 +1726,75 @@ img { display: block; max-width: 100%; }
   50%      { opacity: 0.5; }
 }
 
+
+/* ━━━ 20b. AI 生成进度 ━━━ */
+.ai-progress {
+  padding: var(--sp-4);
+  background: var(--bg-faint);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  margin-bottom: var(--sp-3);
+}
+
+.ai-progress__step {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 13px;
+  padding: var(--sp-1) 0;
+}
+
+.ai-progress__step--done {
+  color: var(--green);
+}
+
+.ai-progress__step--current {
+  color: var(--brand);
+  font-weight: 700;
+  animation: pulse-soft 1.8s ease-in-out infinite;
+}
+
+.ai-progress__step--pending {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.ai-progress__spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(126,149,255,0.2);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.ai-progress__bar-wrap {
+  margin-top: var(--sp-3);
+  height: 4px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ai-progress__bar {
+  height: 100%;
+  background: linear-gradient(90deg, #6f86ff, #61d1ff);
+  border-radius: 999px;
+  transition: width 500ms ease;
+}
+
+.ai-progress__meta {
+  margin-top: var(--sp-2);
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 /* ━━━ 21. 打印 ━━━ */
 @media print {

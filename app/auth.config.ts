@@ -6,7 +6,7 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const PROTECTED = ["/list", "/detail", "/admin"];
+      const PROTECTED = ["/list", "/detail", "/admin", "/lesson", "/course-rnd"];
       const isProtected = PROTECTED.some((p) => nextUrl.pathname.startsWith(p));
 
       if (isProtected) return isLoggedIn;
@@ -17,11 +17,17 @@ export const authConfig: NextAuthConfig = {
       return true;
     },
     jwt({ token, user }) {
-      if (user) token.role = (user as { role?: string }).role;
+      if (user) {
+        token.role = (user as { role?: string }).role;
+        token.userId = (user as { id?: string }).id;
+      }
       return token;
     },
     session({ session, token }) {
-      if (session.user) (session.user as { role?: unknown }).role = token.role;
+      if (session.user) {
+        (session.user as { role?: unknown }).role = token.role;
+        (session.user as { id?: unknown }).id = token.userId;
+      }
       return session;
     },
   },

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { signOut } from "next-auth/react";
 import { LogOut } from "lucide-react";
+import { ROLE_LABELS, ROLE_CSS, type Role } from "@/lib/roles";
 
 export default function UserAvatarDropdown({
   userName,
@@ -44,7 +45,8 @@ export default function UserAvatarDropdown({
     if (open) updatePos();
   }, [open, updatePos]);
 
-  const roleLabel = userRole === "admin" ? "管理员" : "教师";
+  const roleLabel = ROLE_LABELS[userRole as Role] ?? "教师";
+  const roleCss = ROLE_CSS[userRole as Role] ?? "teacher";
 
   return (
     <>
@@ -60,7 +62,7 @@ export default function UserAvatarDropdown({
         >
           <div className="avatar-dropdown__info">
             <div className="avatar-dropdown__name">{userName}</div>
-            <span className={`badge-role badge-role--${userRole === "admin" ? "admin" : "teacher"}`}>
+            <span className={`badge-role badge-role--${roleCss}`}>
               {roleLabel}
             </span>
           </div>

@@ -2,21 +2,14 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
+import { ROLES } from "@/lib/roles";
 import AdmZip from "adm-zip";
 import path from "node:path";
 import fs from "node:fs";
 
 const SLUG_RE = /^[a-z0-9-]+$/;
 const MAX_SIZE = 50 * 1024 * 1024; // 50MB
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session) return null;
-  const user = session.user as { role?: string };
-  if (user.role !== "admin") return null;
-  return session;
-}
 
 interface PackageManifest {
   package_slug: string;
@@ -43,8 +36,8 @@ interface LessonManifest {
 
 // POST /api/admin/upload — 上传课程包 zip
 export async function POST(request: Request) {
-  if (!(await requireAdmin())) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  if (!(await requireRole([ROLES.ADMIN, ROLES.RD_MANAGER]))) {
+    return forbiddenResponse();
   }
 
   // 解析 FormData

@@ -75,6 +75,7 @@ function QaPairBlockR({ block }: { block: { question: string; answer: string } }
 }
 
 function BlocksR({ blocks }: { blocks: Block[] }) {
+  if (!blocks || !Array.isArray(blocks)) return null;
   return (
     <>
       {blocks.map((block, i) => {
@@ -107,11 +108,7 @@ function BoxBlockR({ block }: { block: BoxBlock }) {
 
 function GridBlockR({ block }: { block: { cols: 2 | 3; items: BoxBlock[] } }) {
   return (
-    <div className="lesson-block--grid" style={{
-      display: "grid",
-      gridTemplateColumns: `repeat(${block.cols}, minmax(0,1fr))`,
-      gap: "var(--sp-4)", margin: "8px 0",
-    }}>
+    <div className={`lesson-block--grid lesson-block--grid--${block.cols}`}>
       {block.items.map((item, i) => <BoxBlockR key={i} block={item} />)}
     </div>
   );
@@ -122,7 +119,7 @@ function AccordionBlockR({ block }: { block: { title: string; time: string; bloc
     <details open className="lesson-block--accordion">
       <summary className="lesson-block--accordion__summary">
         <span>{block.title}</span>
-        <span className="pill" style={{ background: "#e8f6ff", color: "#0f6fb8" }}>{block.time}</span>
+        <span className="pill lesson-accordion__time">{block.time}</span>
       </summary>
       <div className="lesson-block--accordion__body">
         <BlocksR blocks={block.blocks} />
@@ -134,7 +131,7 @@ function AccordionBlockR({ block }: { block: { title: string; time: string; bloc
 /* ── Section panel ── */
 function SectionPanel({ section, index }: { section: Section; index: number }) {
   return (
-    <section id={section.id} className="lesson-section" style={{ scrollMarginTop: 20 }}>
+    <section id={section.id} className="lesson-section">
       <div className="lesson-section__header">
         {index + 1}. {section.title}
       </div>
@@ -175,10 +172,24 @@ function HeroSection({ hero }: { hero: Hero }) {
 }
 
 /* ── Main renderer ── */
-export default function LessonRenderer({ content }: { content: LessonContent }) {
+export default function LessonRenderer({ content, preview = false }: { content: LessonContent; preview?: boolean }) {
   const sectionIds = content.sections.map(s => s.id);
   const tocSections = content.sections.map(s => ({ id: s.id, title: s.title }));
-  const activeId = useActiveSection(sectionIds);
+  const activeId = useActiveSection(preview ? [] : sectionIds);
+
+  // 预览模式：无 TOC、无双列布局、紧凑间距
+  if (preview) {
+    return (
+      <div style={{ padding: "var(--sp-4)" }}>
+        <HeroSection hero={content.hero} />
+        <div style={{ marginTop: "var(--sp-4)" }}>
+          {content.sections.map((section, i) => (
+            <SectionPanel key={section.id} section={section} index={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="lesson-content">

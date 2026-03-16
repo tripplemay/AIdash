@@ -2,21 +2,14 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
 import bcrypt from "bcryptjs";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session) return null;
-  const user = session.user as { role?: string };
-  if (user.role !== "admin") return null;
-  return session;
-}
+import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
+import { ROLES, VALID_ROLES } from "@/lib/roles";
 
 // GET /api/admin/users — 用户列表（不返回 password）
 export async function GET() {
-  if (!(await requireAdmin())) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  if (!(await requireRole([ROLES.ADMIN]))) {
+    return forbiddenResponse();
   }
 
   const users = await prisma.user.findMany({
@@ -29,8 +22,8 @@ export async function GET() {
 
 // POST /api/admin/users — 新建用户
 export async function POST(request: Request) {
-  if (!(await requireAdmin())) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  if (!(await requireRole([ROLES.ADMIN]))) {
+    return forbiddenResponse();
   }
 
   const body = await request.json();
@@ -42,7 +35,7 @@ export async function POST(request: Request) {
   if (password.length < 6) {
     return NextResponse.json({ error: "密码最少 6 位" }, { status: 400 });
   }
-  if (!["teacher", "admin"].includes(role)) {
+  if (!VALID_ROLES.includes(role)) {
     return NextResponse.json({ error: "角色无效" }, { status: 400 });
   }
 

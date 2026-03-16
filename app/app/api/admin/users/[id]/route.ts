@@ -2,24 +2,17 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
 import bcrypt from "bcryptjs";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session) return null;
-  const user = session.user as { role?: string };
-  if (user.role !== "admin") return null;
-  return session;
-}
+import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
+import { ROLES, VALID_ROLES } from "@/lib/roles";
 
 // PATCH /api/admin/users/[id] — 更新用户信息 / 重置密码
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await requireAdmin())) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  if (!(await requireRole([ROLES.ADMIN]))) {
+    return forbiddenResponse();
   }
 
   const { id } = await params;
@@ -29,7 +22,7 @@ export async function PATCH(
   const data: Record<string, string> = {};
   if (name) data.name = name;
   if (role) {
-    if (!["teacher", "admin"].includes(role)) {
+    if (!VALID_ROLES.includes(role)) {
       return NextResponse.json({ error: "角色无效" }, { status: 400 });
     }
     data.role = role;
@@ -59,9 +52,9 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireAdmin();
+  const session = await requireRole([ROLES.ADMIN]);
   if (!session) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
+    return forbiddenResponse();
   }
 
   const { id } = await params;

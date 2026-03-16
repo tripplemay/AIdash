@@ -2,20 +2,13 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session) return null;
-  const user = session.user as { role?: string };
-  if (user.role !== "admin") return null;
-  return session;
-}
+import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
+import { ROLES } from "@/lib/roles";
 
 // GET /api/admin/packages — 获取所有课程包（含草稿）
 export async function GET() {
-  if (!(await requireAdmin())) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  if (!(await requireRole([ROLES.ADMIN, ROLES.RD_MANAGER]))) {
+    return forbiddenResponse();
   }
 
   const packages = await prisma.coursePackage.findMany({
@@ -28,8 +21,8 @@ export async function GET() {
 
 // POST /api/admin/packages — 创建课程包
 export async function POST(request: Request) {
-  if (!(await requireAdmin())) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  if (!(await requireRole([ROLES.ADMIN, ROLES.RD_MANAGER]))) {
+    return forbiddenResponse();
   }
 
   const body = await request.json();
