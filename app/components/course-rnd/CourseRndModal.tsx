@@ -19,7 +19,7 @@ export function ConfirmModal({ title, message, confirmLabel = "确认", danger, 
         </div>
         <div className="modal__actions">
           <button className="btn btn--soft" onClick={onCancel}>取消</button>
-          <button className={danger ? "btn btn--danger" : "btn"} onClick={onConfirm}>{confirmLabel}</button>
+          <button className={danger ? "btn btn--danger-fill" : "btn"} onClick={onConfirm}>{confirmLabel}</button>
         </div>
       </div>
     </div>

@@ -93,7 +93,7 @@ export default function AdminUserList({ users }: { users: UserRow[] }) {
             </div>
             <div className="modal__actions">
               <button className="btn btn--soft" onClick={() => setConfirm(null)}>取消</button>
-              <button className="btn btn--danger" onClick={() => deleteUser(confirm.id)}>确认删除</button>
+              <button className="btn btn--danger-fill" onClick={() => deleteUser(confirm.id)}>确认删除</button>
             </div>
           </div>
         </div>

@@ -459,6 +459,13 @@ img { display: block; max-width: 100%; }
   border-color: transparent;
 }
 .btn--danger:hover { background: rgba(239,68,68,.08); }
+.btn--danger-fill {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--red);
+  box-shadow: none;
+}
+.btn--danger-fill:hover { opacity: 0.9; }
 
 .btn--ghost {
   background: transparent;

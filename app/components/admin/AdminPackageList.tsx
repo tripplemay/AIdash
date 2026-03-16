@@ -123,7 +123,7 @@ export default function AdminPackageList({ packages }: { packages: PackageRow[] 
             <div className="modal__actions">
               <button className="btn btn--soft" onClick={() => setConfirm(null)}>取消</button>
               <button
-                className={confirm.type !== "online" ? "btn btn--danger" : "btn"}
+                className={confirm.type !== "online" ? "btn btn--danger-fill" : "btn"}
                 onClick={() => {
                   if (confirm.type === "delete") deletePackage(confirm.slug);
                   else if (confirm.type === "offline") toggleStatus(confirm.slug, "offline");
