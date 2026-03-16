@@ -79,8 +79,11 @@ export default function ProviderCard({ provider, onUpdate, onDelete }: Props) {
       const res = await fetch(`/api/admin/ai-providers/${provider.id}/test`, { method: "POST" });
       const json = await res.json();
       if (json.success) {
-        setTestResult({ success: true, message: `连接正常 · ${json.modelCount} 个模型` });
-        setTimeout(() => setTestResult(null), 5000);
+        const msg = json.modelCount > 0
+          ? `连接正常 · ${json.modelCount} 个模型`
+          : "连接正常 · 该服务商需手动输入模型 ID";
+        setTestResult({ success: true, message: msg });
+        setTimeout(() => setTestResult(null), 8000);
       } else {
         setTestResult({ success: false, message: json.error ?? "测试失败" });
       }
