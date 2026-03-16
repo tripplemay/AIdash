@@ -90,6 +90,7 @@ model CourseRndProject {
   constraints               String?  @db.LongText
   currentDirectionVersionId String?
   currentPlanVersionId      String?
+  coverUrl                  String?
   createdById               String
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt

@@ -453,10 +453,12 @@ img { display: block; max-width: 100%; }
 .btn--soft:hover { background: rgba(255, 255, 255, 0.96); opacity: 1; }
 
 .btn--danger {
-  background: var(--danger);
+  color: var(--red);
+  background: transparent;
   box-shadow: none;
+  border-color: transparent;
 }
-.btn--danger:hover { opacity: 0.9; }
+.btn--danger:hover { background: rgba(239,68,68,.08); }
 
 .btn--ghost {
   background: transparent;
@@ -1978,8 +1980,6 @@ img { display: block; max-width: 100%; }
 /* Button variants */
 .btn--xs { font-size: 11px; padding: 3px 8px; height: 26px; }
 .btn--primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-.btn--danger { color: var(--red); }
-.btn--danger:hover { background: rgba(239,68,68,.08); }
 
 /* ━━━ 23. Toast 提示 ━━━ */
 .toast-container {

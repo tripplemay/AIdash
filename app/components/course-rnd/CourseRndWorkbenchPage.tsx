@@ -37,6 +37,7 @@ interface Project {
   title: string;
   status: string;
   currentPlanVersionId: string | null;
+  coverUrl: string | null;
 }
 
 interface Props {
@@ -62,7 +63,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   type ProgressState = { step: number; total: number; label: string; tokenCount: number };
   const [generatingLessons, setGeneratingLessons] = useState<Map<number, ProgressState>>(new Map());
   const [revisingLessons, setRevisingLessons] = useState<Set<number>>(new Set());
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(project.coverUrl);
   const [generatingCover, setGeneratingCover] = useState(false);
 
   // 同步 props → state

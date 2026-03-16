@@ -148,7 +148,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
   }
 
   return (
-    <div className="card--glass" style={{ padding: "var(--sp-5)", overflow: "hidden" }}>
+    <div className="card--glass" style={{ padding: "var(--sp-5)" }}>
       {/* 头部 */}
       <div style={{ marginBottom: "var(--sp-3)" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: "var(--sp-2)", marginBottom: "var(--sp-1)" }}>
@@ -273,11 +273,13 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
               {!disabled && (
                 <div style={{
                   position: "sticky",
-                  bottom: 0,
+                  bottom: "var(--sp-3)",
                   background: "var(--panel-solid)",
                   borderTop: "1px solid var(--line)",
-                  padding: "var(--sp-3) 0 0",
+                  padding: "var(--sp-3)",
                   marginTop: "var(--sp-3)",
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-sm)",
                 }}>
                   {/* 修改中提示 */}
                   {loading && (

@@ -43,6 +43,11 @@ export async function POST(
     const img = await provider.generateImage({ prompt, model });
     const savedUrl = await saveAiImage(img.url, `covers/${id}`);
 
+    await prisma.courseRndProject.update({
+      where: { id },
+      data: { coverUrl: savedUrl },
+    });
+
     return NextResponse.json({
       data: { coverUrl: savedUrl },
     });
