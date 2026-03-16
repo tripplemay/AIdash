@@ -14,6 +14,7 @@ interface Provider {
   supportText: boolean;
   supportImage: boolean;
   isActive: boolean;
+  proxyUrl: string | null;
 }
 
 interface ActionConfig {
@@ -51,7 +52,7 @@ export default function AiSettingsPage() {
   const [actions, setActions] = useState<ActionConfig[]>([]);
   const [pricingInfo, setPricingInfo] = useState<PricingInfo | null>(null);
   const [showAddProvider, setShowAddProvider] = useState(false);
-  const [newProvider, setNewProvider] = useState({ name: "", baseUrl: "", apiKey: "", supportText: true, supportImage: false });
+  const [newProvider, setNewProvider] = useState({ name: "", baseUrl: "", apiKey: "", supportText: true, supportImage: false, proxyUrl: "" });
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -75,7 +76,7 @@ export default function AiSettingsPage() {
       if (!res.ok) { setError(json.error); return; }
       setProviders(prev => [...prev, json.data]);
       setShowAddProvider(false);
-      setNewProvider({ name: "", baseUrl: "", apiKey: "", supportText: true, supportImage: false });
+      setNewProvider({ name: "", baseUrl: "", apiKey: "", supportText: true, supportImage: false, proxyUrl: "" });
     } catch {
       setError("操作失败");
     } finally {
@@ -180,9 +181,15 @@ export default function AiSettingsPage() {
                 <input className="input input--sm" value={newProvider.baseUrl} onChange={e => setNewProvider(p => ({ ...p, baseUrl: e.target.value }))} placeholder="https://openrouter.ai/api/v1" />
               </div>
             </div>
-            <div style={{ marginBottom: "var(--sp-3)" }}>
-              <label className="field-label">API Key</label>
-              <input className="input input--sm" type="password" value={newProvider.apiKey} onChange={e => setNewProvider(p => ({ ...p, apiKey: e.target.value }))} placeholder="sk-..." />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--sp-3)", marginBottom: "var(--sp-3)" }}>
+              <div>
+                <label className="field-label">API Key</label>
+                <input className="input input--sm" type="password" value={newProvider.apiKey} onChange={e => setNewProvider(p => ({ ...p, apiKey: e.target.value }))} placeholder="sk-..." />
+              </div>
+              <div>
+                <label className="field-label">代理地址（可选，留空直连）</label>
+                <input className="input input--sm" value={newProvider.proxyUrl} onChange={e => setNewProvider(p => ({ ...p, proxyUrl: e.target.value }))} placeholder="socks5://127.0.0.1:1080" />
+              </div>
             </div>
             <div style={{ display: "flex", gap: "var(--sp-4)", marginBottom: "var(--sp-3)", fontSize: 13 }}>
               <label><input type="checkbox" checked={newProvider.supportText} onChange={e => setNewProvider(p => ({ ...p, supportText: e.target.checked }))} /> 支持文本生成</label>

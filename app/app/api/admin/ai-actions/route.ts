@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
   // 模型可用性测试（除非 skipTest=true，即用户确认跳过）
   if (!skipTest) {
-    const testResult = await testModel(provider.baseUrl, apiKey, modelName);
+    const testResult = await testModel(provider.baseUrl, apiKey, modelName, provider.proxyUrl);
     if (!testResult.success) {
       return NextResponse.json({
         error: `模型测试失败：${testResult.error}`,
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   if (inputPricePerM != null && outputPricePerM != null) {
     pricing = { inputPricePerM, outputPricePerM, pricingSource: "manual" };
   } else {
-    const fetched = await fetchModelPricing(provider.baseUrl, apiKey, modelName);
+    const fetched = await fetchModelPricing(provider.baseUrl, apiKey, modelName, provider.proxyUrl);
     if (fetched) {
       pricing = { ...fetched, pricingSource: "auto" };
     }

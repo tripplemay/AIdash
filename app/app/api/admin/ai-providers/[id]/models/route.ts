@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { ROLES } from "@/lib/roles";
 import { decryptApiKey } from "@/lib/crypto";
+import { proxyFetch } from "@/lib/proxy-fetch";
 
 // GET /api/admin/ai-providers/[id]/models — 从服务商 API 拉取可用模型列表（含价格）
 export async function GET(
@@ -24,8 +25,9 @@ export async function GET(
 
   try {
     const base = provider.baseUrl.replace(/\/+$/, "");
-    const res = await fetch(`${base}/models`, {
+    const res = await proxyFetch(`${base}/models`, {
       headers: { "Authorization": `Bearer ${apiKey}` },
+      proxyUrl: provider.proxyUrl,
     });
 
     if (!res.ok) {

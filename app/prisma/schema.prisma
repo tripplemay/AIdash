@@ -206,6 +206,7 @@ model AiProvider {
   supportText  Boolean  @default(true)
   supportImage Boolean  @default(false)
   isActive     Boolean  @default(true)
+  proxyUrl     String?  // 代理地址，如 socks5://127.0.0.1:1080，为空表示直连
   createdAt    DateTime @default(now())
 
   actionConfigs AiActionConfig[]

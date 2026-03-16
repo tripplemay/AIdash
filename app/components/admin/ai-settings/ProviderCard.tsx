@@ -11,6 +11,7 @@ interface Provider {
   supportText: boolean;
   supportImage: boolean;
   isActive: boolean;
+  proxyUrl: string | null;
 }
 
 interface Props {
@@ -27,6 +28,7 @@ export default function ProviderCard({ provider, onUpdate, onDelete }: Props) {
     supportText: provider.supportText,
     supportImage: provider.supportImage,
     apiKey: "",
+    proxyUrl: provider.proxyUrl ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -52,6 +54,7 @@ export default function ProviderCard({ provider, onUpdate, onDelete }: Props) {
         baseUrl: editData.baseUrl,
         supportText: editData.supportText,
         supportImage: editData.supportImage,
+        proxyUrl: editData.proxyUrl || null,
       };
       if (editData.apiKey) body.apiKey = editData.apiKey;
 
@@ -116,6 +119,7 @@ export default function ProviderCard({ provider, onUpdate, onDelete }: Props) {
           <div className="provider-card__tags">
             {provider.supportText && <span className="pill pill--sm">文本</span>}
             {provider.supportImage && <span className="pill pill--sm">图片</span>}
+            {provider.proxyUrl && <span className="pill pill--sm" title={provider.proxyUrl}>代理</span>}
           </div>
         </div>
         <div className="provider-card__actions">
@@ -154,9 +158,15 @@ export default function ProviderCard({ provider, onUpdate, onDelete }: Props) {
               <input className="input input--sm" value={editData.baseUrl} onChange={e => setEditData(d => ({ ...d, baseUrl: e.target.value }))} />
             </div>
           </div>
-          <div style={{ marginTop: "var(--sp-2)" }}>
-            <label className="field-label">更换 API Key（留空保持不变）</label>
-            <input className="input input--sm" type="password" value={editData.apiKey} onChange={e => setEditData(d => ({ ...d, apiKey: e.target.value }))} placeholder="留空保持不变" />
+          <div className="provider-card__edit-grid" style={{ marginTop: "var(--sp-2)" }}>
+            <div>
+              <label className="field-label">更换 API Key（留空保持不变）</label>
+              <input className="input input--sm" type="password" value={editData.apiKey} onChange={e => setEditData(d => ({ ...d, apiKey: e.target.value }))} placeholder="留空保持不变" />
+            </div>
+            <div>
+              <label className="field-label">代理地址（留空直连）</label>
+              <input className="input input--sm" value={editData.proxyUrl} onChange={e => setEditData(d => ({ ...d, proxyUrl: e.target.value }))} placeholder="socks5://127.0.0.1:1080" />
+            </div>
           </div>
           <div className="provider-card__edit-checks">
             <label><input type="checkbox" checked={editData.supportText} onChange={e => setEditData(d => ({ ...d, supportText: e.target.checked }))} /> 文本</label>

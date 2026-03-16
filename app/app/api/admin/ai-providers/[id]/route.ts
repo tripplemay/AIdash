@@ -20,7 +20,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   const { id } = await params;
   const body = await request.json();
-  const { name, baseUrl, apiKey, supportText, supportImage, protocol, isActive } = body;
+  const { name, baseUrl, apiKey, supportText, supportImage, protocol, isActive, proxyUrl } = body;
 
   const existing = await prisma.aiProvider.findUnique({ where: { id } });
   if (!existing) {
@@ -32,6 +32,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   if (baseUrl !== undefined) data.baseUrl = normalizeBaseUrl(baseUrl as string);
   if (protocol !== undefined) data.protocol = protocol;
   if (supportText !== undefined) data.supportText = supportText;
+  if (proxyUrl !== undefined) data.proxyUrl = proxyUrl || null;
   if (supportImage !== undefined) data.supportImage = supportImage;
   if (isActive !== undefined) data.isActive = isActive;
   if (apiKey) data.apiKeyEnc = encryptApiKey(apiKey);

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { decryptApiKey } from "@/lib/crypto";
+import { proxyFetch } from "@/lib/proxy-fetch";
 
 // ─── 汇率刷新 ───
 
@@ -46,12 +47,14 @@ export async function fetchModelPricing(
   baseUrl: string,
   apiKey: string,
   modelName: string,
+  proxyUrl?: string | null,
 ): Promise<ModelPricing | null> {
   try {
     const base = baseUrl.replace(/\/+$/, "");
-    const res = await fetch(`${base}/models`, {
+    const res = await proxyFetch(`${base}/models`, {
       headers: { Authorization: `Bearer ${apiKey}` },
       signal: AbortSignal.timeout(15_000),
+      proxyUrl,
     });
 
     if (!res.ok) return null;
@@ -107,6 +110,7 @@ export async function refreshAllActionPricing(): Promise<RefreshResult[]> {
       action.provider.baseUrl,
       apiKey,
       action.modelName,
+      action.provider.proxyUrl,
     );
 
     if (pricing) {
@@ -134,10 +138,11 @@ export async function testModel(
   baseUrl: string,
   apiKey: string,
   modelName: string,
+  proxyUrl?: string | null,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const base = baseUrl.replace(/\/+$/, "");
-    const res = await fetch(`${base}/chat/completions`, {
+    const res = await proxyFetch(`${base}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -149,6 +154,7 @@ export async function testModel(
         max_tokens: 5,
       }),
       signal: AbortSignal.timeout(15_000),
+      proxyUrl,
     });
 
     if (!res.ok) {

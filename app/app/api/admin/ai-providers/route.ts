@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   if (!(await requireRole([ROLES.ADMIN]))) return forbiddenResponse();
 
   const body = await request.json();
-  const { name, baseUrl, apiKey, protocol, supportText, supportImage } = body;
+  const { name, baseUrl, apiKey, protocol, supportText, supportImage, proxyUrl } = body;
 
   if (!name || !baseUrl || !apiKey) {
     return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       protocol: protocol ?? "openai",
       supportText: supportText ?? true,
       supportImage: supportImage ?? false,
+      proxyUrl: proxyUrl || null,
     },
   });
 

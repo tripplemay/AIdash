@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { decryptApiKey } from "@/lib/crypto";
+import { proxyFetch } from "@/lib/proxy-fetch";
 import aiConfigFile from "@/config/ai-models.json";
 
 // ─── Types ───
@@ -47,6 +48,7 @@ interface ProviderConfig {
   apiKey: string;
   protocol: string;
   supportImage: boolean;
+  proxyUrl?: string | null;
 }
 
 async function getProviderForAction(actionKey: string): Promise<{ provider: ProviderConfig; modelName: string } | null> {
@@ -63,6 +65,7 @@ async function getProviderForAction(actionKey: string): Promise<{ provider: Prov
           apiKey: decryptApiKey(config.provider.apiKeyEnc),
           protocol: config.provider.protocol,
           supportImage: config.provider.supportImage,
+          proxyUrl: config.provider.proxyUrl,
         },
         modelName: config.modelName,
       };
@@ -78,7 +81,7 @@ async function getProviderForAction(actionKey: string): Promise<{ provider: Prov
 // ─── OpenAI 兼容 Provider ───
 
 function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000): AiProvider {
-  const { apiKey } = config;
+  const { apiKey, proxyUrl } = config;
   const base = config.baseUrl.replace(/\/+$/, "");
   const chatUrl = `${base}/chat/completions`;
   const imageUrl = `${base}/images/generations`;
@@ -89,7 +92,7 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
-        const res = await fetch(chatUrl, {
+        const res = await proxyFetch(chatUrl, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${apiKey}`,
@@ -107,6 +110,7 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
             max_tokens: maxTokens,
           }),
           signal: controller.signal,
+          proxyUrl,
         });
 
         if (!res.ok) {
@@ -129,13 +133,14 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
     },
 
     async generateImage({ prompt, model, size = "1024x1024" }) {
-      const res = await fetch(imageUrl, {
+      const res = await proxyFetch(imageUrl, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ model, prompt, n: 1, size }),
+        proxyUrl,
       });
 
       if (!res.ok) {
@@ -167,6 +172,7 @@ export async function createDefaultProvider(options?: { timeoutMs?: number }): P
         apiKey: decryptApiKey(provider.apiKeyEnc),
         protocol: provider.protocol,
         supportImage: provider.supportImage,
+        proxyUrl: provider.proxyUrl,
       }, options?.timeoutMs);
     }
   } catch {}

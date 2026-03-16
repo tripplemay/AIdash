@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { ROLES } from "@/lib/roles";
 import { decryptApiKey } from "@/lib/crypto";
+import { proxyFetch } from "@/lib/proxy-fetch";
 
 // POST /api/admin/ai-providers/[id]/test — 连通性测试
 export async function POST(
@@ -27,9 +28,10 @@ export async function POST(
     const timer = setTimeout(() => controller.abort(), 10_000);
 
     const base = provider.baseUrl.replace(/\/+$/, "");
-    const res = await fetch(`${base}/models`, {
+    const res = await proxyFetch(`${base}/models`, {
       headers: { Authorization: `Bearer ${apiKey}` },
       signal: controller.signal,
+      proxyUrl: provider.proxyUrl,
     });
 
     clearTimeout(timer);
