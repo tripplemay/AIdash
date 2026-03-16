@@ -7,15 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── 用户（老师 / 管理员） ───
+// ─── 用户（老师 / 教学主管 / 管理员） ───
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
   password  String
   name      String
-  role      String   @default("teacher") // "teacher" | "admin"
+  role      String   @default("teacher") // "teacher" | "rd_manager" | "admin"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // 课程研发模块关联
+  courseRndProjects  CourseRndProject[]
+  publishRecords     CourseRndPublishRecord[]
+  operationLogs      OperationLog[]
 }
 
 // ─── 课程包 ───
@@ -67,4 +72,153 @@ model Attachment {
 
   lessonId  String
   lesson    Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+// ─── 课程研发项目 ───
+model CourseRndProject {
+  id                        String   @id @default(cuid())
+  title                     String
+  status                    String   @default("direction") // "direction" | "workbench" | "finalized" | "paused" | "archived"
+  targetAudience            String?
+  courseDirection            String?
+  ageRange                  String?
+  level                     String?
+  lessonCount               Int?
+  coreDeliverable           String?
+  roughFramework            String?  @db.LongText
+  coreNeeds                 String?  @db.LongText
+  constraints               String?  @db.LongText
+  currentDirectionVersionId String?
+  currentPlanVersionId      String?
+  createdById               String
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  createdBy         User                      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  directionVersions CourseRndDirectionVersion[]
+  planVersions      CourseRndPlanVersion[]
+  publishRecords    CourseRndPublishRecord[]
+}
+
+// ─── 课程方向版本 ───
+model CourseRndDirectionVersion {
+  id              String   @id @default(cuid())
+  projectId       String
+  versionNo       Int
+  summary         String?  @db.LongText
+  frameworkJson    String?  @db.LongText // JSON: [{lessonNo, title, overview}]
+  isSelected      Boolean  @default(false)
+  promptSnapshot  String?  @db.LongText
+  modelName       String?
+  inputTokens     Int?
+  outputTokens    Int?
+  createdAt       DateTime @default(now())
+
+  project CourseRndProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// ─── 课程方案版本 ───
+model CourseRndPlanVersion {
+  id                       String   @id @default(cuid())
+  projectId                String
+  versionNo                Int
+  isSelected               Boolean  @default(false)
+  planJson                 String   @db.LongText
+  changeSummary            String?  @db.LongText
+  sourceDirectionVersionId String?
+  modelName                String?
+  inputTokens              Int?
+  outputTokens             Int?
+  createdAt                DateTime @default(now())
+
+  project      CourseRndProject       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  lessonDrafts CourseRndLessonDraft[]
+}
+
+// ─── 课次草稿 ───
+model CourseRndLessonDraft {
+  id            String   @id @default(cuid())
+  planVersionId String
+  lessonNo      Int
+  title         String
+  contentData   String?  @db.LongText // v2 完整 JSON (hero + sections)
+  draftJson     String?  @db.LongText // AI 原始输出 (AiLessonOutput)
+  lastFeedback  String?  @db.LongText
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  planVersion CourseRndPlanVersion @relation(fields: [planVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([planVersionId, lessonNo])
+}
+
+// ─── AI 调用日志 ───
+model CourseRndAiCallLog {
+  id            String   @id @default(cuid())
+  projectId     String
+  pageKey       String   // "direction" | "workbench"
+  actionType    String   // generate_framework, regenerate_lesson, revise_lesson, etc.
+  modelName     String
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  estimatedCost Float    @default(0) // CNY
+  cacheHit      Boolean  @default(false)
+  userId        String?
+  metadataJson  String?  @db.LongText
+  createdAt     DateTime @default(now())
+}
+
+// ─── 课程发布记录 ───
+model CourseRndPublishRecord {
+  id            String   @id @default(cuid())
+  projectId     String
+  packageSlug   String
+  packageTitle  String
+  publishedById String
+  resultJson    String?  @db.LongText
+  createdAt     DateTime @default(now())
+
+  project     CourseRndProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  publishedBy User             @relation(fields: [publishedById], references: [id], onDelete: Cascade)
+}
+
+// ─── 操作日志 ───
+model OperationLog {
+  id         String   @id @default(cuid())
+  userId     String
+  module     String   // "package" | "user"
+  action     String   // "upload" | "publish" | "online" | "offline" | "delete" | "create" | "edit" | "reset_password"
+  targetId   String?
+  targetName String?
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── AI 服务提供商 ───
+model AiProvider {
+  id           String   @id @default(cuid())
+  name         String
+  baseUrl      String
+  apiKeyEnc    String   // AES-256-GCM 加密
+  protocol     String   @default("openai")
+  supportText  Boolean  @default(true)
+  supportImage Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  actionConfigs AiActionConfig[]
+}
+
+// ─── AI 动作配置（动作→服务商+模型映射） ───
+model AiActionConfig {
+  id          String @id @default(cuid())
+  actionKey   String @unique // "generate_framework", "regenerate_lesson", etc.
+  actionLabel String
+  actionType  String // "text" | "image"
+  providerId  String
+  modelName   String
+
+  provider AiProvider @relation(fields: [providerId], references: [id])
 }
