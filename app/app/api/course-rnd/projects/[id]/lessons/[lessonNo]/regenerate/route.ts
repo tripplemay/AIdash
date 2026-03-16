@@ -192,28 +192,28 @@ ${allDrafts.map(d => `第 ${d.lessonNo} 课：${d.title}`).join("\n")}
           return;
         }
 
-        // 图片生成（如果 AI 提供了图片描述）
+        // 图片生成（并行，每张独立，失败不影响其他）
         sendEvent("progress", { step: 6, total: 7, label: "正在生成配图...", tokenCount: 0 });
-        try {
-          const imageConfig = await getProviderAndModel("lesson_cover").catch(() => null);
-          const imageProvider = imageConfig?.provider;
-          const imageModel = imageConfig?.model ?? "";
+        const imageConfig = await getProviderAndModel("lesson_cover").catch(() => null);
+        const imageProvider = imageConfig?.provider;
+        const imageModel = imageConfig?.model ?? "";
 
-          if (aiOutput.hero_image_prompt && imageProvider?.generateImage) {
-            const img = await imageProvider.generateImage({ prompt: aiOutput.hero_image_prompt, model: imageModel });
-            aiOutput.hero_image_url = await saveAiImage(img.url, `lessons/${id}`);
-          }
-          if (aiOutput.illustration_prompt && imageProvider?.generateImage) {
-            const img = await imageProvider.generateImage({ prompt: aiOutput.illustration_prompt, model: imageModel });
-            aiOutput.illustration_url = await saveAiImage(img.url, `lessons/${id}`);
-          }
-          if (aiOutput.template_image_prompt && imageProvider?.generateImage) {
-            const img = await imageProvider.generateImage({ prompt: aiOutput.template_image_prompt, model: imageModel });
-            aiOutput.template_image_url = await saveAiImage(img.url, `lessons/${id}`);
-          }
-        } catch (imgErr) {
-          // 图片生成失败不阻断主流程
-          console.warn("图片生成失败（不影响课程内容）:", imgErr instanceof Error ? imgErr.message : imgErr);
+        if (imageProvider?.generateImage) {
+          const imageJobs: Array<{ field: "hero_image_url" | "illustration_url" | "template_image_url"; prompt: string | undefined }> = [
+            { field: "hero_image_url", prompt: aiOutput.hero_image_prompt },
+            { field: "illustration_url", prompt: aiOutput.illustration_prompt },
+            { field: "template_image_url", prompt: aiOutput.template_image_prompt },
+          ];
+
+          await Promise.all(imageJobs.map(async (job) => {
+            if (!job.prompt) return;
+            try {
+              const img = await imageProvider.generateImage!({ prompt: job.prompt, model: imageModel });
+              (aiOutput as unknown as Record<string, unknown>)[job.field] = await saveAiImage(img.url, `lessons/${id}`);
+            } catch {
+              // 单张失败不影响其他
+            }
+          }));
         }
 
         // 系统组装 v2 contentData（格式 100% 正确）
