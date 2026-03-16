@@ -44,6 +44,7 @@ export interface Hero {
   subtitle: string;
   goal: string;
   outcome: string;
+  imageUrl?: string;
 }
 
 export interface LessonContent {

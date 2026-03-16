@@ -8,6 +8,7 @@ import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-data";
 import { getBaselinePrompt } from "@/lib/ai/prompts";
+import { saveAiImage } from "@/lib/ai/image-store";
 
 const SYSTEM_PROMPT = `你是课程设计助手。用户会提供当前课程方案和修改意见。
 
@@ -65,6 +66,60 @@ export async function POST(
 
   if (!currentOutput) {
     return NextResponse.json({ error: "请先生成课程方案" }, { status: 400 });
+  }
+
+  // 图片类修改：用反馈作为新 prompt 重新生成图片
+  const IMAGE_TARGETS = ["hero_image", "illustration", "template_image"];
+  if (targetSection && IMAGE_TARGETS.includes(targetSection)) {
+    const actionKey = targetSection === "hero_image" ? "lesson_cover" : "lesson_illustration";
+    let imageProvider, imageModel;
+    try {
+      ({ provider: imageProvider, model: imageModel } = await getProviderAndModel(actionKey));
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : "图片模型未配置" }, { status: 503 });
+    }
+
+    if (!imageProvider.generateImage) {
+      return NextResponse.json({ error: "该服务商不支持图片生成" }, { status: 503 });
+    }
+
+    // 用原始 prompt + 用户反馈组合成新 prompt
+    const promptField = targetSection === "hero_image" ? "hero_image_prompt"
+      : targetSection === "illustration" ? "illustration_prompt"
+      : "template_image_prompt";
+    const originalPrompt = (currentOutput as unknown as Record<string, unknown>)[promptField] as string ?? "";
+    const newPrompt = originalPrompt
+      ? `${originalPrompt}\n\nAdditional requirements: ${feedback}`
+      : feedback;
+
+    try {
+      const img = await imageProvider.generateImage({ prompt: newPrompt, model: imageModel });
+      const savedUrl = await saveAiImage(img.url, `lessons/${id}`);
+
+      // 更新对应字段
+      const urlField = targetSection === "hero_image" ? "hero_image_url"
+        : targetSection === "illustration" ? "illustration_url"
+        : "template_image_url";
+      (currentOutput as unknown as Record<string, unknown>)[urlField] = savedUrl;
+      (currentOutput as unknown as Record<string, unknown>)[promptField] = newPrompt;
+
+      const contentData = buildContentData(currentOutput);
+
+      await prisma.courseRndLessonDraft.update({
+        where: { id: draft.id },
+        data: {
+          contentData: JSON.stringify(contentData),
+          draftJson: JSON.stringify(currentOutput),
+          lastFeedback: feedback,
+        },
+      });
+
+      return NextResponse.json({ data: { contentData } });
+    } catch (e) {
+      return NextResponse.json({
+        error: `图片生成失败：${e instanceof Error ? e.message : String(e)}`,
+      }, { status: 502 });
+    }
   }
 
   let provider, model;

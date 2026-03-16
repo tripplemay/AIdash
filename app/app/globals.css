@@ -1279,6 +1279,18 @@ img { display: block; max-width: 100%; }
   position: relative;
   z-index: 1;
 }
+.lesson-hero__image-wrap {
+  margin-bottom: var(--sp-4);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+}
+.lesson-hero__image {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  display: block;
+}
 
 .lesson-hero__tags {
   display: flex;

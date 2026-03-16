@@ -162,8 +162,20 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
           const chatJson = await chatRes.json();
           const message = chatJson.choices?.[0]?.message;
 
+          // GPT-5-image 等模型：图片在 message.images 数组中
+          if (Array.isArray(message?.images)) {
+            for (const img of message.images) {
+              if (img.type === "image_url" && img.image_url?.url) {
+                return { url: img.image_url.url, model };
+              }
+              if (typeof img === "string" && img.startsWith("data:image/")) {
+                return { url: img, model };
+              }
+            }
+          }
+
           if (message?.content) {
-            // OpenRouter Gemini 图片在 content 数组中
+            // Gemini 等模型：图片在 content 数组中
             if (Array.isArray(message.content)) {
               for (const part of message.content) {
                 if (part.type === "image_url" && part.image_url?.url) {

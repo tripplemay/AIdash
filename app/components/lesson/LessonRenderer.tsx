@@ -147,6 +147,11 @@ function HeroSection({ hero }: { hero: Hero }) {
   return (
     <div className="lesson-hero">
       <div className="lesson-hero__inner">
+        {hero.imageUrl && (
+          <div id="hero_image" className="lesson-hero__image-wrap">
+            <img src={hero.imageUrl} alt={hero.title} className="lesson-hero__image" />
+          </div>
+        )}
         <div className="lesson-hero__tags">
           {hero.tags.map(tag => (
             <span key={tag} className="lesson-hero__tag">{tag}</span>

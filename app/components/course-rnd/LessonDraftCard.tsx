@@ -115,10 +115,22 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
     setTargetSection(null);
   }
 
-  // section 点击事件处理（从 LessonRenderer 内部冒泡）
+  // section / image 点击事件处理（从 LessonRenderer 内部冒泡）
   function handleContentClick(e: React.MouseEvent) {
-    // 查找被点击的 section header
     const target = e.target as HTMLElement;
+
+    // 点击 hero 图片区域 → 关联到图片修改
+    const heroImage = target.closest("#hero_image");
+    if (heroImage) {
+      if (targetSection?.id === "hero_image") {
+        setTargetSection(null);
+      } else {
+        setTargetSection({ id: "hero_image", title: "课次封面图" });
+      }
+      return;
+    }
+
+    // 查找被点击的 section header
     const header = target.closest(".lesson-section__header");
     if (!header) return;
 
@@ -169,46 +181,6 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
       <div className="muted small" style={{ marginBottom: "var(--sp-3)" }}>
         {sectionCount > 0 ? `${sectionCount} 个教学板块` : "尚未生成详细内容"}
       </div>
-
-      {/* 图片区域 */}
-      {draft.contentData && !generating && (
-        <div style={{ display: "flex", gap: "var(--sp-3)", marginBottom: "var(--sp-3)", flexWrap: "wrap" }}>
-          {[
-            { type: "hero" as const, label: "课次封面", url: images.hero },
-            { type: "illustration" as const, label: "课内插图", url: images.illustration },
-            { type: "template" as const, label: "模板示意图", url: images.template },
-          ].map(img => (
-            <div key={img.type} style={{
-              width: 140, border: "1px solid var(--line)", borderRadius: "var(--radius-md)",
-              overflow: "hidden", background: "var(--bg-faint)",
-            }}>
-              <div
-                style={{ height: 100, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: img.url ? "pointer" : "default" }}
-                onClick={() => { if (img.url) setLightboxUrl(img.url); }}
-              >
-                {img.url ? (
-                  <img src={img.url} alt={img.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <span className="muted" style={{ fontSize: 11 }}>未生成</span>
-                )}
-              </div>
-              <div style={{ padding: "4px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 11 }}>{img.label}</span>
-                {!disabled && (
-                  <button
-                    className="btn btn--soft btn--xs"
-                    style={{ fontSize: 10, padding: "1px 4px" }}
-                    onClick={() => handleRegenerateImage(img.type)}
-                    disabled={!!regeneratingImage || loading}
-                  >
-                    {regeneratingImage === img.type ? "..." : img.url ? "重新生成" : "生成"}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* 生成中 — 步骤进度列表 */}
       {generating && progress && (
