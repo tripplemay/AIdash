@@ -6,6 +6,13 @@ import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { ROLES } from "@/lib/roles";
 import { encryptApiKey, maskApiKey, decryptApiKey } from "@/lib/crypto";
 
+/** 清理 baseUrl：去掉末尾斜杠和误填的子路径 */
+function normalizeBaseUrl(url: string): string {
+  return url
+    .replace(/\/(chat\/completions|models|images\/generations|completions)\/?$/i, "")
+    .replace(/\/+$/, "");
+}
+
 // GET /api/admin/ai-providers — 列表（脱敏）
 export async function GET() {
   if (!(await requireRole([ROLES.ADMIN]))) return forbiddenResponse();
@@ -38,7 +45,7 @@ export async function POST(request: Request) {
   const provider = await prisma.aiProvider.create({
     data: {
       name,
-      baseUrl: baseUrl.replace(/\/+$/, ""),
+      baseUrl: normalizeBaseUrl(baseUrl),
       apiKeyEnc: encryptApiKey(apiKey),
       protocol: protocol ?? "openai",
       supportText: supportText ?? true,
