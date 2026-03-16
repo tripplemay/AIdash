@@ -35,6 +35,10 @@ export default function ActionMappingRow({
   const [modelName, setModelName] = useState(currentModelName);
   const [models, setModels] = useState<ModelOption[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+
+  // 同步 props → state（actions 异步加载完成后 props 会更新）
+  useEffect(() => { setProviderId(currentProviderId); }, [currentProviderId]);
+  useEffect(() => { setModelName(currentModelName); }, [currentModelName]);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "ok" | "warn" | "error"; message: string } | null>(null);
   const changed = providerId !== currentProviderId || modelName !== currentModelName;
