@@ -23,7 +23,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   const data: Record<string, unknown> = {};
   if (name !== undefined) data.name = name;
-  if (baseUrl !== undefined) data.baseUrl = baseUrl;
+  if (baseUrl !== undefined) data.baseUrl = (baseUrl as string).replace(/\/+$/, "");
   if (protocol !== undefined) data.protocol = protocol;
   if (supportText !== undefined) data.supportText = supportText;
   if (supportImage !== undefined) data.supportImage = supportImage;

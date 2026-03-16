@@ -78,9 +78,10 @@ async function getProviderForAction(actionKey: string): Promise<{ provider: Prov
 // ─── OpenAI 兼容 Provider ───
 
 function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000): AiProvider {
-  const { baseUrl, apiKey } = config;
-  const chatUrl = `${baseUrl}/chat/completions`;
-  const imageUrl = `${baseUrl}/images/generations`;
+  const { apiKey } = config;
+  const base = config.baseUrl.replace(/\/+$/, "");
+  const chatUrl = `${base}/chat/completions`;
+  const imageUrl = `${base}/images/generations`;
 
   return {
     async chat({ systemPrompt, userMessage, model, temperature = 0.7, maxTokens = 8192 }) {

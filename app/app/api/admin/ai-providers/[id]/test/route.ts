@@ -26,7 +26,8 @@ export async function POST(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10_000);
 
-    const res = await fetch(`${provider.baseUrl}/models`, {
+    const base = provider.baseUrl.replace(/\/+$/, "");
+    const res = await fetch(`${base}/models`, {
       headers: { Authorization: `Bearer ${apiKey}` },
       signal: controller.signal,
     });

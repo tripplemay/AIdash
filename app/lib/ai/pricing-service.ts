@@ -48,7 +48,8 @@ export async function fetchModelPricing(
   modelName: string,
 ): Promise<ModelPricing | null> {
   try {
-    const res = await fetch(`${baseUrl}/models`, {
+    const base = baseUrl.replace(/\/+$/, "");
+    const res = await fetch(`${base}/models`, {
       headers: { Authorization: `Bearer ${apiKey}` },
       signal: AbortSignal.timeout(15_000),
     });
@@ -135,7 +136,8 @@ export async function testModel(
   modelName: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const res = await fetch(`${baseUrl}/chat/completions`, {
+    const base = baseUrl.replace(/\/+$/, "");
+    const res = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,

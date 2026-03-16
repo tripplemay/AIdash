@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const provider = await prisma.aiProvider.create({
     data: {
       name,
-      baseUrl,
+      baseUrl: baseUrl.replace(/\/+$/, ""),
       apiKeyEnc: encryptApiKey(apiKey),
       protocol: protocol ?? "openai",
       supportText: supportText ?? true,

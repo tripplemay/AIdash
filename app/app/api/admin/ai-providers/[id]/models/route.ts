@@ -23,7 +23,8 @@ export async function GET(
   const apiKey = decryptApiKey(provider.apiKeyEnc);
 
   try {
-    const res = await fetch(`${provider.baseUrl}/models`, {
+    const base = provider.baseUrl.replace(/\/+$/, "");
+    const res = await fetch(`${base}/models`, {
       headers: { "Authorization": `Bearer ${apiKey}` },
     });
 
