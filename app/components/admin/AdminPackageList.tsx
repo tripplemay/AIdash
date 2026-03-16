@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import UploadModal from "./UploadModal";
+import { SetTopBar } from "@/components/TopBarContext";
 
 interface PackageRow {
   id: string;
@@ -49,13 +50,11 @@ export default function AdminPackageList({ packages }: { packages: PackageRow[] 
 
   return (
     <>
-      <div className="admin-header">
-        <div>
-          <h2 className="admin-header__title">课程包管理</h2>
-          <p className="admin-header__subtitle">共 {packages.length} 个课程包</p>
-        </div>
-        <button className="btn" onClick={() => setShowUpload(true)}>上传课程包 zip</button>
-      </div>
+      <SetTopBar
+        breadcrumb="管理后台"
+        title="课程包管理"
+        actions={<button className="btn btn--sm" onClick={() => setShowUpload(true)}>上传课程包 zip</button>}
+      />
 
       <div className="table-wrap">
         <table className="table">

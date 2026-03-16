@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SetTopBar } from "@/components/TopBarContext";
 
 interface LessonDraftSummary {
   lessonNo: number;
@@ -120,14 +121,11 @@ export default function CourseRndDashboard({ projects, projectCosts, totalCost, 
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-      {/* 头部 */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--sp-5)" }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: "var(--sp-1)" }}>研发进度管理</h1>
-          <p className="muted" style={{ fontSize: 14 }}>管理课程研发项目，跟踪进度</p>
-        </div>
-        <Link href="/course-rnd/new" className="btn">+ 新建项目</Link>
-      </div>
+      <SetTopBar
+        breadcrumb="课程研发"
+        title="研发进度管理"
+        actions={<Link href="/course-rnd/new" className="btn btn--sm">+ 新建项目</Link>}
+      />
 
       {/* AI 费用总览 */}
       <div style={{

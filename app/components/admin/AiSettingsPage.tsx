@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ProviderCard from "./ai-settings/ProviderCard";
 import ActionMappingRow from "./ai-settings/ActionMappingRow";
 import UsageStats from "./ai-settings/UsageStats";
+import { SetTopBar } from "@/components/TopBarContext";
 
 interface Provider {
   id: string;
@@ -132,12 +133,10 @@ export default function AiSettingsPage() {
 
   return (
     <>
-      <div className="admin-header">
-        <div>
-          <h2 className="admin-header__title">AI 服务配置</h2>
-          <p className="admin-header__subtitle">管理 AI 服务提供商、模型映射和用量统计</p>
-        </div>
-      </div>
+      <SetTopBar
+        breadcrumb="管理后台"
+        title="AI 服务配置"
+      />
 
       {error && <div className="field-error" style={{ marginBottom: "var(--sp-4)" }}>{error}</div>}
 

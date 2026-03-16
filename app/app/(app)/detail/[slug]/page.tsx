@@ -1,10 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { SetBreadcrumb } from "@/components/TopBarContext";
+import { SetTopBar } from "@/components/TopBarContext";
 import EnterLessonButton from "@/components/EnterLessonButton";
 import { isLessonAccessible } from "@/lib/lesson-utils";
 import Image from "next/image";
-import Link from "next/link";
 
 export default async function DetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -28,10 +27,10 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
 
   return (
     <>
-      <SetBreadcrumb>
-        <Link href="/list">返回课程包列表</Link>
-        <span> / {pkg.ageRange} 岁 / {pkg.level}</span>
-      </SetBreadcrumb>
+      <SetTopBar
+        breadcrumb="课程包列表"
+        title={pkg.title}
+      />
 
       <div id="package-info" className="detail-info">
         <div className={`detail-cover${pkg.coverImage ? "" : " detail-cover--empty"}`}>

@@ -348,7 +348,7 @@ img { display: block; max-width: 100%; }
 
 /* ━━━ 5. 顶栏 ━━━ */
 .topbar {
-  height: 64px;
+  height: 48px;
   border-bottom: 1px solid rgba(228,234,255,0.6);
   display: flex;
   align-items: center;
@@ -360,32 +360,49 @@ img { display: block; max-width: 100%; }
   flex-shrink: 0;
 }
 
-.topbar__title {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text);
+.topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
 }
 
-.topbar__breadcrumb {
+.topbar__back-link {
   font-size: 13px;
-  color: var(--muted);
-}
-
-.topbar__breadcrumb a {
   color: var(--brand);
   text-decoration: none;
   font-weight: 600;
-  transition: color var(--transition-fast);
+  white-space: nowrap;
+  transition: color var(--dur-fast);
+}
+.topbar__back-link:hover { color: #6079f5; }
+
+.topbar__sep {
+  width: 1px;
+  height: 16px;
+  background: var(--line);
+  margin: 0 var(--sp-3);
+  flex-shrink: 0;
 }
 
-.topbar__breadcrumb a:hover {
-  color: #6079f5;
+.topbar__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .topbar__right {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
+  flex-shrink: 0;
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
 }
 
 

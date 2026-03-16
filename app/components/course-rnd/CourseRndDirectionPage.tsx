@@ -6,6 +6,7 @@ import DirectionInputForm from "./DirectionInputForm";
 import { ConfirmModal } from "./CourseRndModal";
 import FrameworkResultPanel from "./FrameworkResultPanel";
 import Link from "next/link";
+import { SetTopBar } from "@/components/TopBarContext";
 
 interface RecentProject {
   id: string;
@@ -175,28 +176,17 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
 
   return (
     <div style={{ maxWidth: 960, margin: "0 auto" }}>
-      {/* 头部 */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--sp-6)" }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: "var(--sp-1)" }}>
-            {projectId ? "课程方向确认" : "创建新课程"}
-          </h1>
-          <p className="muted" style={{ fontSize: 14 }}>输入课程信息，AI 帮你生成课程框架</p>
-        </div>
-        {recentProjects && recentProjects.length > 0 && !projectId && (
-          <div style={{ display: "flex", gap: "var(--sp-2)" }}>
+      <SetTopBar
+        breadcrumb="研发进度"
+        title={projectId ? "课程方向确认" : "创建新课程"}
+        actions={recentProjects && recentProjects.length > 0 && !projectId ? (
+          <>
             {recentProjects.slice(0, 3).map(p => (
-              <Link
-                key={p.id}
-                href={`/course-rnd/${p.id}`}
-                className="btn btn--soft btn--sm"
-              >
-                {p.title}
-              </Link>
+              <Link key={p.id} href={`/course-rnd/${p.id}`} className="btn btn--soft btn--sm">{p.title}</Link>
             ))}
-          </div>
-        )}
-      </div>
+          </>
+        ) : undefined}
+      />
 
       {error && <div className="field-error" style={{ marginBottom: "var(--sp-4)" }}>{error}</div>}
 

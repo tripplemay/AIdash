@@ -3,26 +3,36 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
 interface TopBarState {
-  breadcrumb: ReactNode | null;
+  breadcrumb: string | null;
+  title: string | null;
+  actions: ReactNode | null;
 }
+
+const EMPTY_STATE: TopBarState = { breadcrumb: null, title: null, actions: null };
 
 const TopBarContext = createContext<{
   state: TopBarState;
-  setBreadcrumb: (breadcrumb: ReactNode | null) => void;
+  setTopBar: (state: Partial<TopBarState>) => void;
+  clearTopBar: () => void;
 }>({
-  state: { breadcrumb: null },
-  setBreadcrumb: () => {},
+  state: EMPTY_STATE,
+  setTopBar: () => {},
+  clearTopBar: () => {},
 });
 
 export function TopBarProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<TopBarState>({ breadcrumb: null });
+  const [state, setState] = useState<TopBarState>(EMPTY_STATE);
 
-  const setBreadcrumb = useCallback((breadcrumb: ReactNode | null) => {
-    setState({ breadcrumb });
+  const setTopBar = useCallback((partial: Partial<TopBarState>) => {
+    setState(prev => ({ ...prev, ...partial }));
+  }, []);
+
+  const clearTopBar = useCallback(() => {
+    setState(EMPTY_STATE);
   }, []);
 
   return (
-    <TopBarContext.Provider value={{ state, setBreadcrumb }}>
+    <TopBarContext.Provider value={{ state, setTopBar, clearTopBar }}>
       {children}
     </TopBarContext.Provider>
   );
@@ -32,14 +42,18 @@ export function useTopBar() {
   return useContext(TopBarContext);
 }
 
-/** 页面级组件：挂载时设置面包屑，卸载时清除 */
-export function SetBreadcrumb({ children }: { children: ReactNode }) {
-  const { setBreadcrumb } = useTopBar();
+/** 页面级组件：挂载时设置 TopBar 内容，卸载时清除 */
+export function SetTopBar({ breadcrumb, title, actions }: {
+  breadcrumb?: string;
+  title: string;
+  actions?: ReactNode;
+}) {
+  const { setTopBar, clearTopBar } = useTopBar();
 
   useEffect(() => {
-    setBreadcrumb(children);
-    return () => setBreadcrumb(null);
-  }, [setBreadcrumb]); // eslint-disable-line react-hooks/exhaustive-deps
+    setTopBar({ breadcrumb: breadcrumb ?? null, title, actions: actions ?? null });
+    return () => clearTopBar();
+  }, [breadcrumb, title]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { SetTopBar } from "@/components/TopBarContext";
+
 interface LogEntry {
   id: string;
   module: string;
@@ -29,12 +31,10 @@ const ACTION_LABELS: Record<string, string> = {
 export default function OperationLogList({ logs }: { logs: LogEntry[] }) {
   return (
     <>
-      <div className="admin-header">
-        <div>
-          <h2 className="admin-header__title">操作日志</h2>
-          <p className="admin-header__subtitle">共 {logs.length} 条记录</p>
-        </div>
-      </div>
+      <SetTopBar
+        breadcrumb="管理后台"
+        title="操作日志"
+      />
 
       <div className="table-wrap">
         <table className="table">

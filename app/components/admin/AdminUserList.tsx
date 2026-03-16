@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import UserFormModal from "./UserFormModal";
+import { SetTopBar } from "@/components/TopBarContext";
 
 interface UserRow {
   id: string;
@@ -37,13 +38,11 @@ export default function AdminUserList({ users }: { users: UserRow[] }) {
 
   return (
     <>
-      <div className="admin-header">
-        <div>
-          <h2 className="admin-header__title">用户管理</h2>
-          <p className="admin-header__subtitle">共 {users.length} 个账号</p>
-        </div>
-        <button className="btn" onClick={() => setModal({ type: "create" })}>新建用户</button>
-      </div>
+      <SetTopBar
+        breadcrumb="管理后台"
+        title="用户管理"
+        actions={<button className="btn btn--sm" onClick={() => setModal({ type: "create" })}>新建用户</button>}
+      />
 
       <div className="table-wrap">
         <table className="table">

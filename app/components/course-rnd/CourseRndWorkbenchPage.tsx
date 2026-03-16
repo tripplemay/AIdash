@@ -6,6 +6,7 @@ import LessonDraftCard from "./LessonDraftCard";
 import AiCostPanel from "./AiCostPanel";
 import PublishPanel from "./PublishPanel";
 import { ConfirmModal, AlertModal } from "./CourseRndModal";
+import { SetTopBar } from "@/components/TopBarContext";
 
 interface LessonDraft {
   id: string;
@@ -218,27 +219,17 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
 
   return (
     <div style={{ maxWidth: 960, margin: "0 auto" }}>
-      {/* 头部 */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--sp-5)" }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: "var(--sp-1)" }}>
-            {project.title}
-          </h1>
-          <p className="muted" style={{ fontSize: 14 }}>
-            {isFinalized ? "已定稿 — 可一键发布" : "课程详细方案工作台"}
-            {planVersion && ` · v${planVersion.versionNo}`}
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: "var(--sp-2)" }}>
-          {!isFinalized && (
-            <>
-              <button className="btn btn--ghost" onClick={() => setShowArchiveConfirm(true)} disabled={globalLoading}>废弃</button>
-              <button className="btn btn--soft" onClick={handleSaveVersion} disabled={globalLoading}>保存版本</button>
-              <button className="btn" onClick={() => setShowFinalizeConfirm(true)} disabled={globalLoading}>确认定稿</button>
-            </>
-          )}
-        </div>
-      </div>
+      <SetTopBar
+        breadcrumb="研发进度"
+        title={project.title}
+        actions={!isFinalized ? (
+          <>
+            <button className="btn btn--soft btn--sm btn--danger" onClick={() => setShowArchiveConfirm(true)} disabled={globalLoading}>废弃</button>
+            <button className="btn btn--soft btn--sm" onClick={handleSaveVersion} disabled={globalLoading}>保存版本</button>
+            <button className="btn btn--sm" onClick={() => setShowFinalizeConfirm(true)} disabled={globalLoading}>确认定稿</button>
+          </>
+        ) : undefined}
+      />
 
       {error && <div className="field-error" style={{ marginBottom: "var(--sp-4)" }}>{error}</div>}
 
