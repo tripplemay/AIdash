@@ -133,26 +133,76 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
     },
 
     async generateImage({ prompt, model, size = "1024x1024" }) {
-      const res = await proxyFetch(imageUrl, {
+      // 先尝试 /images/generations（DALL-E 等标准接口）
+      // 失败则回退到 /chat/completions（Gemini 等 chat 接口生成图片）
+      try {
+        const res = await proxyFetch(imageUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ model, prompt, n: 1, size }),
+          proxyUrl,
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const url = json.data?.[0]?.url ?? json.data?.[0]?.b64_json;
+          if (url) return { url, model };
+        }
+      } catch {
+        // /images/generations 不可用，回退到 chat
+      }
+
+      // 回退：通过 chat completions 生成图片（Gemini 等模型）
+      const chatRes = await proxyFetch(chatUrl, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
+          "HTTP-Referer": "https://ai.dashedu.net",
+          "X-Title": "AI Dash Image Gen",
         },
-        body: JSON.stringify({ model, prompt, n: 1, size }),
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "user", content: `Generate an image based on this description. Only output the image, no text.\n\n${prompt}` },
+          ],
+        }),
         proxyUrl,
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Image API error ${res.status}: ${text}`);
+      if (!chatRes.ok) {
+        const text = await chatRes.text();
+        throw new Error(`Image generation failed ${chatRes.status}: ${text}`);
       }
 
-      const json = await res.json();
-      const url = json.data?.[0]?.url ?? json.data?.[0]?.b64_json;
-      if (!url) throw new Error("No image URL in response");
+      const chatJson = await chatRes.json();
+      const message = chatJson.choices?.[0]?.message;
 
-      return { url, model };
+      // 解析 chat 响应中的图片：可能在 content 中的 multipart 或 inline_data
+      if (message?.content) {
+        // OpenRouter 返回的 Gemini 图片通常在 content 数组中
+        if (Array.isArray(message.content)) {
+          for (const part of message.content) {
+            if (part.type === "image_url" && part.image_url?.url) {
+              return { url: part.image_url.url, model };
+            }
+            if (part.type === "image" && part.source?.data) {
+              return { url: `data:image/png;base64,${part.source.data}`, model };
+            }
+          }
+        }
+        // 可能是 base64 data URL 直接在文本中
+        const dataUrlMatch = (typeof message.content === "string" ? message.content : "")
+          .match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
+        if (dataUrlMatch) {
+          return { url: dataUrlMatch[0], model };
+        }
+      }
+
+      throw new Error("图片模型未返回有效图片");
     },
   };
 }

@@ -33,15 +33,17 @@ const SECTION_IDS = ["core", "ai_value", "prep", "flow", "issues", "materials", 
 
 interface Props {
   draft: LessonDraft;
+  projectId: string;
   onRevise: (feedback: string, targetSection?: string) => void;
   onRegenerate: () => void;
+  onContentUpdate?: (lessonNo: number, contentData: string) => void;
   loading: boolean;
   disabled: boolean;
   generating?: boolean;
   progress?: ProgressState | null;
 }
 
-export default function LessonDraftCard({ draft, onRevise, onRegenerate, loading, disabled, generating, progress }: Props) {
+export default function LessonDraftCard({ draft, projectId, onRevise, onRegenerate, onContentUpdate, loading, disabled, generating, progress }: Props) {
   const [feedback, setFeedback] = useState("");
   const [expanded, setExpanded] = useState(!!draft.contentData && !generating);
   const [targetSection, setTargetSection] = useState<{ id: string; title: string } | null>(null);
@@ -58,18 +60,45 @@ export default function LessonDraftCard({ draft, onRevise, onRegenerate, loading
     wasGenerating.current = generating;
   }, [generating, draft.contentData]);
 
+  const [regeneratingImage, setRegeneratingImage] = useState<string | null>(null);
+
   // 解析 contentData
-  let hero: { title?: string; subtitle?: string; goal?: string; outcome?: string } | null = null;
+  let hero: { title?: string; subtitle?: string; goal?: string; outcome?: string; imageUrl?: string } | null = null;
   let sections: Array<{ id: string; title: string }> = [];
   let sectionCount = 0;
+  let images: { hero?: string; illustration?: string; template?: string } = {};
   try {
     if (draft.contentData) {
       const parsed = JSON.parse(draft.contentData);
       hero = parsed.hero ?? null;
       sectionCount = parsed.sections?.length ?? 0;
       sections = (parsed.sections ?? []).map((s: { id: string; title: string }) => ({ id: s.id, title: s.title }));
+      if (hero?.imageUrl) images.hero = hero.imageUrl;
+      // 从 sections 中提取插图和模板图
+      for (const s of parsed.sections ?? []) {
+        for (const b of s.blocks ?? []) {
+          if (b.imageUrl && s.id === "materials") images.template = b.imageUrl;
+          else if (b.imageUrl) images.illustration = b.imageUrl;
+        }
+      }
     }
   } catch {}
+
+  async function handleRegenerateImage(imageType: "hero" | "illustration" | "template") {
+    setRegeneratingImage(imageType);
+    try {
+      const res = await fetch(`/api/course-rnd/projects/${projectId}/lessons/${draft.lessonNo}/regenerate-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageType }),
+      });
+      const json = await res.json();
+      if (res.ok && json.data?.contentData) {
+        onContentUpdate?.(draft.lessonNo, JSON.stringify(json.data.contentData));
+      }
+    } catch {}
+    setRegeneratingImage(null);
+  }
 
   function handleSubmitFeedback() {
     if (!feedback.trim()) return;
@@ -132,6 +161,43 @@ export default function LessonDraftCard({ draft, onRevise, onRegenerate, loading
       <div className="muted small" style={{ marginBottom: "var(--sp-3)" }}>
         {sectionCount > 0 ? `${sectionCount} 个教学板块` : "尚未生成详细内容"}
       </div>
+
+      {/* 图片区域 */}
+      {draft.contentData && !generating && (
+        <div style={{ display: "flex", gap: "var(--sp-3)", marginBottom: "var(--sp-3)", flexWrap: "wrap" }}>
+          {[
+            { type: "hero" as const, label: "课次封面", url: images.hero },
+            { type: "illustration" as const, label: "课内插图", url: images.illustration },
+            { type: "template" as const, label: "模板示意图", url: images.template },
+          ].map(img => (
+            <div key={img.type} style={{
+              width: 140, border: "1px solid var(--line)", borderRadius: "var(--radius-md)",
+              overflow: "hidden", background: "var(--bg-faint)",
+            }}>
+              <div style={{ height: 100, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                {img.url ? (
+                  <img src={img.url} alt={img.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <span className="muted" style={{ fontSize: 11 }}>未生成</span>
+                )}
+              </div>
+              <div style={{ padding: "4px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 11 }}>{img.label}</span>
+                {!disabled && (
+                  <button
+                    className="btn btn--soft btn--xs"
+                    style={{ fontSize: 10, padding: "1px 4px" }}
+                    onClick={() => handleRegenerateImage(img.type)}
+                    disabled={!!regeneratingImage || loading}
+                  >
+                    {regeneratingImage === img.type ? "..." : img.url ? "重新生成" : "生成"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 生成中 — 步骤进度列表 */}
       {generating && progress && (

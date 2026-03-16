@@ -61,6 +61,8 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   type ProgressState = { step: number; total: number; label: string; tokenCount: number };
   const [generatingLessons, setGeneratingLessons] = useState<Map<number, ProgressState>>(new Map());
   const [revisingLessons, setRevisingLessons] = useState<Set<number>>(new Set());
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [generatingCover, setGeneratingCover] = useState(false);
 
   // 同步 props → state
   useEffect(() => { setDrafts(lessonDrafts); }, [lessonDrafts]);
@@ -217,6 +219,23 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
     }
   }
 
+  async function handleGenerateCover() {
+    setGeneratingCover(true);
+    try {
+      const res = await fetch(`/api/course-rnd/projects/${project.id}/generate-cover`, { method: "POST" });
+      const json = await res.json();
+      if (res.ok) {
+        setCoverUrl(json.data.coverUrl);
+      } else {
+        setError(json.error ?? "封面生成失败");
+      }
+    } catch {
+      setError("网络错误");
+    } finally {
+      setGeneratingCover(false);
+    }
+  }
+
   return (
     <div style={{ maxWidth: 960, margin: "0 auto" }}>
       <SetTopBar
@@ -246,6 +265,36 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
         </div>
       )}
 
+      {/* 课程包封面 */}
+      {drafts.length > 0 && !isFinalized && (
+        <div className="card--glass" style={{ padding: "var(--sp-4)", marginBottom: "var(--sp-5)", display: "flex", alignItems: "center", gap: "var(--sp-4)" }}>
+          <div style={{
+            width: 120, height: 80, borderRadius: "var(--radius-md)", overflow: "hidden",
+            border: "1px solid var(--line)", background: "var(--bg-faint)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            {coverUrl ? (
+              <img src={coverUrl} alt="课程包封面" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <span className="muted" style={{ fontSize: 11 }}>无封面</span>
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: "var(--sp-1)" }}>课程包封面</div>
+            <div className="muted" style={{ fontSize: 12 }}>
+              {coverUrl ? "封面已生成，可重新生成" : "AI 根据课程信息自动生成封面图"}
+            </div>
+          </div>
+          <button
+            className="btn btn--sm"
+            onClick={handleGenerateCover}
+            disabled={generatingCover || globalLoading}
+          >
+            {generatingCover ? "生成中..." : coverUrl ? "重新生成" : "生成封面"}
+          </button>
+        </div>
+      )}
+
       {/* 课次草稿列表 */}
       {drafts.length > 0 && (
         <div style={{ display: "grid", gap: "var(--sp-5)" }}>
@@ -253,8 +302,14 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
             <LessonDraftCard
               key={draft.id}
               draft={draft}
+              projectId={project.id}
               onRevise={(feedback, targetSection) => handleReviselesson(draft.lessonNo, feedback, targetSection)}
               onRegenerate={() => handleRegenerateLesson(draft.lessonNo)}
+              onContentUpdate={(lessonNo, contentData) => {
+                setDrafts(prev => prev.map(d =>
+                  d.lessonNo === lessonNo ? { ...d, contentData } : d
+                ));
+              }}
               loading={revisingLessons.has(draft.lessonNo)}
               disabled={isFinalized}
               generating={generatingLessons.has(draft.lessonNo)}

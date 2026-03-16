@@ -42,3 +42,23 @@ export async function saveImageFromBase64(base64: string, subDir: string): Promi
 
   return `/api/ai-images/${subDir}/${fileName}`;
 }
+
+/**
+ * 保存 AI 生成的图片（自动判断 URL / data URL / base64）
+ * 返回本地访问路径
+ */
+export async function saveAiImage(imageData: string, subDir: string): Promise<string> {
+  // data:image/xxx;base64,... 格式
+  const dataUrlMatch = imageData.match(/^data:image\/[^;]+;base64,(.+)$/);
+  if (dataUrlMatch) {
+    return saveImageFromBase64(dataUrlMatch[1], subDir);
+  }
+
+  // 纯 base64（无 data URL 前缀）
+  if (!imageData.startsWith("http") && imageData.length > 100) {
+    return saveImageFromBase64(imageData, subDir);
+  }
+
+  // HTTP URL
+  return saveImageFromUrl(imageData, subDir);
+}

@@ -7,7 +7,7 @@ import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-data";
 import { getBaselinePrompt } from "@/lib/ai/prompts";
-import { saveImageFromUrl } from "@/lib/ai/image-store";
+import { saveAiImage } from "@/lib/ai/image-store";
 
 const SECTION_STEPS = [
   { id: "core", label: "本课核心信息" },
@@ -201,24 +201,15 @@ ${allDrafts.map(d => `第 ${d.lessonNo} 课：${d.title}`).join("\n")}
 
           if (aiOutput.hero_image_prompt && imageProvider?.generateImage) {
             const img = await imageProvider.generateImage({ prompt: aiOutput.hero_image_prompt, model: imageModel });
-            const savedUrl = img.url.startsWith("http")
-              ? await saveImageFromUrl(img.url, `lessons/${id}`)
-              : img.url;
-            aiOutput.hero_image_url = savedUrl;
+            aiOutput.hero_image_url = await saveAiImage(img.url, `lessons/${id}`);
           }
           if (aiOutput.illustration_prompt && imageProvider?.generateImage) {
             const img = await imageProvider.generateImage({ prompt: aiOutput.illustration_prompt, model: imageModel });
-            const savedUrl = img.url.startsWith("http")
-              ? await saveImageFromUrl(img.url, `lessons/${id}`)
-              : img.url;
-            aiOutput.illustration_url = savedUrl;
+            aiOutput.illustration_url = await saveAiImage(img.url, `lessons/${id}`);
           }
           if (aiOutput.template_image_prompt && imageProvider?.generateImage) {
             const img = await imageProvider.generateImage({ prompt: aiOutput.template_image_prompt, model: imageModel });
-            const savedUrl = img.url.startsWith("http")
-              ? await saveImageFromUrl(img.url, `lessons/${id}`)
-              : img.url;
-            aiOutput.template_image_url = savedUrl;
+            aiOutput.template_image_url = await saveAiImage(img.url, `lessons/${id}`);
           }
         } catch (imgErr) {
           // 图片生成失败不阻断主流程
