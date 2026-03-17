@@ -142,19 +142,6 @@ export async function POST(
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
       }
 
-      let currentStep = 0;
-      const progressTimer = setInterval(() => {
-        if (currentStep < 6) {
-          currentStep++;
-          sendEvent("progress", {
-            step: currentStep,
-            total: 7,
-            label: `正在生成「${SECTION_STEPS[currentStep]?.label ?? ""}」...`,
-            tokenCount: currentStep * 300,
-          });
-        }
-      }, 5000);
-
       sendEvent("progress", { step: 0, total: 7, label: "正在连接 AI 服务...", tokenCount: 0 });
 
       try {
@@ -181,13 +168,62 @@ export async function POST(
         // 调用 AI（解析失败自动重试 1 次）
         let aiOutput: AiLessonOutput | null = null;
         let lastResult: { content: string; inputTokens: number; outputTokens: number; model: string } | null = null;
+
         for (let attempt = 0; attempt < 2; attempt++) {
-          const result = await provider.chat({
-            systemPrompt,
-            userMessage,
-            model,
-            maxTokens: 4096,
-          });
+          let result: { content: string; inputTokens: number; outputTokens: number; model: string };
+
+          if (provider.chatStream) {
+            // Streaming mode: real progress
+            const generator = provider.chatStream({
+              systemPrompt,
+              userMessage,
+              model,
+              maxTokens: 4096,
+            });
+
+            while (true) {
+              const iterResult = await generator.next();
+              if (iterResult.done) {
+                // iterResult.value is ChatResult
+                result = iterResult.value;
+                break;
+              }
+              // iterResult.value is ChatStreamChunk
+              const chunk = iterResult.value;
+              const estimatedTokens = Math.round(chunk.totalChars / 2.5);
+              sendEvent("progress", {
+                step: Math.min(6, Math.floor(estimatedTokens / 300)),
+                total: 7,
+                label: `正在生成中（已接收 ${chunk.totalChars} 字符）...`,
+                tokenCount: estimatedTokens,
+              });
+            }
+          } else {
+            // Non-streaming fallback: fake progress timer
+            let currentStep = 0;
+            const progressTimer = setInterval(() => {
+              if (currentStep < 6) {
+                currentStep++;
+                sendEvent("progress", {
+                  step: currentStep,
+                  total: 7,
+                  label: `正在生成「${SECTION_STEPS[currentStep]?.label ?? ""}」...`,
+                  tokenCount: currentStep * 300,
+                });
+              }
+            }, 5000);
+
+            try {
+              result = await provider.chat({
+                systemPrompt,
+                userMessage,
+                model,
+                maxTokens: 4096,
+              });
+            } finally {
+              clearInterval(progressTimer);
+            }
+          }
 
           try {
             let raw = result.content;
@@ -209,8 +245,6 @@ export async function POST(
             }
           }
         }
-
-        clearInterval(progressTimer);
 
         if (!aiOutput) {
           sendEvent("error", { message: "AI 输出解析失败，请重试" });
@@ -266,7 +300,6 @@ export async function POST(
           cost,
         });
       } catch (e) {
-        clearInterval(progressTimer);
         const msg = e instanceof Error ? e.message : String(e);
         sendEvent("error", { message: `AI 调用失败：${msg}` });
       }

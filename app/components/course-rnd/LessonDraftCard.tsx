@@ -196,44 +196,66 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
         {sectionCount > 0 ? `${sectionCount} 个教学板块` : "尚未生成详细内容"}
       </div>
 
-      {/* 生成中 — 步骤进度列表 */}
-      {generating && progress && (
-        <div className="ai-progress">
-          {progress.step === 0 && (
-            <div className="ai-progress__step ai-progress__step--current">
-              <span style={{ width: 20, display: "flex", justifyContent: "center" }}>
-                <span className="ai-progress__spinner" />
-              </span>
-              正在连接 AI 服务...
-            </div>
-          )}
+      {/* 生成中 — 进度指示 */}
+      {generating && progress && (() => {
+        const isStreaming = progress.label.includes("已接收");
+        const streamPercent = isStreaming
+          ? Math.min(100, Math.round((progress.tokenCount / 2000) * 100))
+          : Math.round((progress.step / progress.total) * 100);
 
-          {progress.step > 0 && SECTION_LABELS.map((label, i) => {
-            const stepNo = i + 1;
-            const isDone = stepNo < progress.step;
-            const isCurrent = stepNo === progress.step;
-            const cls = isDone ? "ai-progress__step--done"
-              : isCurrent ? "ai-progress__step--current"
-              : "ai-progress__step--pending";
-            return (
-              <div key={label} className={`ai-progress__step ${cls}`}>
+        return (
+          <div className="ai-progress">
+            {/* Streaming mode: single continuous indicator */}
+            {isStreaming && (
+              <div className="ai-progress__step ai-progress__step--current">
                 <span style={{ width: 20, display: "flex", justifyContent: "center" }}>
-                  {isDone ? "✓" : isCurrent ? <span className="ai-progress__spinner" /> : "○"}
+                  <span className="ai-progress__spinner" />
                 </span>
-                {label}
+                {progress.label}
               </div>
-            );
-          })}
+            )}
 
-          <div className="ai-progress__bar-wrap">
-            <div className="ai-progress__bar" style={{ width: `${Math.round((progress.step / progress.total) * 100)}%` }} />
+            {/* Non-streaming: step-based progress (fallback) */}
+            {!isStreaming && progress.step === 0 && (
+              <div className="ai-progress__step ai-progress__step--current">
+                <span style={{ width: 20, display: "flex", justifyContent: "center" }}>
+                  <span className="ai-progress__spinner" />
+                </span>
+                {progress.label}
+              </div>
+            )}
+
+            {!isStreaming && progress.step > 0 && SECTION_LABELS.map((label, i) => {
+              const stepNo = i + 1;
+              const isDone = stepNo < progress.step;
+              const isCurrent = stepNo === progress.step;
+              const cls = isDone ? "ai-progress__step--done"
+                : isCurrent ? "ai-progress__step--current"
+                : "ai-progress__step--pending";
+              return (
+                <div key={label} className={`ai-progress__step ${cls}`}>
+                  <span style={{ width: 20, display: "flex", justifyContent: "center" }}>
+                    {isDone ? "✓" : isCurrent ? <span className="ai-progress__spinner" /> : "○"}
+                  </span>
+                  {label}
+                </div>
+              );
+            })}
+
+            <div className="ai-progress__bar-wrap">
+              <div className="ai-progress__bar" style={{ width: `${streamPercent}%` }} />
+            </div>
+            <div className="ai-progress__meta">
+              <span>
+                {isStreaming
+                  ? `约 ${progress.tokenCount} tokens`
+                  : `已接收 ${progress.tokenCount} tokens`}
+              </span>
+              <span>{streamPercent}%</span>
+            </div>
           </div>
-          <div className="ai-progress__meta">
-            <span>已接收 {progress.tokenCount} tokens</span>
-            <span>{Math.round((progress.step / progress.total) * 100)}%</span>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 操作按钮 */}
       {!disabled && !generating && (
