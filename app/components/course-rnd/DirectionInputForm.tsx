@@ -61,8 +61,19 @@ export default function DirectionInputForm({ formData, onChange, onGenerate, loa
     let cancelled = false;
     fetch("/api/course-rnd/form-options")
       .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled) setOptions(data);
+      .then((json) => {
+        if (cancelled) return;
+        const d = json.data ?? json;
+        setOptions({
+          ageRanges: d.ageRanges ?? [],
+          levels: d.levels ?? [],
+          orgForms: d.orgForms ?? [],
+          deliverableGroups: d.deliverableTypes ?? [],
+          courseDirectionPresets: d.courseDirections ?? [],
+          imageStylePresets: d.imageStyles ?? [],
+          coreNeedsTags: d.coreNeedsTags ?? [],
+          constraintsTags: d.constraintsTags ?? [],
+        });
       })
       .catch(() => {
         /* keep defaults */
