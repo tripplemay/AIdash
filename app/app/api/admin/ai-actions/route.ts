@@ -39,8 +39,8 @@ export async function POST(request: Request) {
 
   const apiKey = decryptApiKey(provider.apiKeyEnc);
 
-  // 模型可用性测试（除非 skipTest=true，即用户确认跳过）
-  if (!skipTest) {
+  // 模型可用性测试（图片模型跳过 chat 测试，除非 skipTest=true）
+  if (!skipTest && actionType !== "image") {
     const testResult = await testModel(provider.baseUrl, apiKey, modelName, provider.proxyUrl);
     if (!testResult.success) {
       return NextResponse.json({
