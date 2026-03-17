@@ -323,124 +323,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                 <LessonRenderer content={parsed} preview />
               </div>
 
-              {/* 固定在视口底部的意见输入框（通过 Portal 渲染到 body，绕过 backdrop-filter 对 fixed 的影响） */}
-              {!disabled && typeof document !== "undefined" && createPortal(
-                <div style={{
-                  position: "fixed",
-                  bottom: 0,
-                  left: "var(--sidebar-w, 240px)",
-                  right: 0,
-                  background: "var(--panel-solid)",
-                  borderTop: "1px solid var(--line)",
-                  padding: "var(--sp-4) var(--sp-6)",
-                  boxShadow: "0 -4px 12px rgba(0,0,0,0.1)",
-                  zIndex: 50,
-                }}>
-                  {/* 修改中提示 */}
-                  {loading && (
-                    <div className="ai-progress" style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", marginBottom: "var(--sp-2)" }}>
-                      <span className="ai-progress__spinner" />
-                      <span className="ai-progress__step--current">AI 正在处理修改意见...</span>
-                    </div>
-                  )}
-
-                  {!loading && (
-                    <>
-                      {/* 暂存列表 */}
-                      {pendingFeedbacks.length > 0 && (
-                        <div style={{ marginBottom: "var(--sp-2)", padding: "var(--sp-2) var(--sp-3)", background: "var(--bg-faint)", borderRadius: "var(--radius-sm)", fontSize: 13 }}>
-                          <div className="muted" style={{ fontSize: 11, marginBottom: "var(--sp-1)" }}>已暂存 {pendingFeedbacks.length} 条修改意见：</div>
-                          {pendingFeedbacks.map(pf => (
-                            <div key={pf.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0" }}>
-                              <span>
-                                {pf.sectionTitle && <span className="pill" style={{ fontSize: 10, marginRight: "var(--sp-1)" }}>{pf.sectionTitle}</span>}
-                                {pf.feedback.length > 40 ? pf.feedback.slice(0, 40) + "..." : pf.feedback}
-                              </span>
-                              <button onClick={() => onRemovePending(pf.id)} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted)", fontSize: 12, padding: "0 4px" }}>✕</button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* 提示行：未选时显示操作提示，选中时显示区块名+取消 */}
-                      <div style={{ fontSize: 12, marginBottom: "var(--sp-2)", display: "flex", alignItems: "center", gap: "var(--sp-2)" }}>
-                        {targetSection ? (
-                          <>
-                            <span className="pill" style={{ fontSize: 11 }}>针对：{targetSection.title}</span>
-                            <button
-                              onClick={() => setTargetSection(null)}
-                              style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted)", fontSize: 12, padding: "0 4px" }}
-                            >
-                              ✕ 取消
-                            </button>
-                          </>
-                        ) : (
-                          <span className="muted">点击上方板块标题可针对具体板块输入修改意见</span>
-                        )}
-                      </div>
-
-                      <div style={{ display: "flex", gap: "var(--sp-2)", alignItems: "flex-end" }}>
-                        <textarea
-                          className="input"
-                          style={{ height: 60, paddingTop: "var(--sp-2)", resize: "vertical", flex: 1 }}
-                          placeholder={targetSection
-                            ? `针对「${targetSection.title}」输入修改意见...`
-                            : "输入修改意见，AI 将按意见调整本课方案..."}
-                          value={feedback}
-                          onChange={e => setFeedback(e.target.value)}
-                        />
-                        <div style={{ display: "flex", flexDirection: "column", gap: "var(--sp-1)" }}>
-                          <button
-                            className="btn btn--soft btn--sm"
-                            onClick={() => {
-                              if (!feedback.trim()) return;
-                              onAddPending({
-                                id: Date.now().toString(),
-                                sectionId: targetSection?.id,
-                                sectionTitle: targetSection?.title,
-                                feedback: feedback.trim(),
-                              });
-                              setFeedback("");
-                              setTargetSection(null);
-                            }}
-                            disabled={!feedback.trim()}
-                            style={{ whiteSpace: "nowrap" }}
-                          >
-                            暂存
-                          </button>
-                          <button
-                            className="btn btn--sm"
-                            onClick={() => {
-                              if (pendingFeedbacks.length > 0) {
-                                if (feedback.trim()) {
-                                  onAddPending({
-                                    id: Date.now().toString(),
-                                    sectionId: targetSection?.id,
-                                    sectionTitle: targetSection?.title,
-                                    feedback: feedback.trim(),
-                                  });
-                                  setFeedback("");
-                                  setTargetSection(null);
-                                }
-                                requestAnimationFrame(() => onSubmitAllPending());
-                              } else {
-                                handleSubmitFeedback();
-                              }
-                            }}
-                            disabled={!feedback.trim() && pendingFeedbacks.length === 0}
-                            style={{ whiteSpace: "nowrap" }}
-                          >
-                            {pendingFeedbacks.length > 0
-                              ? `提交全部(${pendingFeedbacks.length + (feedback.trim() ? 1 : 0)})`
-                              : "按意见修改"}
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>,
-                document.body
-              )}
+              {/* 展开时的内容区到此结束 */}
             </div>
           );
         } catch {
@@ -448,8 +331,8 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
         }
       })()}
 
-      {/* 详情未展开时也显示 Portal 固定反馈栏 */}
-      {!expanded && !disabled && !generating && draft.contentData && typeof document !== "undefined" && createPortal(
+      {/* 统一的 Portal 固定反馈栏（展开/未展开共用） */}
+      {!disabled && !generating && draft.contentData && typeof document !== "undefined" && createPortal(
         <div style={{
           position: "fixed",
           bottom: 0,
@@ -468,25 +351,97 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
             </div>
           ) : (
             <>
-              <div style={{ fontSize: 12, marginBottom: "var(--sp-2)" }}>
-                <span className="muted">展开详情后可点击板块标题针对具体板块修改</span>
+              {/* 暂存列表 */}
+              {pendingFeedbacks.length > 0 && (
+                <div style={{ marginBottom: "var(--sp-2)", padding: "var(--sp-2) var(--sp-3)", background: "var(--bg-faint)", borderRadius: "var(--radius-sm)", fontSize: 13 }}>
+                  <div className="muted" style={{ fontSize: 11, marginBottom: "var(--sp-1)" }}>已暂存 {pendingFeedbacks.length} 条修改意见：</div>
+                  {pendingFeedbacks.map(pf => (
+                    <div key={pf.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0" }}>
+                      <span>
+                        {pf.sectionTitle && <span className="pill" style={{ fontSize: 10, marginRight: "var(--sp-1)" }}>{pf.sectionTitle}</span>}
+                        {pf.feedback.length > 40 ? pf.feedback.slice(0, 40) + "..." : pf.feedback}
+                      </span>
+                      <button onClick={() => onRemovePending(pf.id)} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted)", fontSize: 12, padding: "0 4px" }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 提示行 */}
+              <div style={{ fontSize: 12, marginBottom: "var(--sp-2)", display: "flex", alignItems: "center", gap: "var(--sp-2)" }}>
+                {targetSection ? (
+                  <>
+                    <span className="pill" style={{ fontSize: 11 }}>针对：{targetSection.title}</span>
+                    <button
+                      onClick={() => setTargetSection(null)}
+                      style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted)", fontSize: 12, padding: "0 4px" }}
+                    >
+                      ✕ 取消
+                    </button>
+                  </>
+                ) : (
+                  <span className="muted">
+                    {expanded ? "点击上方板块标题可针对具体板块输入修改意见" : "展开详情后可点击板块标题针对具体板块修改"}
+                  </span>
+                )}
               </div>
+
               <div style={{ display: "flex", gap: "var(--sp-2)", alignItems: "flex-end" }}>
                 <textarea
                   className="input"
                   style={{ height: 60, paddingTop: "var(--sp-2)", resize: "vertical", flex: 1 }}
-                  placeholder="输入修改意见，AI 将按意见调整本课方案..."
+                  placeholder={targetSection
+                    ? `针对「${targetSection.title}」输入修改意见...`
+                    : "输入修改意见，AI 将按意见调整本课方案..."}
                   value={feedback}
                   onChange={e => setFeedback(e.target.value)}
                 />
-                <button
-                  className="btn btn--sm"
-                  onClick={handleSubmitFeedback}
-                  disabled={!feedback.trim()}
-                  style={{ whiteSpace: "nowrap", height: 60 }}
-                >
-                  按意见修改
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--sp-1)" }}>
+                  <button
+                    className="btn btn--soft btn--sm"
+                    onClick={() => {
+                      if (!feedback.trim()) return;
+                      onAddPending({
+                        id: Date.now().toString(),
+                        sectionId: targetSection?.id,
+                        sectionTitle: targetSection?.title,
+                        feedback: feedback.trim(),
+                      });
+                      setFeedback("");
+                      setTargetSection(null);
+                    }}
+                    disabled={!feedback.trim()}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    暂存
+                  </button>
+                  <button
+                    className="btn btn--sm"
+                    onClick={() => {
+                      if (pendingFeedbacks.length > 0) {
+                        if (feedback.trim()) {
+                          onAddPending({
+                            id: Date.now().toString(),
+                            sectionId: targetSection?.id,
+                            sectionTitle: targetSection?.title,
+                            feedback: feedback.trim(),
+                          });
+                          setFeedback("");
+                          setTargetSection(null);
+                        }
+                        requestAnimationFrame(() => onSubmitAllPending());
+                      } else {
+                        handleSubmitFeedback();
+                      }
+                    }}
+                    disabled={!feedback.trim() && pendingFeedbacks.length === 0}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    {pendingFeedbacks.length > 0
+                      ? `提交全部(${pendingFeedbacks.length + (feedback.trim() ? 1 : 0)})`
+                      : "按意见修改"}
+                  </button>
+                </div>
               </div>
             </>
           )}
