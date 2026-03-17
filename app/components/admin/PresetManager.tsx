@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/Toast";
+import { ChevronUp, ChevronDown } from "lucide-react";
+import { ConfirmModal } from "@/components/course-rnd/CourseRndModal";
 
 interface Preset {
   id: string;
@@ -173,7 +175,7 @@ export default function PresetManager({ canEdit }: Props) {
 
   return (
     <div>
-      <div className="prompt-config__tabs" style={{ marginBottom: "var(--sp-4)" }}>
+      <div className="prompt-config__tabs">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.key}
@@ -186,7 +188,7 @@ export default function PresetManager({ canEdit }: Props) {
       </div>
 
       {loading && (
-        <div className="muted" style={{ textAlign: "center", padding: "var(--sp-5) 0" }}>
+        <div className="muted editor-empty">
           加载中...
         </div>
       )}
@@ -194,7 +196,7 @@ export default function PresetManager({ canEdit }: Props) {
       {!loading && (
         <div className="preset-mgr__list">
           {presets.length === 0 && !addingNew && (
-            <div className="muted" style={{ textAlign: "center", padding: "var(--sp-5) 0" }}>
+            <div className="muted editor-empty">
               暂无预设项
             </div>
           )}
@@ -202,23 +204,21 @@ export default function PresetManager({ canEdit }: Props) {
           {presets.map((preset, index) => (
             <div key={preset.id} className="preset-mgr__item">
               {editingId === preset.id ? (
-                <div style={{ flex: 1 }}>
+                <div className="preset-mgr__form">
                   <input
-                    className="input input--sm"
+                    className="input input--sm preset-mgr__form-input"
                     placeholder="名称"
                     value={editForm.name}
                     onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-                    style={{ width: "100%", marginBottom: "var(--sp-2)" }}
                   />
                   <textarea
-                    className="input input--sm"
+                    className="input input--sm preset-mgr__form-input"
                     placeholder="值（可选）"
                     rows={3}
                     value={editForm.value}
                     onChange={(e) => setEditForm((f) => ({ ...f, value: e.target.value }))}
-                    style={{ width: "100%", marginBottom: "var(--sp-2)" }}
                   />
-                  <div style={{ display: "flex", gap: "var(--sp-2)" }}>
+                  <div className="editor-footer__btn-group">
                     <button
                       className="btn btn--sm"
                       onClick={handleSaveEdit}
@@ -233,7 +233,7 @@ export default function PresetManager({ canEdit }: Props) {
                 </div>
               ) : (
                 <>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="preset-mgr__item-content">
                     <div className="preset-mgr__item-name">{preset.name}</div>
                     {preset.value && (
                       <div className="preset-mgr__item-value">{preset.value}</div>
@@ -241,14 +241,14 @@ export default function PresetManager({ canEdit }: Props) {
                   </div>
 
                   {canEdit && (
-                    <div style={{ display: "flex", gap: "var(--sp-1)", alignItems: "center", flexShrink: 0 }}>
+                    <div className="preset-mgr__item-controls">
                       <button
                         className="btn btn--soft btn--xs"
                         onClick={() => handleMove(index, "up")}
                         disabled={index === 0}
                         title="上移"
                       >
-                        &#8593;
+                        <ChevronUp size={14} />
                       </button>
                       <button
                         className="btn btn--soft btn--xs"
@@ -256,7 +256,7 @@ export default function PresetManager({ canEdit }: Props) {
                         disabled={index === presets.length - 1}
                         title="下移"
                       >
-                        &#8595;
+                        <ChevronDown size={14} />
                       </button>
                       <button
                         className="btn btn--soft btn--xs"
@@ -278,24 +278,22 @@ export default function PresetManager({ canEdit }: Props) {
           ))}
 
           {addingNew && (
-            <div className="preset-mgr__item" style={{ background: "var(--bg-faint)" }}>
-              <div style={{ flex: 1 }}>
+            <div className="preset-mgr__item preset-mgr__item--new">
+              <div className="preset-mgr__form">
                 <input
-                  className="input input--sm"
+                  className="input input--sm preset-mgr__form-input"
                   placeholder="名称"
                   value={newForm.name}
                   onChange={(e) => setNewForm((f) => ({ ...f, name: e.target.value }))}
-                  style={{ width: "100%", marginBottom: "var(--sp-2)" }}
                 />
                 <textarea
-                  className="input input--sm"
+                  className="input input--sm preset-mgr__form-input"
                   placeholder="值（可选）"
                   rows={3}
                   value={newForm.value}
                   onChange={(e) => setNewForm((f) => ({ ...f, value: e.target.value }))}
-                  style={{ width: "100%", marginBottom: "var(--sp-2)" }}
                 />
-                <div style={{ display: "flex", gap: "var(--sp-2)" }}>
+                <div className="editor-footer__btn-group">
                   <button
                     className="btn btn--sm"
                     onClick={handleAdd}
@@ -320,7 +318,7 @@ export default function PresetManager({ canEdit }: Props) {
       )}
 
       {canEdit && !addingNew && (
-        <div style={{ marginTop: "var(--sp-3)" }}>
+        <div className="preset-mgr__add-bar">
           <button
             className="btn btn--soft btn--sm"
             onClick={() => {
@@ -334,28 +332,14 @@ export default function PresetManager({ canEdit }: Props) {
       )}
 
       {confirmDeleteId && (
-        <div className="modal-overlay" onClick={() => setConfirmDeleteId(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal__title">确认删除</h3>
-            <div className="modal__body" style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7 }}>
-              确定要删除此预设项吗？此操作不可撤销。
-            </div>
-            <div className="modal__actions">
-              <button
-                className="btn btn--danger-fill btn--sm"
-                onClick={() => handleDelete(confirmDeleteId)}
-              >
-                删除
-              </button>
-              <button
-                className="btn btn--soft btn--sm"
-                onClick={() => setConfirmDeleteId(null)}
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          title="确认删除"
+          message="确定要删除此预设项吗？此操作不可撤销。"
+          confirmLabel="删除"
+          danger
+          onConfirm={() => handleDelete(confirmDeleteId)}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
       )}
     </div>
   );

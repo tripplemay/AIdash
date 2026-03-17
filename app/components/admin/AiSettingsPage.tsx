@@ -86,12 +86,12 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
     }
   }
 
-  async function handleSaveAction(actionKey: string, actionLabel: string, actionType: string, providerId: string, modelName: string) {
+  async function handleSaveAction(actionKey: string, actionLabel: string, actionType: string, providerId: string, modelName: string, manualPricing?: { inputPricePerM?: number; outputPricePerM?: number; pricePerCall?: number; priceCurrency?: string }) {
     try {
       const res = await fetch("/api/admin/ai-actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actionKey, actionLabel, actionType, providerId, modelName }),
+        body: JSON.stringify({ actionKey, actionLabel, actionType, providerId, modelName, ...manualPricing }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -140,15 +140,7 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
       />
 
       {!canEdit && (
-        <div style={{
-          padding: "var(--sp-3) var(--sp-4)",
-          marginBottom: "var(--sp-4)",
-          borderRadius: "var(--radius-md)",
-          background: "var(--brand-light, #eef3ff)",
-          border: "1px solid var(--brand-border, #c5d0f0)",
-          fontSize: 13,
-          color: "var(--muted)",
-        }}>
+        <div className="admin-readonly-banner">
           该页面由管理员统一配置，您可以查看当前配置
         </div>
       )}
@@ -260,7 +252,7 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
                   pricingUpdatedAt: existing.pricingUpdatedAt,
                 } : undefined}
                 canEdit={canEdit}
-                onSave={(providerId, modelName) => handleSaveAction(da.key, da.label, da.type, providerId, modelName)}
+                onSave={(providerId, modelName, manualPricing) => handleSaveAction(da.key, da.label, da.type, providerId, modelName, manualPricing)}
               />
             );
           })}

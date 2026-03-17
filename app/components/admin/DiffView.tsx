@@ -13,34 +13,23 @@ export default function DiffView({ hunks, v1Label, v2Label, onClose }: Props) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal"
-        style={{ maxWidth: 800, width: "90vw" }}
+        className="modal diff-view__modal"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="modal__title">
           版本对比: {v1Label} vs {v2Label}
         </h3>
 
-        <div className="modal__body" style={{ maxHeight: "60vh", overflow: "auto" }}>
+        <div className="modal__body diff-view__body">
           {hunks.length === 0 && (
-            <div className="muted" style={{ textAlign: "center", padding: "var(--sp-5) 0" }}>
+            <div className="muted editor-empty">
               两个版本内容相同，无差异
             </div>
           )}
 
           {hunks.map((hunk, hi) => (
-            <div key={hi} style={{ marginBottom: "var(--sp-3)" }}>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "var(--muted)",
-                  padding: "var(--sp-1) var(--sp-2)",
-                  background: "var(--bg-faint)",
-                  borderRadius: "var(--radius-sm)",
-                  fontFamily: "monospace",
-                  marginBottom: "var(--sp-1)",
-                }}
-              >
+            <div key={hi} className="diff-view__hunk">
+              <div className="diff-view__hunk-header">
                 @@ -{hunk.oldStart} +{hunk.newStart} @@
               </div>
 

@@ -30,7 +30,7 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
-  const [showSaveInput, setShowSaveInput] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [editSummary, setEditSummary] = useState("");
   const [showHistory, setShowHistory] = useState(false);
 
@@ -77,8 +77,6 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
   function handleSelect(template: Template) {
     setSelectedId(template.id);
     setContent(template.content);
-    setShowSaveInput(false);
-    setEditSummary("");
   }
 
   function handleInsertVariable(key: string) {
@@ -98,16 +96,15 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
       textarea.focus();
       textarea.setSelectionRange(cursorPos, cursorPos);
     });
+
+    showToast(`已插入 {{${key}}}`, "info");
   }
 
   async function handleSave() {
-    if (!showSaveInput) {
-      setShowSaveInput(true);
-      return;
-    }
     if (!selectedId || !editSummary.trim()) return;
 
     setSaving(true);
+    setShowSaveConfirm(false);
     try {
       const res = await fetch(`/api/admin/prompt-templates/${selectedId}`, {
         method: "PUT",
@@ -123,7 +120,6 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
       setTemplates((prev) =>
         prev.map((t) => (t.id === selectedId ? { ...t, content } : t))
       );
-      setShowSaveInput(false);
       setEditSummary("");
     } catch {
       showToast("操作失败", "error");
@@ -154,8 +150,8 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
       <div className="template-editor__main">
         {selected ? (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--sp-3)" }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>{selected.actionLabel}</h3>
+            <div className="editor-header">
+              <h3 className="editor-header__title">{selected.actionLabel}</h3>
               <button
                 className="btn btn--soft btn--sm"
                 onClick={() => setShowHistory(true)}
@@ -166,64 +162,41 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
 
             <textarea
               ref={textareaRef}
-              className="input"
+              className="input template-editor__textarea"
               rows={25}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               readOnly={!canEdit}
-              style={{ width: "100%", fontFamily: "monospace", fontSize: 13, lineHeight: 1.6 }}
             />
 
             {canEdit && (
-              <div style={{ marginTop: "var(--sp-3)" }}>
-                {showSaveInput && (
-                  <div style={{ marginBottom: "var(--sp-2)" }}>
-                    <input
-                      className="input input--sm"
-                      placeholder="修改说明（必填）"
-                      value={editSummary}
-                      onChange={(e) => setEditSummary(e.target.value)}
-                      style={{ width: "100%", maxWidth: 400 }}
-                    />
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: "var(--sp-2)" }}>
+              <div className="editor-footer">
+                <div className="editor-footer__btn-group">
                   <button
                     className="btn btn--sm"
-                    onClick={handleSave}
-                    disabled={saving || (showSaveInput && !editSummary.trim())}
+                    onClick={() => setShowSaveConfirm(true)}
+                    disabled={saving}
                   >
                     {saving ? "保存中..." : "保存"}
                   </button>
-                  {showSaveInput && (
-                    <button
-                      className="btn btn--soft btn--sm"
-                      onClick={() => {
-                        setShowSaveInput(false);
-                        setEditSummary("");
-                      }}
-                    >
-                      取消
-                    </button>
-                  )}
                 </div>
               </div>
             )}
           </>
         ) : (
-          <div className="muted" style={{ textAlign: "center", padding: "var(--sp-8) 0" }}>
+          <div className="muted editor-empty">
             请从左侧选择模板
           </div>
         )}
       </div>
 
       <div className="template-editor__var-sidebar">
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: "var(--sp-3)", color: "var(--muted)" }}>
+        <div className="template-editor__var-header">
           可用变量
         </div>
         {Object.entries(varGroups).map(([group, vars]) => (
           <div key={group} className="template-editor__var-group">
-            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: "var(--sp-1)", fontWeight: 600 }}>
+            <div className="template-editor__var-group-label">
               {group}
             </div>
             {vars.map((v) => (
@@ -232,6 +205,7 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
                 className="template-editor__var-item"
                 onClick={() => handleInsertVariable(v.key)}
                 title={v.label}
+                disabled={!canEdit}
               >
                 {`{{${v.key}}}`}
               </button>
@@ -239,6 +213,33 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
           </div>
         ))}
       </div>
+
+      {showSaveConfirm && (
+        <div className="modal-overlay" onClick={() => setShowSaveConfirm(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal__title">保存模板</h3>
+            <div className="modal__body">
+              <input
+                className="input"
+                placeholder="修改说明（必填）"
+                value={editSummary}
+                onChange={(e) => setEditSummary(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="modal__actions">
+              <button className="btn btn--soft" onClick={() => setShowSaveConfirm(false)}>取消</button>
+              <button
+                className="btn"
+                onClick={handleSave}
+                disabled={!editSummary.trim()}
+              >
+                确认保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showHistory && selectedId && (
         <VersionHistoryPanel

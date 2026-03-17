@@ -179,18 +179,10 @@ img { display: block; max-width: 100%; }
   text-decoration: none;
 }
 
-.sidebar__logo-mark {
-  width: 36px; height: 36px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #7e95ff, #9ad8ff);
-  box-shadow: var(--shadow-glow);
-  flex-shrink: 0;
-}
-
-.sidebar__logo-text {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text);
+.sidebar__logo-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
 }
 
 /* 用户卡 */
@@ -806,6 +798,7 @@ img { display: block; max-width: 100%; }
   align-items: center;
   justify-content: center;
   padding: var(--sp-5);
+  background: url("/images/login-bg.png") center / cover no-repeat fixed;
 }
 
 .login__shell {
@@ -2032,6 +2025,69 @@ img { display: block; max-width: 100%; }
 /* ━━━ 24. Prompt 配置 ━━━ */
 
 /* Tabs */
+/* Admin read-only banner */
+.admin-readonly-banner {
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-4);
+  border-radius: var(--radius-md);
+  background: #eef3ff;
+  border: 1px solid #c5d0f0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Shared editor header / footer */
+.editor-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--sp-3);
+}
+.editor-header__title { font-size: 16px; font-weight: 700; }
+.editor-footer { margin-top: var(--sp-3); }
+.editor-footer__btn-group { display: flex; gap: var(--sp-2); }
+.editor-footer__summary-input { width: 100%; max-width: 400px; margin-bottom: var(--sp-2); }
+.editor-empty { text-align: center; padding: var(--sp-8) 0; }
+
+/* Template editor textarea */
+.template-editor__textarea {
+  width: 100%; font-family: monospace; font-size: 13px; line-height: 1.6;
+}
+
+/* Variable sidebar header / group label */
+.template-editor__var-header {
+  font-size: 13px; font-weight: 600; margin-bottom: var(--sp-3); color: var(--muted);
+}
+.template-editor__var-group-label {
+  font-size: 12px; color: var(--muted); margin-bottom: var(--sp-1); font-weight: 600;
+}
+
+/* Version panel inline overrides */
+.version-panel__header-title { font-size: 16px; font-weight: 700; }
+.version-panel__compare-bar { padding: 0 var(--sp-4) var(--sp-3); }
+.version-panel__item-row { display: flex; align-items: center; gap: var(--sp-2); }
+.version-panel__item-info { flex: 1; }
+.version-panel__item-version { font-size: 14px; font-weight: 600; }
+.version-panel__item-current { margin-left: var(--sp-2); font-size: 11px; color: var(--accent); font-weight: 400; }
+.version-panel__item-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.version-panel__item-summary { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* Diff view modal */
+.diff-view__modal { max-width: 800px; width: 90vw; }
+.diff-view__body { max-height: 60vh; overflow: auto; }
+.diff-view__hunk { margin-bottom: var(--sp-3); }
+.diff-view__hunk-header {
+  font-size: 12px; color: var(--muted); padding: var(--sp-1) var(--sp-2);
+  background: var(--bg-faint); border-radius: var(--radius-sm);
+  font-family: monospace; margin-bottom: var(--sp-1);
+}
+
+/* Preset manager */
+.preset-mgr__form { flex: 1; }
+.preset-mgr__form-input { width: 100%; margin-bottom: var(--sp-2); }
+.preset-mgr__item-content { flex: 1; min-width: 0; }
+.preset-mgr__item-controls { display: flex; gap: var(--sp-1); align-items: center; flex-shrink: 0; }
+.preset-mgr__add-bar { margin-top: var(--sp-3); }
+.preset-mgr__item--new { background: var(--bg-faint); }
+
 .prompt-config__tabs {
   display: flex; gap: var(--sp-1); border-bottom: 1px solid var(--line);
   margin-bottom: var(--sp-4);
@@ -2150,7 +2206,7 @@ img { display: block; max-width: 100%; }
 .preset-mgr__item-name { font-size: 14px; font-weight: 600; }
 .preset-mgr__item-value {
   font-size: 12px; color: var(--muted); margin-top: 2px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px;
+  line-height: 1.5;
 }
 
 /* ━━━ Tag Picker ━━━ */

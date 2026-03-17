@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/Toast";
+import { ConfirmModal } from "@/components/course-rnd/CourseRndModal";
 import VersionHistoryPanel from "./VersionHistoryPanel";
 
 interface Baseline {
@@ -31,7 +32,7 @@ export default function BaselineManager({ canEdit }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
-  const [showSaveInput, setShowSaveInput] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [editSummary, setEditSummary] = useState("");
   const [showHistory, setShowHistory] = useState(false);
 
@@ -63,18 +64,13 @@ export default function BaselineManager({ canEdit }: Props) {
   function handleSelect(baseline: Baseline) {
     setSelectedId(baseline.id);
     setContent(baseline.content);
-    setShowSaveInput(false);
-    setEditSummary("");
   }
 
   async function handleSave() {
-    if (!showSaveInput) {
-      setShowSaveInput(true);
-      return;
-    }
     if (!selectedId || !editSummary.trim()) return;
 
     setSaving(true);
+    setShowSaveConfirm(false);
     try {
       const res = await fetch(`/api/admin/baselines/${selectedId}`, {
         method: "PUT",
@@ -90,7 +86,6 @@ export default function BaselineManager({ canEdit }: Props) {
       setBaselines((prev) =>
         prev.map((b) => (b.id === selectedId ? { ...b, content } : b))
       );
-      setShowSaveInput(false);
       setEditSummary("");
     } catch {
       showToast("操作失败", "error");
@@ -127,8 +122,8 @@ export default function BaselineManager({ canEdit }: Props) {
       <div className="baseline-mgr__content">
         {selected ? (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--sp-3)" }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>{selected.label}</h3>
+            <div className="editor-header">
+              <h3 className="editor-header__title">{selected.label}</h3>
               <button
                 className="btn btn--soft btn--sm"
                 onClick={() => setShowHistory(true)}
@@ -146,47 +141,52 @@ export default function BaselineManager({ canEdit }: Props) {
             />
 
             {canEdit && (
-              <div style={{ marginTop: "var(--sp-3)" }}>
-                {showSaveInput && (
-                  <div style={{ marginBottom: "var(--sp-2)" }}>
-                    <input
-                      className="input input--sm"
-                      placeholder="修改说明（必填）"
-                      value={editSummary}
-                      onChange={(e) => setEditSummary(e.target.value)}
-                      style={{ width: "100%", maxWidth: 400 }}
-                    />
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: "var(--sp-2)" }}>
+              <div className="editor-footer">
+                <div className="editor-footer__btn-group">
                   <button
                     className="btn btn--sm"
-                    onClick={handleSave}
-                    disabled={saving || (showSaveInput && !editSummary.trim())}
+                    onClick={() => setShowSaveConfirm(true)}
+                    disabled={saving}
                   >
                     {saving ? "保存中..." : "保存"}
                   </button>
-                  {showSaveInput && (
-                    <button
-                      className="btn btn--soft btn--sm"
-                      onClick={() => {
-                        setShowSaveInput(false);
-                        setEditSummary("");
-                      }}
-                    >
-                      取消
-                    </button>
-                  )}
                 </div>
               </div>
             )}
           </>
         ) : (
-          <div className="muted" style={{ textAlign: "center", padding: "var(--sp-8) 0" }}>
+          <div className="muted editor-empty">
             请从左侧选择基线项
           </div>
         )}
       </div>
+
+      {showSaveConfirm && (
+        <div className="modal-overlay" onClick={() => setShowSaveConfirm(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal__title">保存基线</h3>
+            <div className="modal__body">
+              <input
+                className="input"
+                placeholder="修改说明（必填）"
+                value={editSummary}
+                onChange={(e) => setEditSummary(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="modal__actions">
+              <button className="btn btn--soft" onClick={() => setShowSaveConfirm(false)}>取消</button>
+              <button
+                className="btn"
+                onClick={handleSave}
+                disabled={!editSummary.trim()}
+              >
+                确认保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showHistory && selectedId && (
         <VersionHistoryPanel
