@@ -342,7 +342,7 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
       }
     },
 
-    async generateImage({ prompt, model, size = "1024x1024" }) {
+    async generateImage({ prompt, model, size = "1792x1024" }) {
       // 先尝试 /chat/completions（Gemini 等模型通过 chat 生成图片）
       // 这是大多数 OpenRouter 图片模型的接口方式
       // 失败后再回退到 /images/generations（DALL-E 等传统接口）
@@ -361,7 +361,7 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
           body: JSON.stringify({
             model,
             messages: [
-              { role: "user", content: `Generate an image based on this description. Only output the image, no text.\n\n${prompt}` },
+              { role: "user", content: `Generate a wide landscape image (aspect ratio approximately 16:9) based on this description. Only output the image, no text.\n\n${prompt}` },
             ],
           }),
           signal: controller.signal,
