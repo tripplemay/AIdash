@@ -7,6 +7,7 @@ import AiCostPanel from "./AiCostPanel";
 import PublishPanel from "./PublishPanel";
 import { ConfirmModal } from "./CourseRndModal";
 import ValidationReportModal, { type ValidationReport } from "./ValidationReportModal";
+import CoverRegenerateModal from "./CoverRegenerateModal";
 import { SetTopBar } from "@/components/TopBarContext";
 import { useToast } from "@/components/Toast";
 
@@ -72,6 +73,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   const [activeLessonNo, setActiveLessonNo] = useState<number | null>(drafts.length > 0 ? drafts[0].lessonNo : null);
   const [coverUrl, setCoverUrl] = useState<string | null>(project.coverUrl);
   const [generatingCover, setGeneratingCover] = useState(false);
+  const [showCoverModal, setShowCoverModal] = useState(false);
 
   // 同步 props → state
   useEffect(() => { setDrafts(lessonDrafts); }, [lessonDrafts]);
@@ -243,10 +245,15 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
     }
   }
 
-  async function handleGenerateCover() {
+  async function handleGenerateCover(customPrompt?: string) {
     setGeneratingCover(true);
+    setShowCoverModal(false);
     try {
-      const res = await fetch(`/api/course-rnd/projects/${project.id}/generate-cover`, { method: "POST" });
+      const res = await fetch(`/api/course-rnd/projects/${project.id}/generate-cover`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customPrompt }),
+      });
       const json = await res.json();
       if (res.ok) {
         setCoverUrl(json.data.coverUrl);
@@ -310,7 +317,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
           </div>
           <button
             className="btn btn--sm"
-            onClick={handleGenerateCover}
+            onClick={() => coverUrl ? setShowCoverModal(true) : handleGenerateCover()}
             disabled={generatingCover || globalLoading}
           >
             {generatingCover ? "生成中..." : coverUrl ? "重新生成" : "生成封面"}
@@ -419,6 +426,14 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
           report={validationReport}
           onIgnoreAndFinalize={handleFinalize}
           onGoBack={() => setValidationReport(null)}
+        />
+      )}
+
+      {showCoverModal && (
+        <CoverRegenerateModal
+          coverUrl={coverUrl}
+          onGenerate={handleGenerateCover}
+          onClose={() => setShowCoverModal(false)}
         />
       )}
 
