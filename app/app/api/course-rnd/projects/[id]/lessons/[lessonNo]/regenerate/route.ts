@@ -191,7 +191,7 @@ export async function POST(
               systemPrompt,
               userMessage,
               model,
-              maxTokens: 4096,
+              maxTokens: 16384,
             });
 
             let streamedContent = "";
@@ -248,7 +248,7 @@ export async function POST(
                 systemPrompt,
                 userMessage,
                 model,
-                maxTokens: 4096,
+                maxTokens: 16384,
               });
             } finally {
               clearInterval(progressTimer);

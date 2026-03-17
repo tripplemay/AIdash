@@ -221,6 +221,13 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
 
   // AI 审核（SSE 流式）
   async function handleValidate() {
+    // 前置检查：所有课次必须已生成
+    const missingCount = drafts.filter(d => !d.contentData).length;
+    if (missingCount > 0) {
+      showToast(`尚有 ${missingCount} 节课未生成方案，请先完成全部课次再定稿`, "error");
+      return;
+    }
+
     // 初始化 10 项为 pending，第 1 项为 checking
     const initialItems: ValidationItemState[] = VALIDATION_CRITERIA.map((c, i) => ({
       criterion: c,
