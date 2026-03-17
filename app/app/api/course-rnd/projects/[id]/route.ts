@@ -46,18 +46,24 @@ export async function DELETE(
 
   const project = await prisma.courseRndProject.findUnique({
     where: { id },
-    include: { _count: { select: { publishRecords: true } } },
+    include: { publishRecords: { select: { packageSlug: true } } },
   });
 
   if (!project) {
     return NextResponse.json({ error: "项目不存在" }, { status: 404 });
   }
 
-  // 已发布的项目不允许直接删除
-  if (project._count.publishRecords > 0) {
-    return NextResponse.json({
-      error: "该项目已发布课程包，请先在课程包管理中下架后再删除",
-    }, { status: 409 });
+  // 检查发布记录对应的课程包是否仍存在（未被删除）
+  if (project.publishRecords.length > 0) {
+    const slugs = [...new Set(project.publishRecords.map(r => r.packageSlug))];
+    const existingPackages = await prisma.coursePackage.count({
+      where: { slug: { in: slugs } },
+    });
+    if (existingPackages > 0) {
+      return NextResponse.json({
+        error: "该项目已发布课程包，请先在课程包管理中删除后再删除项目",
+      }, { status: 409 });
+    }
   }
 
   await prisma.courseRndProject.delete({ where: { id } });

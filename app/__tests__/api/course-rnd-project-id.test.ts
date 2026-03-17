@@ -8,6 +8,9 @@ jest.mock("@/lib/prisma", () => ({
       update: jest.fn(),
       delete: jest.fn(),
     },
+    coursePackage: {
+      count: jest.fn(),
+    },
   },
 }));
 
@@ -18,6 +21,7 @@ const mockAuth = auth as jest.Mock;
 const mockFindUnique = prisma.courseRndProject.findUnique as jest.Mock;
 const mockUpdate = prisma.courseRndProject.update as jest.Mock;
 const mockDelete = prisma.courseRndProject.delete as jest.Mock;
+const mockPackageCount = (prisma.coursePackage as unknown as { count: jest.Mock }).count as jest.Mock;
 
 const rdSession = { user: { id: "rd-1", role: "rd_manager" }, expires: "" };
 const teacherSession = { user: { id: "t-1", role: "teacher" }, expires: "" };
@@ -143,27 +147,40 @@ describe("DELETE /api/course-rnd/projects/[id]", () => {
     expect(res.status).toBe(404);
   });
 
-  it("returns 409 when project has publish records", async () => {
+  it("returns 409 when published package still exists", async () => {
     mockAuth.mockResolvedValue(rdSession);
     mockFindUnique.mockResolvedValue({
       id: "p1",
-      _count: { publishRecords: 2 },
+      publishRecords: [{ packageSlug: "course-abc" }],
     });
+    mockPackageCount.mockResolvedValue(1);
     const res = await DELETE(dummyRequest, makeParams("p1"));
     expect(res.status).toBe(409);
   });
 
-  it("deletes project successfully when no publish records", async () => {
+  it("deletes project when published package has been removed", async () => {
     mockAuth.mockResolvedValue(rdSession);
     mockFindUnique.mockResolvedValue({
       id: "p1",
-      _count: { publishRecords: 0 },
+      publishRecords: [{ packageSlug: "course-abc" }],
     });
+    mockPackageCount.mockResolvedValue(0);
     mockDelete.mockResolvedValue({ id: "p1" });
     const res = await DELETE(dummyRequest, makeParams("p1"));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.data.id).toBe("p1");
+  });
+
+  it("deletes project when no publish records exist", async () => {
+    mockAuth.mockResolvedValue(rdSession);
+    mockFindUnique.mockResolvedValue({
+      id: "p1",
+      publishRecords: [],
+    });
+    mockDelete.mockResolvedValue({ id: "p1" });
+    const res = await DELETE(dummyRequest, makeParams("p1"));
+    expect(res.status).toBe(200);
     expect(mockDelete).toHaveBeenCalledWith({ where: { id: "p1" } });
   });
 });
