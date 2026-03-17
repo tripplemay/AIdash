@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import LessonRenderer from "@/components/lesson/LessonRenderer";
 import type { LessonContent } from "@/types/lesson-content";
 import { useToast } from "@/components/Toast";
@@ -305,8 +306,8 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                 </div>
               )}
 
-              {/* 固定在视口底部的意见输入框 */}
-              {!disabled && (
+              {/* 固定在视口底部的意见输入框（通过 Portal 渲染到 body，绕过 backdrop-filter 对 fixed 的影响） */}
+              {!disabled && typeof document !== "undefined" && createPortal(
                 <div style={{
                   position: "fixed",
                   bottom: 0,
@@ -399,7 +400,6 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                             className="btn btn--sm"
                             onClick={() => {
                               if (pendingFeedbacks.length > 0) {
-                                // 如果有暂存且当前输入不为空，先暂存当前再一起提交
                                 if (feedback.trim()) {
                                   onAddPending({
                                     id: Date.now().toString(),
@@ -410,7 +410,6 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                                   setFeedback("");
                                   setTargetSection(null);
                                 }
-                                // 延迟一帧让 state 更新后提交
                                 requestAnimationFrame(() => onSubmitAllPending());
                               } else {
                                 handleSubmitFeedback();
@@ -427,7 +426,8 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                       </div>
                     </>
                   )}
-                </div>
+                </div>,
+                document.body
               )}
             </div>
           );
