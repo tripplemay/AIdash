@@ -96,26 +96,25 @@ export async function POST(
       return NextResponse.json({ error: "该服务商不支持图片生成" }, { status: 503 });
     }
 
-    // 用原始 prompt + 用户反馈组合成新 prompt
+    // 用原始 prompt + 本次反馈组合成生成 prompt（不累积历史修改）
     const promptField = targetSection === "hero_image" ? "hero_image_prompt"
       : targetSection === "illustration" ? "illustration_prompt"
       : "template_image_prompt";
     const originalPrompt = (currentOutput as unknown as Record<string, unknown>)[promptField] as string ?? "";
     const stylePrefix = project?.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
-    const newPrompt = originalPrompt
+    const generationPrompt = originalPrompt
       ? `${stylePrefix}${originalPrompt}\n\nAdditional requirements: ${feedback}`
       : `${stylePrefix}${feedback}`;
 
     try {
-      const img = await imageProvider.generateImage({ prompt: newPrompt, model: imageModel });
+      const img = await imageProvider.generateImage({ prompt: generationPrompt, model: imageModel });
       const savedUrl = await saveAiImage(img.url, `lessons/${id}`);
 
-      // 更新对应字段
+      // 只更新图片 URL，保留原始 prompt 不变
       const urlField = targetSection === "hero_image" ? "hero_image_url"
         : targetSection === "illustration" ? "illustration_url"
         : "template_image_url";
       (currentOutput as unknown as Record<string, unknown>)[urlField] = savedUrl;
-      (currentOutput as unknown as Record<string, unknown>)[promptField] = newPrompt;
 
       const contentData = buildContentData(currentOutput);
 
