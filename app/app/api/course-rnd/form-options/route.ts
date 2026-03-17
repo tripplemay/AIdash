@@ -67,8 +67,8 @@ export async function GET() {
 
   const courseDirections: { name: string; value: string }[] = [];
   const imageStyles: { name: string; value: string }[] = [];
-  const coreNeedsTags: string[] = [];
-  const constraintsTags: string[] = [];
+  const coreNeedsTags: { name: string; value: string }[] = [];
+  const constraintsTags: { name: string; value: string }[] = [];
 
   for (const preset of presets) {
     switch (preset.category) {
@@ -79,10 +79,10 @@ export async function GET() {
         imageStyles.push({ name: preset.name, value: preset.value });
         break;
       case "core_needs_tag":
-        coreNeedsTags.push(preset.name);
+        coreNeedsTags.push({ name: preset.name, value: preset.value });
         break;
       case "constraints_tag":
-        constraintsTags.push(preset.name);
+        constraintsTags.push({ name: preset.name, value: preset.value });
         break;
     }
   }

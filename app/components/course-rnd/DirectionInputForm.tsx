@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import TagPicker from "./TagPicker";
+import TagPicker, { type TagItem } from "./TagPicker";
 import PresetDropdownWithEditor from "./PresetDropdownWithEditor";
 import GroupedSelect from "./GroupedSelect";
 
@@ -38,8 +38,8 @@ interface FormOptions {
   orgForms: { key: string; label: string }[];
   deliverableGroups: { group: string; items: { key: string; label: string }[] }[];
   imageStylePresets: { name: string; value: string }[];
-  coreNeedsTags: string[];
-  constraintsTags: string[];
+  coreNeedsTags: TagItem[];
+  constraintsTags: TagItem[];
 }
 
 const EMPTY_OPTIONS: FormOptions = {
@@ -71,8 +71,12 @@ export default function DirectionInputForm({ formData, onChange, onGenerate, loa
           deliverableGroups: d.deliverableTypes ?? [],
           courseDirectionPresets: d.courseDirections ?? [],
           imageStylePresets: d.imageStyles ?? [],
-          coreNeedsTags: d.coreNeedsTags ?? [],
-          constraintsTags: d.constraintsTags ?? [],
+          coreNeedsTags: (d.coreNeedsTags ?? []).map((t: string | TagItem) =>
+            typeof t === "string" ? { name: t, value: t } : t
+          ),
+          constraintsTags: (d.constraintsTags ?? []).map((t: string | TagItem) =>
+            typeof t === "string" ? { name: t, value: t } : t
+          ),
         });
       })
       .catch(() => {
@@ -268,16 +272,22 @@ export default function DirectionInputForm({ formData, onChange, onGenerate, loa
         <TagPicker
           tags={options.coreNeedsTags}
           selected={formData.coreNeedsTags}
-          onChange={(selected) => update("coreNeedsTags", selected)}
+          onChange={(selected) => {
+            const tagTexts = selected
+              .map((name) => options.coreNeedsTags.find((t) => t.name === name)?.value)
+              .filter(Boolean)
+              .join("\n");
+            onChange({ ...formData, coreNeedsTags: selected, coreNeedsText: tagTexts });
+          }}
         />
         <textarea
           className="input"
-          style={{ height: 56, paddingTop: "var(--sp-2)", resize: "vertical" }}
+          style={{ height: 80, paddingTop: "var(--sp-2)", resize: "vertical" }}
           value={formData.coreNeedsText}
           onChange={(e) => update("coreNeedsText", e.target.value)}
-          placeholder="补充其他诉求，如：希望融入绘本元素，适合阅读能力较弱的学生"
+          placeholder="选择上方标签自动填入描述，也可直接编辑补充"
         />
-        <div className="field-hint">选择标签或输入文字，描述对课程设计的核心要求</div>
+        <div className="field-hint">选择标签自动带入提示词，可自由编辑修改</div>
       </div>
 
       {/* constraints: tags + text */}
@@ -286,16 +296,22 @@ export default function DirectionInputForm({ formData, onChange, onGenerate, loa
         <TagPicker
           tags={options.constraintsTags}
           selected={formData.constraintsTags}
-          onChange={(selected) => update("constraintsTags", selected)}
+          onChange={(selected) => {
+            const tagTexts = selected
+              .map((name) => options.constraintsTags.find((t) => t.name === name)?.value)
+              .filter(Boolean)
+              .join("\n");
+            onChange({ ...formData, constraintsTags: selected, constraintsText: tagTexts });
+          }}
         />
         <textarea
           className="input"
-          style={{ height: 56, paddingTop: "var(--sp-2)", resize: "vertical" }}
+          style={{ height: 80, paddingTop: "var(--sp-2)", resize: "vertical" }}
           value={formData.constraintsText}
           onChange={(e) => update("constraintsText", e.target.value)}
-          placeholder="补充其他约束条件，如：教室没有投影仪，需要用平板展示"
+          placeholder="选择上方标签自动填入描述，也可直接编辑补充"
         />
-        <div className="field-hint">选择标签或输入文字，描述课程实施的限制条件</div>
+        <div className="field-hint">选择标签自动带入提示词，可自由编辑修改</div>
       </div>
 
       {/* Divider */}
