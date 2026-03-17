@@ -255,11 +255,14 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
     if (!projectId) return;
     setLoading(true);
     try {
+      // 1. 更新状态
       await fetch(`/api/course-rnd/projects/${projectId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "workbench" }),
       });
+      // 2. 创建方案骨架（空课次卡片），这样进入工作台直接看到课次列表
+      await fetch(`/api/course-rnd/projects/${projectId}/generate-plan`, { method: "POST" });
       router.push(`/course-rnd/${projectId}/workbench`);
     } catch {
       setError("操作失败");

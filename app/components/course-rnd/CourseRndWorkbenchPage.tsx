@@ -78,22 +78,6 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
 
   const isFinalized = status === "finalized";
 
-  // 创建方案骨架（瞬间完成，不调用 AI）
-  async function handleGeneratePlan() {
-    setGenerating(true);
-    setError("");
-    try {
-      const res = await fetch(`/api/course-rnd/projects/${project.id}/generate-plan`, { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) { setError(json.error ?? "创建失败"); return; }
-      router.refresh();
-    } catch {
-      setError("网络错误，请重试");
-    } finally {
-      setGenerating(false);
-    }
-  }
-
   // 逐课生成 contentData（SSE 流式，支持多课并行）
   async function handleRegenerateLesson(lessonNo: number) {
     setGeneratingLessons(prev => new Map(prev).set(lessonNo, { step: 0, total: 7, label: "开始生成...", tokenCount: 0 }));
@@ -289,13 +273,10 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
       {/* AI 费用面板 */}
       <AiCostPanel costs={aiCosts} lessonCount={drafts.filter(d => d.contentData).length || 1} />
 
-      {/* 无草稿时显示生成按钮 */}
+      {/* 无草稿提示 */}
       {drafts.length === 0 && (
         <div className="card--glass" style={{ padding: "var(--sp-10)", textAlign: "center" }}>
-          <p className="muted" style={{ marginBottom: "var(--sp-4)" }}>框架已确认，点击生成逐节详细方案</p>
-          <button className="btn btn--lg" onClick={handleGeneratePlan} disabled={generating}>
-            {generating ? "AI 生成中（可能需要 30-60 秒）..." : "生成详细方案"}
-          </button>
+          <p className="muted">暂无课次数据，请返回框架阶段确认后重新进入。</p>
         </div>
       )}
 
