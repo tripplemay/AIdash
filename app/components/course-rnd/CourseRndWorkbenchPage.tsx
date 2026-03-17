@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import LessonDraftCard, { type PendingFeedback } from "./LessonDraftCard";
 import AiCostPanel from "./AiCostPanel";
@@ -43,15 +43,23 @@ interface Project {
   coverUrl: string | null;
 }
 
+interface PublishRecord {
+  id: string;
+  packageSlug: string;
+  packageTitle: string;
+  createdAt: string;
+}
+
 interface Props {
   project: Project;
   currentPlan: PlanVersion | null;
   lessonDrafts: LessonDraft[];
   directionSummary?: string | null;
   aiCosts: AiCost[];
+  publishRecord?: PublishRecord | null;
 }
 
-export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDrafts, aiCosts, directionSummary }: Props) {
+export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDrafts, aiCosts, directionSummary, publishRecord }: Props) {
   const router = useRouter();
   const [drafts, setDrafts] = useState(lessonDrafts);
   const [globalLoading, setGlobalLoading] = useState(false);
@@ -61,9 +69,12 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   const [planVersion, setPlanVersion] = useState(currentPlan);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
+  const [showUnfinalizeConfirm, setShowUnfinalizeConfirm] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
   const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
   const { showToast } = useToast();
+  const publishPanelRef = useRef<HTMLDivElement>(null);
 
   // 每课独立的进度状态
   type ProgressState = { step: number; total: number; label: string; tokenCount: number; streamText?: string };
@@ -209,6 +220,8 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   // AI 审核
   async function handleValidate() {
     setValidating(true);
+    setValidationReport(null);
+    setShowValidationModal(true);
     setError("");
     try {
       const res = await fetch(`/api/course-rnd/projects/${project.id}/validate`, { method: "POST" });
@@ -216,13 +229,16 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
       if (res.ok) {
         setValidationReport(json.data);
       } else if (res.status === 503) {
-        // AI 审核未配置，允许直接定稿
+        // AI 审核未配置，关闭审核弹窗，允许直接定稿
+        setShowValidationModal(false);
         showToast("AI 审核服务未配置，跳过审核", "info");
         setShowFinalizeConfirm(true);
       } else {
+        setShowValidationModal(false);
         showToast(json.error ?? "审核失败", "error");
       }
     } catch {
+      setShowValidationModal(false);
       showToast("网络错误", "error");
     } finally {
       setValidating(false);
@@ -233,11 +249,30 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   async function handleFinalize() {
     setShowFinalizeConfirm(false);
     setValidationReport(null);
+    setShowValidationModal(false);
     setGlobalLoading(true);
     try {
       const res = await fetch(`/api/course-rnd/projects/${project.id}/finalize`, { method: "POST" });
       if (!res.ok) { setError("定稿失败"); return; }
       setStatus("finalized");
+      // 定稿后滚动到发布区
+      setTimeout(() => publishPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    } catch {
+      setError("网络错误");
+    } finally {
+      setGlobalLoading(false);
+    }
+  }
+
+  // 撤回定稿
+  async function handleUnfinalize() {
+    setShowUnfinalizeConfirm(false);
+    setGlobalLoading(true);
+    try {
+      const res = await fetch(`/api/course-rnd/projects/${project.id}/finalize`, { method: "PATCH" });
+      if (!res.ok) { setError("撤回失败"); return; }
+      setStatus("workbench");
+      showToast("已撤回定稿，可继续修改");
     } catch {
       setError("网络错误");
     } finally {
@@ -272,7 +307,9 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
       <SetTopBar
         breadcrumb="研发进度"
         title={project.title}
-        actions={!isFinalized ? (
+        actions={isFinalized ? (
+          <button className="btn btn--soft btn--sm btn--danger" onClick={() => setShowUnfinalizeConfirm(true)} disabled={globalLoading}>撤回定稿</button>
+        ) : (
           <>
             <button className="btn btn--soft btn--sm btn--danger" onClick={() => setShowArchiveConfirm(true)} disabled={globalLoading}>废弃</button>
             <button className="btn btn--soft btn--sm" onClick={handleSaveVersion} disabled={globalLoading}>保存版本</button>
@@ -280,7 +317,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
               {validating ? "审核中..." : "审核并定稿"}
             </button>
           </>
-        ) : undefined}
+        )}
       />
 
       {error && <div className="field-error" style={{ marginBottom: "var(--sp-4)" }}>{error}</div>}
@@ -389,14 +426,17 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
 
       {/* 发布面板（定稿后显示） */}
       {isFinalized && drafts.length > 0 && (
-        <PublishPanel
-          projectId={project.id}
-          projectTitle={project.title}
-          ageRange={(project as { ageRange?: string }).ageRange ?? null}
-          level={(project as { level?: string }).level ?? null}
-          lessonDrafts={drafts.map(d => ({ lessonNo: d.lessonNo, title: d.title, contentData: d.contentData }))}
-          directionSummary={directionSummary}
-        />
+        <div ref={publishPanelRef}>
+          <PublishPanel
+            projectId={project.id}
+            projectTitle={project.title}
+            ageRange={(project as { ageRange?: string }).ageRange ?? null}
+            level={(project as { level?: string }).level ?? null}
+            lessonDrafts={drafts.map(d => ({ lessonNo: d.lessonNo, title: d.title, contentData: d.contentData }))}
+            directionSummary={directionSummary}
+            publishRecord={publishRecord}
+          />
+        </div>
       )}
 
       {/* 弹窗 */}
@@ -421,11 +461,23 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
         />
       )}
 
-      {validationReport && (
+      {showUnfinalizeConfirm && (
+        <ConfirmModal
+          title="确认撤回定稿"
+          message="撤回后课程方案将解锁，可继续修改。如已发布到课程库，已发布内容不受影响，修改后需重新定稿并发布。"
+          confirmLabel="确认撤回"
+          danger
+          onConfirm={handleUnfinalize}
+          onCancel={() => setShowUnfinalizeConfirm(false)}
+        />
+      )}
+
+      {showValidationModal && (
         <ValidationReportModal
           report={validationReport}
+          loading={validating}
           onIgnoreAndFinalize={handleFinalize}
-          onGoBack={() => setValidationReport(null)}
+          onGoBack={() => { setShowValidationModal(false); setValidationReport(null); }}
         />
       )}
 

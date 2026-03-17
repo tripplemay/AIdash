@@ -55,6 +55,13 @@ export default async function WorkbenchPage({
     directionSummary = dirVersion?.summary ?? null;
   }
 
+  // 获取最新发布记录
+  const publishRecord = await prisma.courseRndPublishRecord.findFirst({
+    where: { projectId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, packageSlug: true, packageTitle: true, createdAt: true },
+  });
+
   return (
     <CourseRndWorkbenchPage
       project={project}
@@ -62,6 +69,12 @@ export default async function WorkbenchPage({
       lessonDrafts={currentPlan?.lessonDrafts ?? []}
       aiCosts={aiCosts}
       directionSummary={directionSummary}
+      publishRecord={publishRecord ? {
+        id: publishRecord.id,
+        packageSlug: publishRecord.packageSlug,
+        packageTitle: publishRecord.packageTitle,
+        createdAt: publishRecord.createdAt.toISOString(),
+      } : null}
     />
   );
 }

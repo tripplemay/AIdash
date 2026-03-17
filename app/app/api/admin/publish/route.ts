@@ -18,8 +18,16 @@ export async function POST(request: Request) {
   const { package: pkg, lessons, projectId } = body;
 
   // 校验 package 必填字段
-  if (!pkg?.slug || !pkg?.title || !pkg?.ageRange || !pkg?.level) {
-    return NextResponse.json({ error: "缺少课程包必填字段（slug/title/ageRange/level）" }, { status: 400 });
+  if (!pkg?.title || !pkg?.ageRange || !pkg?.level) {
+    return NextResponse.json({ error: "缺少课程包必填字段（title/ageRange/level）" }, { status: 400 });
+  }
+
+  // slug 自动生成：优先使用前端传入，否则用 projectId 生成
+  if (!pkg.slug) {
+    if (!projectId) {
+      return NextResponse.json({ error: "缺少 slug 或 projectId" }, { status: 400 });
+    }
+    pkg.slug = `course-${projectId.slice(0, 8)}`;
   }
 
   // 校验 slug 格式（只允许小写字母、数字和连字符）

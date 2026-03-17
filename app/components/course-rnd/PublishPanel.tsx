@@ -10,6 +10,13 @@ interface LessonDraft {
   contentData: string | null;
 }
 
+interface PublishRecord {
+  id: string;
+  packageSlug: string;
+  packageTitle: string;
+  createdAt: string;
+}
+
 interface Props {
   projectId: string;
   projectTitle: string;
@@ -17,22 +24,16 @@ interface Props {
   level: string | null;
   lessonDrafts: LessonDraft[];
   directionSummary?: string | null;
+  publishRecord?: PublishRecord | null;
 }
 
-function generateSlug(title: string, projectId: string): string {
-  // 只保留 ASCII 字母、数字和连字符
-  const ascii = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 50);
-  // 如果中文标题生成不了有效 slug，用项目 ID 前缀兜底
-  return ascii || `course-${projectId.slice(0, 8)}`;
+function generateSlug(projectId: string): string {
+  return `course-${projectId.slice(0, 8)}`;
 }
 
-export default function PublishPanel({ projectId, projectTitle, ageRange, level, lessonDrafts, directionSummary }: Props) {
+export default function PublishPanel({ projectId, projectTitle, ageRange, level, lessonDrafts, directionSummary, publishRecord }: Props) {
   const router = useRouter();
-  const [slug, setSlug] = useState(generateSlug(projectTitle, projectId));
+  const slug = generateSlug(projectId);
   const [title, setTitle] = useState(projectTitle);
   const [summary, setSummary] = useState(directionSummary ?? "");
   const [publishing, setPublishing] = useState(false);
@@ -43,6 +44,28 @@ export default function PublishPanel({ projectId, projectTitle, ageRange, level,
   const readyCount = lessonDrafts.filter(d => d.contentData).length;
   const totalCount = lessonDrafts.length;
   const allReady = readyCount === totalCount && totalCount > 0;
+
+  // 已发布：显示已发布状态，不显示发布表单
+  if (publishRecord) {
+    const publishedAt = new Date(publishRecord.createdAt).toLocaleString("zh-CN");
+    return (
+      <div className="card--glass" style={{ padding: "var(--sp-5)", marginTop: "var(--sp-5)" }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: "var(--sp-4)" }}>发布到课程库</h2>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--sp-3)",
+          padding: "var(--sp-3) var(--sp-4)",
+          borderRadius: "var(--radius-md)",
+          background: "var(--green-light)",
+          border: "1px solid var(--green-border)",
+        }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--green)" }}>已发布</span>
+          <span style={{ fontSize: 13, color: "var(--muted)" }}>发布时间：{publishedAt}</span>
+        </div>
+      </div>
+    );
+  }
 
   async function handlePublish() {
     if (!allReady) return;
@@ -101,15 +124,9 @@ export default function PublishPanel({ projectId, projectTitle, ageRange, level,
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--sp-4)", marginBottom: "var(--sp-4)" }}>
-        <div>
-          <label className="field-label">课程包标题</label>
-          <input className="input" value={title} onChange={e => setTitle(e.target.value)} />
-        </div>
-        <div>
-          <label className="field-label">Slug（URL 路径）</label>
-          <input className="input" value={slug} onChange={e => setSlug(e.target.value)} placeholder="小写字母、数字和连字符" />
-        </div>
+      <div style={{ marginBottom: "var(--sp-4)" }}>
+        <label className="field-label">课程包标题</label>
+        <input className="input" value={title} onChange={e => setTitle(e.target.value)} />
       </div>
 
       <div style={{ marginBottom: "var(--sp-4)" }}>
@@ -124,8 +141,7 @@ export default function PublishPanel({ projectId, projectTitle, ageRange, level,
       </div>
 
       <div className="muted small" style={{ marginBottom: "var(--sp-4)" }}>
-        将发布 {readyCount} 节课到课程包「{title}」（/{slug}）。
-        {slug && <span> 如果该 slug 已存在，将覆盖更新。</span>}
+        将发布 {readyCount} 节课到课程包「{title}」。
       </div>
 
       {error && <div className="field-error" style={{ marginBottom: "var(--sp-4)" }}>{error}</div>}
@@ -133,7 +149,7 @@ export default function PublishPanel({ projectId, projectTitle, ageRange, level,
       <button
         className="btn btn--lg"
         onClick={handlePublish}
-        disabled={publishing || !allReady || !slug || !title}
+        disabled={publishing || !allReady || !title}
       >
         {publishing ? "发布中..." : "确认发布"}
       </button>
