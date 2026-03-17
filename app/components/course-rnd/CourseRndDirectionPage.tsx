@@ -41,6 +41,7 @@ interface ProjectData {
   imageStyle: string | null;
   imageStylePrompt: string | null;
   currentDirectionVersionId: string | null;
+  coverUrl: string | null;
   directionVersions: DirectionVersion[];
 }
 
@@ -75,6 +76,13 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
     return null;
   });
 
+  // 框架修改
+  const [revisingFramework, setRevisingFramework] = useState(false);
+
+  // 封面
+  const [coverUrl, setCoverUrl] = useState<string | null>(projectData?.coverUrl ?? null);
+  const [generatingCover, setGeneratingCover] = useState(false);
+
   // 输入表单数据
   const [formData, setFormData] = useState<FormData>({
     title: projectData?.title ?? "",
@@ -94,6 +102,24 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
     constraintsTags: [],
     constraintsText: projectData?.constraints ?? "",
   });
+
+  async function generateCoverAsync(pid: string) {
+    if (!pid) return;
+    setGeneratingCover(true);
+    try {
+      const res = await fetch(`/api/course-rnd/projects/${pid}/generate-cover`, {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setCoverUrl(json.data.coverUrl);
+      }
+    } catch {
+      // Non-blocking — cover generation failure should not interrupt the user
+    } finally {
+      setGeneratingCover(false);
+    }
+  }
 
   async function handleGenerate() {
     setLoading(true);
@@ -164,10 +190,64 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
         lessons: json.data.framework,
         versionId: json.data.directionVersionId,
       });
-    } catch (e) {
+
+      // 框架生成成功后，异步生成封面（不阻塞）
+      generateCoverAsync(pid);
+    } catch {
       setError("网络错误，请重试");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleReviseFramework(feedback: string) {
+    if (!projectId) return;
+    setRevisingFramework(true);
+    setError("");
+
+    try {
+      const res = await fetch(`/api/course-rnd/projects/${projectId}/revise-framework`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedback }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "修改失败");
+        return;
+      }
+
+      setFramework({
+        summary: json.data.summary,
+        lessons: json.data.framework,
+        versionId: json.data.directionVersionId,
+      });
+    } catch {
+      setError("网络错误，请重试");
+    } finally {
+      setRevisingFramework(false);
+    }
+  }
+
+  async function handleGenerateCover(customPrompt?: string) {
+    if (!projectId) return;
+    setGeneratingCover(true);
+    try {
+      const res = await fetch(`/api/course-rnd/projects/${projectId}/generate-cover`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customPrompt }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setCoverUrl(json.data.coverUrl);
+      } else {
+        setError(json.error ?? "封面生成失败");
+      }
+    } catch {
+      setError("封面生成失败，请重试");
+    } finally {
+      setGeneratingCover(false);
     }
   }
 
@@ -242,7 +322,12 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
           onPause={handlePause}
           onArchive={() => setShowArchiveConfirm(true)}
           onRegenerate={handleGenerate}
+          onReviseFramework={handleReviseFramework}
           loading={loading}
+          revisingFramework={revisingFramework}
+          coverUrl={coverUrl}
+          onRegenerateCover={handleGenerateCover}
+          generatingCover={generatingCover}
         />
       )}
 

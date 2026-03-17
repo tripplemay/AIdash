@@ -16,24 +16,25 @@ interface Props {
   ageRange: string | null;
   level: string | null;
   lessonDrafts: LessonDraft[];
+  directionSummary?: string | null;
 }
 
-function generateSlug(title: string): string {
+function generateSlug(title: string, projectId: string): string {
   // 只保留 ASCII 字母、数字和连字符
   const ascii = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 50);
-  // 如果中文标题生成不了有效 slug，用时间戳兜底
-  return ascii || `course-${Date.now().toString(36)}`;
+  // 如果中文标题生成不了有效 slug，用项目 ID 前缀兜底
+  return ascii || `course-${projectId.slice(0, 8)}`;
 }
 
-export default function PublishPanel({ projectId, projectTitle, ageRange, level, lessonDrafts }: Props) {
+export default function PublishPanel({ projectId, projectTitle, ageRange, level, lessonDrafts, directionSummary }: Props) {
   const router = useRouter();
-  const [slug, setSlug] = useState(generateSlug(projectTitle));
+  const [slug, setSlug] = useState(generateSlug(projectTitle, projectId));
   const [title, setTitle] = useState(projectTitle);
-  const [summary, setSummary] = useState("");
+  const [summary, setSummary] = useState(directionSummary ?? "");
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
   const [successInfo, setSuccessInfo] = useState<{ count: number; slug: string } | null>(null);

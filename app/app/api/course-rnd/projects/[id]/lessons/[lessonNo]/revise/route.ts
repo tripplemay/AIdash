@@ -10,6 +10,7 @@ import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-da
 import { getBaselinePrompt } from "@/lib/ai/prompts";
 import { getSystemPrompt, type TemplateContext } from "@/lib/ai/template-engine";
 import { saveAiImage } from "@/lib/ai/image-store";
+import { loadFrameworkContext, buildLessonListWithOverview, buildGeneratedLessonsSummary } from "@/lib/ai/lesson-context";
 
 const SYSTEM_PROMPT = `你是课程设计助手。用户会提供当前课程方案和修改意见。
 
@@ -52,7 +53,12 @@ export async function POST(
   // 读取项目信息（供模板引擎使用）
   const project = await prisma.courseRndProject.findUnique({
     where: { id },
-    select: { title: true, ageRange: true, level: true, courseDirection: true, coreDeliverable: true },
+    select: {
+      title: true, ageRange: true, level: true, courseDirection: true, coreDeliverable: true,
+      currentDirectionVersionId: true, currentPlanVersionId: true,
+      orgForm: true, deliverableType: true, deliverableName: true,
+      imageStylePrompt: true, coreNeeds: true, constraints: true,
+    },
   });
 
   const draft = await prisma.courseRndLessonDraft.findFirst({
@@ -95,9 +101,10 @@ export async function POST(
       : targetSection === "illustration" ? "illustration_prompt"
       : "template_image_prompt";
     const originalPrompt = (currentOutput as unknown as Record<string, unknown>)[promptField] as string ?? "";
+    const stylePrefix = project?.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
     const newPrompt = originalPrompt
-      ? `${originalPrompt}\n\nAdditional requirements: ${feedback}`
-      : feedback;
+      ? `${stylePrefix}${originalPrompt}\n\nAdditional requirements: ${feedback}`
+      : `${stylePrefix}${feedback}`;
 
     try {
       const img = await imageProvider.generateImage({ prompt: newPrompt, model: imageModel });
@@ -158,13 +165,22 @@ ${draft.draftJson}
 
 只输出需要修改的字段 JSON。`;
 
+  // 加载框架上下文
+  const { summary: courseSummary } = await loadFrameworkContext(project?.currentDirectionVersionId ?? null);
+
   // 优先使用数据库 prompt 模板，fallback 到硬编码
   const templateCtx: TemplateContext = {
     title: project?.title,
+    courseDirection: project?.courseDirection,
     ageRange: project?.ageRange,
     level: project?.level,
-    courseDirection: project?.courseDirection,
-    deliverableName: project?.coreDeliverable,
+    orgForm: project?.orgForm,
+    deliverableType: project?.deliverableType,
+    deliverableName: project?.deliverableName ?? project?.coreDeliverable,
+    imageStylePrompt: project?.imageStylePrompt,
+    coreNeeds: project?.coreNeeds,
+    constraints: project?.constraints,
+    courseSummary,
     lessonNo: lessonNoInt,
     lessonTitle: draft.title,
     currentPlan: draft.draftJson,

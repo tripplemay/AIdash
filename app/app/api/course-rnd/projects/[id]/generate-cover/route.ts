@@ -8,8 +8,9 @@ import { getProviderAndModel } from "@/lib/ai/provider";
 import { saveAiImage } from "@/lib/ai/image-store";
 
 // POST /api/course-rnd/projects/[id]/generate-cover
+// body (optional): { customPrompt?: string }
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await requireRole(COURSE_RND_ROLES);
@@ -32,12 +33,23 @@ export async function POST(
     return NextResponse.json({ error: "该服务商不支持图片生成" }, { status: 503 });
   }
 
-  const prompt = `Create a colorful, engaging educational course cover illustration for children. ` +
+  // 支持自定义 prompt（封面重新生成时用户编辑后提交）
+  let customPrompt: string | null = null;
+  try {
+    const body = await request.json();
+    if (body.customPrompt) customPrompt = body.customPrompt;
+  } catch {}
+
+  const styleDesc = project.imageStylePrompt
+    ?? "cute, modern, vibrant colors, flat illustration, child-friendly";
+  const prompt = customPrompt ?? (
+    `Create a colorful, engaging educational course cover illustration for children. ` +
     `The course is titled "${project.title}", ` +
     `designed for ${project.ageRange ?? "children"} age group, ` +
     `level: ${project.level ?? "beginner"}. ` +
     `Direction: ${project.courseDirection ?? "creative learning"}. ` +
-    `Style: cute, modern, vibrant colors, flat illustration, child-friendly, no text on the image.`;
+    `Style: ${styleDesc}, no text on the image.`
+  );
 
   try {
     const img = await provider.generateImage({ prompt, model });

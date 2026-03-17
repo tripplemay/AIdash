@@ -133,6 +133,7 @@ function ProjectCard({ project, cost, onDelete }: { project: ProjectSummary; cos
 export default function CourseRndDashboard({ projects: initialProjects, projectCosts, totalCost, totalCalls }: Props) {
   const [projects, setProjects] = useState(initialProjects);
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(["inProgress"]));
   const { showToast } = useToast();
 
   const inProgress = projects.filter(p => p.status === "direction" || p.status === "workbench");
@@ -156,27 +157,52 @@ export default function CourseRndDashboard({ projects: initialProjects, projectC
     }
   }
 
-  function renderColumn(title: string, color: string, items: ProjectSummary[]) {
+  function toggleSection(key: string) {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function renderSection(key: string, title: string, color: string, items: ProjectSummary[]) {
+    const isExpanded = expanded.has(key);
     return (
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: "var(--sp-3)", color }}>
-          {title} ({items.length})
-        </div>
-        <div style={{ display: "grid", gap: "var(--sp-3)" }}>
-          {items.length === 0 && (
-            <div className="muted" style={{ fontSize: 13, padding: "var(--sp-5) 0", textAlign: "center", border: "1px dashed var(--line)", borderRadius: "var(--radius-md)" }}>
-              暂无{title}的项目
-            </div>
-          )}
-          {items.map(p => (
-            <ProjectCard
-              key={p.id}
-              project={p}
-              cost={projectCosts[p.id] ?? 0}
-              onDelete={id => setDeleteTarget(projects.find(pp => pp.id === id) ?? null)}
-            />
-          ))}
-        </div>
+      <div className="kanban-accordion" style={{ marginBottom: "var(--sp-3)" }}>
+        <button
+          type="button"
+          className="kanban-accordion__header"
+          onClick={() => toggleSection(key)}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)" }}>
+            <span style={{ fontSize: 12, color: "var(--muted)", transition: "transform 0.2s", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>
+              ▶
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 700, color }}>{title}</span>
+            <span className="kanban-accordion__badge">{items.length}</span>
+          </div>
+        </button>
+        {isExpanded && (
+          <div className="kanban-accordion__body">
+            {items.length === 0 ? (
+              <div className="muted" style={{ fontSize: 13, padding: "var(--sp-4) 0", textAlign: "center", border: "1px dashed var(--line)", borderRadius: "var(--radius-md)", margin: "var(--sp-2) 0" }}>
+                暂无{title}的项目
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: "var(--sp-2)", padding: "var(--sp-2) 0" }}>
+                {items.map(p => (
+                  <ProjectCard
+                    key={p.id}
+                    project={p}
+                    cost={projectCosts[p.id] ?? 0}
+                    onDelete={id => setDeleteTarget(projects.find(pp => pp.id === id) ?? null)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -207,12 +233,10 @@ export default function CourseRndDashboard({ projects: initialProjects, projectC
         <span style={{ fontWeight: 700, color: "var(--brand)" }}>总计 ¥{totalCost.toFixed(2)}</span>
       </div>
 
-      {/* 看板 */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--sp-4)", alignItems: "start" }}>
-        {renderColumn("进行中", "var(--brand)", inProgress)}
-        {renderColumn("已定稿", "var(--green)", finalized)}
-        {renderColumn("已结束", "var(--muted)", ended)}
-      </div>
+      {/* 手风琴看板 */}
+      {renderSection("inProgress", "进行中", "var(--brand)", inProgress)}
+      {renderSection("finalized", "已定稿", "var(--green)", finalized)}
+      {renderSection("ended", "已结束", "var(--muted)", ended)}
 
       {deleteTarget && (
         <ConfirmModal

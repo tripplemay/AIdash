@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import LessonDraftCard from "./LessonDraftCard";
+import LessonDraftCard, { type PendingFeedback } from "./LessonDraftCard";
 import AiCostPanel from "./AiCostPanel";
 import PublishPanel from "./PublishPanel";
 import { ConfirmModal } from "./CourseRndModal";
+import ValidationReportModal, { type ValidationReport } from "./ValidationReportModal";
 import { SetTopBar } from "@/components/TopBarContext";
 import { useToast } from "@/components/Toast";
 
@@ -44,10 +45,11 @@ interface Props {
   project: Project;
   currentPlan: PlanVersion | null;
   lessonDrafts: LessonDraft[];
+  directionSummary?: string | null;
   aiCosts: AiCost[];
 }
 
-export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDrafts, aiCosts }: Props) {
+export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDrafts, aiCosts, directionSummary }: Props) {
   const router = useRouter();
   const [drafts, setDrafts] = useState(lessonDrafts);
   const [globalLoading, setGlobalLoading] = useState(false);
@@ -57,12 +59,15 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   const [planVersion, setPlanVersion] = useState(currentPlan);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
   const { showToast } = useToast();
 
   // 每课独立的进度状态
   type ProgressState = { step: number; total: number; label: string; tokenCount: number };
   const [generatingLessons, setGeneratingLessons] = useState<Map<number, ProgressState>>(new Map());
   const [revisingLessons, setRevisingLessons] = useState<Set<number>>(new Set());
+  const [pendingFeedbacksMap, setPendingFeedbacksMap] = useState<Map<number, PendingFeedback[]>>(new Map());
   const [coverUrl, setCoverUrl] = useState<string | null>(project.coverUrl);
   const [generatingCover, setGeneratingCover] = useState(false);
 
@@ -207,9 +212,33 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
     }
   }
 
+  // AI 审核
+  async function handleValidate() {
+    setValidating(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/course-rnd/projects/${project.id}/validate`, { method: "POST" });
+      const json = await res.json();
+      if (res.ok) {
+        setValidationReport(json.data);
+      } else if (res.status === 503) {
+        // AI 审核未配置，允许直接定稿
+        showToast("AI 审核服务未配置，跳过审核", "info");
+        setShowFinalizeConfirm(true);
+      } else {
+        showToast(json.error ?? "审核失败", "error");
+      }
+    } catch {
+      showToast("网络错误", "error");
+    } finally {
+      setValidating(false);
+    }
+  }
+
   // 确认定稿
   async function handleFinalize() {
     setShowFinalizeConfirm(false);
+    setValidationReport(null);
     setGlobalLoading(true);
     try {
       const res = await fetch(`/api/course-rnd/projects/${project.id}/finalize`, { method: "POST" });
@@ -248,7 +277,9 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
           <>
             <button className="btn btn--soft btn--sm btn--danger" onClick={() => setShowArchiveConfirm(true)} disabled={globalLoading}>废弃</button>
             <button className="btn btn--soft btn--sm" onClick={handleSaveVersion} disabled={globalLoading}>保存版本</button>
-            <button className="btn btn--sm" onClick={() => setShowFinalizeConfirm(true)} disabled={globalLoading}>确认定稿</button>
+            <button className="btn btn--sm" onClick={handleValidate} disabled={globalLoading || validating}>
+              {validating ? "审核中..." : "审核并定稿"}
+            </button>
           </>
         ) : undefined}
       />
@@ -317,6 +348,42 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
               disabled={isFinalized}
               generating={generatingLessons.has(draft.lessonNo)}
               progress={generatingLessons.get(draft.lessonNo) ?? null}
+              pendingFeedbacks={pendingFeedbacksMap.get(draft.lessonNo) ?? []}
+              onAddPending={(item) => {
+                setPendingFeedbacksMap(prev => {
+                  const next = new Map(prev);
+                  const list = [...(next.get(draft.lessonNo) ?? []), item];
+                  next.set(draft.lessonNo, list);
+                  return next;
+                });
+              }}
+              onRemovePending={(id) => {
+                setPendingFeedbacksMap(prev => {
+                  const next = new Map(prev);
+                  const list = (next.get(draft.lessonNo) ?? []).filter(f => f.id !== id);
+                  if (list.length === 0) next.delete(draft.lessonNo);
+                  else next.set(draft.lessonNo, list);
+                  return next;
+                });
+              }}
+              onSubmitAllPending={() => {
+                const items = pendingFeedbacksMap.get(draft.lessonNo) ?? [];
+                if (items.length === 0) return;
+                // 合并多条意见为一条文本
+                const mergedFeedback = items.map(item =>
+                  item.sectionTitle
+                    ? `针对「${item.sectionTitle}」：${item.feedback}`
+                    : item.feedback
+                ).join("\n");
+                // 不传 targetSection，让 AI 自由判断修改范围
+                handleReviselesson(draft.lessonNo, mergedFeedback);
+                // 清空暂存
+                setPendingFeedbacksMap(prev => {
+                  const next = new Map(prev);
+                  next.delete(draft.lessonNo);
+                  return next;
+                });
+              }}
             />
           ))}
         </div>
@@ -330,6 +397,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
           ageRange={(project as { ageRange?: string }).ageRange ?? null}
           level={(project as { level?: string }).level ?? null}
           lessonDrafts={drafts.map(d => ({ lessonNo: d.lessonNo, title: d.title, contentData: d.contentData }))}
+          directionSummary={directionSummary}
         />
       )}
 
@@ -352,6 +420,14 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
           confirmLabel="确认定稿"
           onConfirm={handleFinalize}
           onCancel={() => setShowFinalizeConfirm(false)}
+        />
+      )}
+
+      {validationReport && (
+        <ValidationReportModal
+          report={validationReport}
+          onIgnoreAndFinalize={handleFinalize}
+          onGoBack={() => setValidationReport(null)}
         />
       )}
 

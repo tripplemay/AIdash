@@ -16,6 +16,7 @@ export interface TemplateContext {
   coreNeeds?: string | null;
   constraints?: string | null;
   // 上下文
+  courseSummary?: string | null;
   lessonNo?: number | null;
   lessonTitle?: string | null;
   allLessons?: string | null;
@@ -93,6 +94,7 @@ function buildVariableMap(
     产出物基线: baselines.deliverable || "未指定",
     分层规则矩阵: baselines.matrix || "未指定",
     // 上下文
+    课程整体摘要: str(ctx.courseSummary),
     当前课次号: str(ctx.lessonNo),
     当前课次标题: str(ctx.lessonTitle),
     全部课次概览: str(ctx.allLessons),

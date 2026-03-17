@@ -85,7 +85,8 @@ export async function POST(
 
   // 生成图片
   try {
-    const img = await provider.generateImage({ prompt, model });
+    const stylePrefix = project.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
+    const img = await provider.generateImage({ prompt: stylePrefix + prompt, model });
     const savedUrl = await saveAiImage(img.url, `lessons/${id}`);
 
     // 更新 draftJson 和 contentData

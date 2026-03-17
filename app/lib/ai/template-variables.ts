@@ -36,6 +36,7 @@ export const TEMPLATE_VARIABLES: readonly TemplateVariable[] = [
   { key: "分层规则矩阵", group: "基线", description: "分层规则矩阵" },
 
   // ── 上下文 ──
+  { key: "课程整体摘要", group: "上下文", description: "框架阶段的课程整体摘要" },
   { key: "当前课次号", group: "上下文", description: "当前课次号" },
   { key: "当前课次标题", group: "上下文", description: "当前课次标题" },
   { key: "全部课次概览", group: "上下文", description: "全部课次概览" },

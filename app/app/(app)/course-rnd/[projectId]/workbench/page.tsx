@@ -45,12 +45,23 @@ export default async function WorkbenchPage({
     orderBy: { createdAt: "desc" },
   });
 
+  // 获取框架摘要（用于发布面板自动预填）
+  let directionSummary: string | null = null;
+  if (project.currentDirectionVersionId) {
+    const dirVersion = await prisma.courseRndDirectionVersion.findUnique({
+      where: { id: project.currentDirectionVersionId },
+      select: { summary: true },
+    });
+    directionSummary = dirVersion?.summary ?? null;
+  }
+
   return (
     <CourseRndWorkbenchPage
       project={project}
       currentPlan={currentPlan ?? null}
       lessonDrafts={currentPlan?.lessonDrafts ?? []}
       aiCosts={aiCosts}
+      directionSummary={directionSummary}
     />
   );
 }

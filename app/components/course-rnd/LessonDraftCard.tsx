@@ -32,6 +32,13 @@ const SECTION_LABELS = [
 
 const SECTION_IDS = ["core", "ai_value", "prep", "flow", "issues", "materials", "review"];
 
+export interface PendingFeedback {
+  id: string;
+  sectionId?: string;
+  sectionTitle?: string;
+  feedback: string;
+}
+
 interface Props {
   draft: LessonDraft;
   projectId: string;
@@ -42,9 +49,13 @@ interface Props {
   disabled: boolean;
   generating?: boolean;
   progress?: ProgressState | null;
+  pendingFeedbacks: PendingFeedback[];
+  onAddPending: (item: PendingFeedback) => void;
+  onRemovePending: (id: string) => void;
+  onSubmitAllPending: () => void;
 }
 
-export default function LessonDraftCard({ draft, projectId, onRevise, onRegenerate, onContentUpdate, loading, disabled, generating, progress }: Props) {
+export default function LessonDraftCard({ draft, projectId, onRevise, onRegenerate, onContentUpdate, loading, disabled, generating, progress, pendingFeedbacks, onAddPending, onRemovePending, onSubmitAllPending }: Props) {
   const [feedback, setFeedback] = useState("");
   const [expanded, setExpanded] = useState(!!draft.contentData && !generating);
   const [targetSection, setTargetSection] = useState<{ id: string; title: string } | null>(null);
@@ -291,6 +302,22 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
 
                   {!loading && (
                     <>
+                      {/* 暂存列表 */}
+                      {pendingFeedbacks.length > 0 && (
+                        <div style={{ marginBottom: "var(--sp-2)", padding: "var(--sp-2) var(--sp-3)", background: "var(--bg-faint)", borderRadius: "var(--radius-sm)", fontSize: 13 }}>
+                          <div className="muted" style={{ fontSize: 11, marginBottom: "var(--sp-1)" }}>已暂存 {pendingFeedbacks.length} 条修改意见：</div>
+                          {pendingFeedbacks.map(pf => (
+                            <div key={pf.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0" }}>
+                              <span>
+                                {pf.sectionTitle && <span className="pill" style={{ fontSize: 10, marginRight: "var(--sp-1)" }}>{pf.sectionTitle}</span>}
+                                {pf.feedback.length > 40 ? pf.feedback.slice(0, 40) + "..." : pf.feedback}
+                              </span>
+                              <button onClick={() => onRemovePending(pf.id)} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted)", fontSize: 12, padding: "0 4px" }}>✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {/* 关联标签 */}
                       {targetSection && (
                         <div style={{
@@ -301,7 +328,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                           fontSize: 13,
                         }}>
                           <span className="pill" style={{ fontSize: 11 }}>
-                            📌 针对：{targetSection.title}
+                            针对：{targetSection.title}
                           </span>
                           <button
                             className="btn--ghost"
@@ -323,14 +350,54 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                           value={feedback}
                           onChange={e => setFeedback(e.target.value)}
                         />
-                        <button
-                          className="btn btn--sm"
-                          onClick={handleSubmitFeedback}
-                          disabled={!feedback.trim()}
-                          style={{ whiteSpace: "nowrap", height: 60 }}
-                        >
-                          按意见修改
-                        </button>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "var(--sp-1)" }}>
+                          <button
+                            className="btn btn--soft btn--sm"
+                            onClick={() => {
+                              if (!feedback.trim()) return;
+                              onAddPending({
+                                id: Date.now().toString(),
+                                sectionId: targetSection?.id,
+                                sectionTitle: targetSection?.title,
+                                feedback: feedback.trim(),
+                              });
+                              setFeedback("");
+                              setTargetSection(null);
+                            }}
+                            disabled={!feedback.trim()}
+                            style={{ whiteSpace: "nowrap" }}
+                          >
+                            暂存
+                          </button>
+                          <button
+                            className="btn btn--sm"
+                            onClick={() => {
+                              if (pendingFeedbacks.length > 0) {
+                                // 如果有暂存且当前输入不为空，先暂存当前再一起提交
+                                if (feedback.trim()) {
+                                  onAddPending({
+                                    id: Date.now().toString(),
+                                    sectionId: targetSection?.id,
+                                    sectionTitle: targetSection?.title,
+                                    feedback: feedback.trim(),
+                                  });
+                                  setFeedback("");
+                                  setTargetSection(null);
+                                }
+                                // 延迟一帧让 state 更新后提交
+                                requestAnimationFrame(() => onSubmitAllPending());
+                              } else {
+                                handleSubmitFeedback();
+                              }
+                            }}
+                            disabled={!feedback.trim() && pendingFeedbacks.length === 0}
+                            style={{ whiteSpace: "nowrap" }}
+                          >
+                            {pendingFeedbacks.length > 0
+                              ? `提交全部(${pendingFeedbacks.length + (feedback.trim() ? 1 : 0)})`
+                              : "按意见修改"}
+                          </button>
+                        </div>
                       </div>
                     </>
                   )}

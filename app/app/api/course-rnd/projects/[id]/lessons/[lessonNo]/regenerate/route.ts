@@ -9,6 +9,7 @@ import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-da
 import { getBaselinePrompt } from "@/lib/ai/prompts";
 import { getSystemPrompt, type TemplateContext } from "@/lib/ai/template-engine";
 import { saveAiImage } from "@/lib/ai/image-store";
+import { loadFrameworkContext, buildLessonListWithOverview, buildGeneratedLessonsSummary, buildRegenerateUserMessage } from "@/lib/ai/lesson-context";
 
 const SECTION_STEPS = [
   { id: "core", label: "本课核心信息" },
@@ -93,7 +94,9 @@ export async function POST(
     select: {
       title: true, ageRange: true, level: true,
       coreDeliverable: true, courseDirection: true,
-      currentPlanVersionId: true,
+      currentPlanVersionId: true, currentDirectionVersionId: true,
+      orgForm: true, deliverableType: true, deliverableName: true,
+      imageStylePrompt: true, coreNeeds: true, constraints: true,
     },
   });
   if (!project) return new Response(JSON.stringify({ error: "项目不存在" }), { status: 404 });
@@ -106,7 +109,7 @@ export async function POST(
   const allDrafts = await prisma.courseRndLessonDraft.findMany({
     where: { planVersionId: project.currentPlanVersionId ?? "" },
     orderBy: { lessonNo: "asc" },
-    select: { lessonNo: true, title: true },
+    select: { lessonNo: true, title: true, draftJson: true },
   });
 
   let provider, model;
@@ -116,17 +119,19 @@ export async function POST(
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "AI 服务未配置" }), { status: 503 });
   }
 
-  const userMessage = `课程信息：
-课程标题：${project.title}
-年龄段：${project.ageRange ?? "未指定"}
-级别：${project.level ?? "未指定"}
-核心产出物：${project.coreDeliverable ?? "未指定"}
-课程方向：${project.courseDirection ?? "未指定"}
+  // 加载框架上下文（overview + summary）
+  const { summary: courseSummary, framework } = await loadFrameworkContext(project.currentDirectionVersionId);
+  const lessonListWithOverview = buildLessonListWithOverview(allDrafts, framework);
+  const generatedLessonsSummary = buildGeneratedLessonsSummary(allDrafts, lessonNoInt);
 
-全部课次概览：
-${allDrafts.map(d => `第 ${d.lessonNo} 课：${d.title}`).join("\n")}
-
-请为第 ${lessonNoInt} 课「${draft.title}」生成完整的教学方案。`;
+  const userMessage = buildRegenerateUserMessage({
+    project,
+    courseSummary,
+    lessonListWithOverview,
+    generatedLessonsSummary,
+    lessonNo: lessonNoInt,
+    lessonTitle: draft.title,
+  });
 
   // SSE 响应
   const stream = new ReadableStream({
@@ -156,13 +161,19 @@ ${allDrafts.map(d => `第 ${d.lessonNo} 课：${d.title}`).join("\n")}
         // 优先使用数据库 prompt 模板，fallback 到硬编码
         const templateCtx: TemplateContext = {
           title: project.title,
+          courseDirection: project.courseDirection,
           ageRange: project.ageRange,
           level: project.level,
+          orgForm: project.orgForm,
+          deliverableType: project.deliverableType,
+          deliverableName: project.deliverableName ?? project.coreDeliverable,
+          imageStylePrompt: project.imageStylePrompt,
+          coreNeeds: project.coreNeeds,
+          constraints: project.constraints,
           lessonNo: lessonNoInt,
           lessonTitle: draft.title,
-          allLessons: allDrafts.map(d => `第 ${d.lessonNo} 课：${d.title}`).join("\n"),
-          deliverableName: project.coreDeliverable,
-          courseDirection: project.courseDirection,
+          allLessons: lessonListWithOverview,
+          courseSummary,
         };
         const dbPrompt = await getSystemPrompt("regenerate_lesson", templateCtx);
         const systemPrompt = dbPrompt ?? (getBaselinePrompt() + SYSTEM_PROMPT);
@@ -212,7 +223,8 @@ ${allDrafts.map(d => `第 ${d.lessonNo} 课：${d.title}`).join("\n")}
         const imageConfig = await getProviderAndModel("lesson_cover").catch(() => null);
         if (imageConfig?.provider?.generateImage && aiOutput.hero_image_prompt) {
           try {
-            const img = await imageConfig.provider.generateImage({ prompt: aiOutput.hero_image_prompt, model: imageConfig.model });
+            const stylePrefix = project.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
+            const img = await imageConfig.provider.generateImage({ prompt: stylePrefix + aiOutput.hero_image_prompt, model: imageConfig.model });
             aiOutput.hero_image_url = await saveAiImage(img.url, `lessons/${id}`);
           } catch {
             // 图片生成失败不阻断主流程
