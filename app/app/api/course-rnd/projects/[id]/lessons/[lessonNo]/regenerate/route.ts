@@ -23,14 +23,14 @@ const SECTION_STEPS = [
 
 /** 根据已接收的 JSON 文本检测当前正在生成哪个板块 */
 function detectSectionStep(content: string): number {
-  // 按 JSON 字段出现顺序检测（后出现的优先级高）
-  if (content.includes('"review_questions"') || content.includes('"parent_message"')) return 7;
-  if (content.includes('"outcome_template"') || content.includes('"demo_case"')) return 6;
-  if (content.includes('"issues"')) return 5;
-  if (content.includes('"flow"')) return 4;
-  if (content.includes('"teacher_prep"') || content.includes('"equipment"')) return 3;
-  if (content.includes('"ai_value_quote"') || content.includes('"ai_rounds"')) return 2;
-  if (content.includes('"positioning"') || content.includes('"title"')) return 1;
+  // 按 JSON 字段出现顺序检测（后出现的优先级高，带冒号避免文本内容误匹配）
+  if (content.includes('"review_questions":') || content.includes('"parent_message":')) return 7;
+  if (content.includes('"outcome_template":') || content.includes('"demo_case":')) return 6;
+  if (content.includes('"issues":')) return 5;
+  if (content.includes('"flow":')) return 4;
+  if (content.includes('"teacher_prep":') || content.includes('"equipment":')) return 3;
+  if (content.includes('"ai_value_quote":') || content.includes('"ai_rounds":')) return 2;
+  if (content.includes('"positioning":') || content.includes('"title":')) return 1;
   return 0;
 }
 
@@ -196,6 +196,7 @@ export async function POST(
 
             let streamedContent = "";
             let lastStep = 0;
+            let lastHeartbeatChars = 0;
 
             while (true) {
               const iterResult = await generator.next();
@@ -208,8 +209,12 @@ export async function POST(
 
               // 根据 JSON 字段名检测当前生成的板块
               const step = detectSectionStep(streamedContent);
-              if (step !== lastStep) {
+              const stepChanged = step !== lastStep;
+              const heartbeat = chunk.totalChars - lastHeartbeatChars >= 500;
+
+              if (stepChanged || heartbeat) {
                 lastStep = step;
+                lastHeartbeatChars = chunk.totalChars;
                 sendEvent("progress", {
                   step,
                   total: 7,
@@ -222,7 +227,7 @@ export async function POST(
             // Non-streaming fallback: fake progress timer
             let currentStep = 0;
             const progressTimer = setInterval(() => {
-              if (currentStep < 6) {
+              if (currentStep < 7) {
                 currentStep++;
                 sendEvent("progress", {
                   step: currentStep,
@@ -324,7 +329,6 @@ export async function POST(
           },
         });
 
-        sendEvent("progress", { step: 7, total: 7, label: "生成完成", tokenCount: lastResult?.outputTokens ?? 0 });
         sendEvent("done", {
           lessonNo: lessonNoInt,
           contentData,
