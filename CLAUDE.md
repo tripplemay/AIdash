@@ -4,17 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-**AI Dash — 教师授课系统**，面向老师与管理员，用于统一管理课程包、进入具体课程，并承载按规范接入的单课教师课包内容。
+**AI Dash — 教师授课系统 + 课程研发系统**。面向老师、教学主管（rd_manager）和管理员，包含两大模块：
+1. **教师授课系统**：课程包管理、课次内容渲染（v2 JSON → LessonRenderer）
+2. **课程研发模块**：AI 驱动的课程设计工作台（方向确认 → 详细方案 → 定稿发布）
 
-当前处于**阶段一（纯 HTML 原型已完成）→ 阶段二（Next.js 迁移，已完成）→ 阶段三至八（持续迭代中）**。
+## 技术栈
 
-## 当前技术栈
+Next.js 16 App Router + 纯 CSS 设计系统（BEM-lite） + Prisma 6 + MySQL + NextAuth.js v5 + PM2 + Nginx
 
-**阶段一（已完成）**：纯 HTML + 原生 CSS（CSS 变量）+ 原生 JS，无构建工具，直接用静态服务器打开。
-
-**阶段二及以后（生产）**：Next.js 16 App Router + 纯 CSS 设计系统（BEM-lite 命名） + Prisma 6 + 腾讯云 TDSQL-C MySQL + NextAuth.js v5 + PM2 + Nginx。
-
-> 注意：Tailwind CSS 已完全移除。样式系统为 `app/app/globals.css` 中的纯 CSS 变量 + BEM-lite 类名。
+> Tailwind CSS 已完全移除。样式系统为 `app/app/globals.css` 中的纯 CSS 变量 + BEM-lite 类名。
 
 ## 开发命令
 
@@ -23,21 +21,17 @@ cd app/
 
 # 开发
 npm run dev                    # 启动开发服务器 http://localhost:3000
-
-# 构建
-npm run build                  # Next.js 生产构建
-npm run start                  # 生产服务器
 npm run typecheck              # TypeScript 类型检查（tsc --noEmit）
 
 # 测试
 npm test                       # Jest 运行全部测试
-npm run test:coverage          # 测试覆盖率报告
 npx jest __tests__/api/admin-users.test.ts  # 运行单个测试文件
 
-# 数据库（本地与生产统一使用 MySQL）
+# 数据库（本地与生产统一使用 MySQL，workflow 为 prisma migrate dev）
 npx prisma migrate dev         # 修改 schema 后生成 migration 并应用
 npx prisma migrate deploy      # 仅应用已有 migration（生产部署用）
 npx prisma db seed             # 初始化默认账号（teacher01/teacher123、admin/admin123、rd01/rd123456）
+npx tsx prisma/seed-baselines.ts  # 导入基线 + Prompt 模板 + 预设（幂等，可重复执行）
 npx prisma studio              # GUI 数据库管理
 
 # 本地开发数据库：mysql://root@localhost:3306/aidash_dev
@@ -50,170 +44,157 @@ npx prisma studio              # GUI 数据库管理
 
 ```
 app/
-├── page.tsx                             # 登录页（无需认证）
-├── layout.tsx                           # 根 layout（html/body）
-├── globals.css                          # 纯 CSS 设计系统（~1700行，BEM-lite）
-└── (app)/                               # Route Group（不影响 URL）
-    ├── layout.tsx                       # 认证检查 + AppShell（Sidebar 常驻）
-    ├── list/page.tsx                    # /list — 课程包列表
-    ├── detail/[slug]/page.tsx           # /detail/:slug — 课程包详情
-    ├── lesson/[slug]/[lessonId]/page.tsx # /lesson/:slug/:id — 单课渲染
+├── page.tsx                              # 登录页
+├── globals.css                           # 纯 CSS 设计系统（~2000行，BEM-lite）
+└── (app)/                                # Route Group — 认证保护
+    ├── layout.tsx                        # 认证检查 + AppShell（Sidebar + TopBar 常驻）
+    ├── list/page.tsx                     # /list — 课程包列表
+    ├── detail/[slug]/page.tsx            # /detail/:slug — 课程包详情
+    ├── lesson/[slug]/[lessonId]/page.tsx  # /lesson/:slug/:id — 单课渲染
+    ├── course-rnd/                       # 课程研发模块
+    │   ├── page.tsx                      # /course-rnd — 研发进度看板
+    │   ├── [projectId]/page.tsx          # /course-rnd/:id — 方向确认
+    │   └── [projectId]/workbench/page.tsx # /course-rnd/:id/workbench — 工作台
     └── admin/
-        ├── layout.tsx                   # admin 角色校验
-        ├── packages/page.tsx            # /admin/packages — 课程包管理
-        └── users/page.tsx               # /admin/users — 用户管理
+        ├── layout.tsx                    # admin 角色校验
+        ├── packages/page.tsx             # /admin/packages — 课程包管理
+        ├── users/page.tsx                # /admin/users — 用户管理
+        ├── ai-settings/page.tsx          # /admin/ai-settings — AI 服务配置
+        ├── prompt-config/page.tsx        # /admin/prompt-config — Prompt 配置（基线/模板/预设）
+        └── operation-logs/page.tsx       # /admin/operation-logs — 操作日志
 ```
 
 ### Layout 持久化架构
 
-`(app)/layout.tsx` 渲染 `AppShell`（包含 Sidebar + TopBar），在子路由切换时**不卸载不重建**——这是解决侧栏闪烁的根本方案。
+`(app)/layout.tsx` 渲染 `AppShell`（Sidebar + TopBar + ToastProvider），子路由切换时**不卸载不重建**。
 
 ```
 AppShell (client component, 常驻)
-├── Sidebar（完全自治：内部 fetch 筛选树/课次导航，根据 pathname 自动切换上下文）
+├── ToastProvider（全局 toast 轻提示）
+├── TopBarProvider（页面动态注入标题/面包屑/操作按钮）
+├── Sidebar（完全自治：内部 fetch 筛选树/课次导航）
 └── <main>
-    ├── TopBar（常驻，通过 TopBarContext 接收面包屑）
-    └── {children}（各页面只输出纯业务内容）
+    ├── TopBar（← 返回{上级} | {标题} + 右侧操作按钮 + 用户头像）
+    └── {children}
 ```
 
-**关键设计决策**：
-- Sidebar 不接受外部 children/props（除 userName/userRole），所有导航数据通过 `/api/filter-tree` 和 `/api/lesson-nav` 自行获取
-- TopBar 通过 `TopBarContext` 允许子页面动态注入面包屑（详情页使用 `<SetBreadcrumb>`）
-- 课次页有特殊高度约束（`calc(100vh - 40px)`），AppShell 根据 `isLessonPage` 条件处理
+**TopBar 注入模式**：各页面通过 `<SetTopBar breadcrumb="管理后台" title="AI 服务配置" actions={...} />` 注入内容，卸载时自动清除。
+
+**课次页特殊处理**：`isLessonPage` 时隐藏通用 TopBar，由页面自行渲染 `lesson-topbar`。
+
+### 角色与权限
+
+三种角色：`teacher` | `rd_manager` | `admin`
+
+权限矩阵在 `lib/permissions.ts`，API 统一用 `requireRole()` + `forbiddenResponse()` 守卫（`lib/auth-utils.ts`）。
+
+### 数据模型
+
+**核心表**（4张）：`User` / `CoursePackage` / `Lesson` / `Attachment`
+
+**课程研发表**（6张）：`CourseRndProject` / `CourseRndDirectionVersion` / `CourseRndPlanVersion` / `CourseRndLessonDraft` / `CourseRndAiCallLog` / `CourseRndPublishRecord`
+
+**AI 配置表**（2张）：`AiProvider`（服务商，含加密 API Key + 可选代理） / `AiActionConfig`（动作→模型映射 + 价格）
+
+**基线与 Prompt 表**（5张）：`BaselineDoc`（按维度拆分的基线文档） / `BaselineDocVersion`（基线版本历史） / `PromptTemplate`（6 个动作的 prompt 模板） / `PromptTemplateVersion`（模板版本历史） / `Preset`（课程方向/图片风格/标签预设）
+
+**系统表**（2张）：`OperationLog` / `SystemConfig`（key-value，存汇率等）
+
+### AI 服务架构
+
+```
+管理面板配置：AiProvider（服务商+Key+代理） → AiActionConfig（动作→模型映射）
+                                                    ↓
+课程研发调用：getProviderAndModel("generate_framework") → createOpenAICompatProvider → proxyFetch
+```
+
+关键文件：
+- `lib/ai/provider.ts` — Provider 工厂 + chat/generateImage 方法
+- `lib/ai/pricing-service.ts` — 价格自动获取 + 汇率 + DB-backed 费用计算
+- `lib/ai/build-content-data.ts` — AiLessonOutput → v2 contentData 格式转换
+- `lib/ai/prompts.ts` — 硬编码 prompt（fallback 用），DB 模板优先
+- `lib/ai/template-engine.ts` — Prompt 模板变量引擎（resolveTemplate + getSystemPrompt）
+- `lib/ai/baseline-assembler.ts` — 按项目属性拼装多维度基线（60s 缓存）
+- `lib/ai/template-variables.ts` — 28 个预定义模板变量元数据
+- `lib/proxy-fetch.ts` — SOCKS5/HTTP 代理支持（用 node:https，非原生 fetch）
+- `lib/crypto.ts` — AES-256-GCM 加密 API Key
+
+**图片生成**：`generateImage` 优先 chat 接口（Gemini/GPT-5-image），回退 `/images/generations`（DALL-E）。GPT-5-image 模型图片在 `message.images` 字段。
+
+**代理**：按提供商配置 `proxyUrl` 字段（如 `socks5://127.0.0.1:1080`），通过 Xray 出站。代理请求用 `node:https` + `socks-proxy-agent`（原生 fetch 不支持 agent）。
+
+### 基线与 Prompt 模板架构
+
+```
+管理端配置：BaselineDoc（23条，按维度拆分） + PromptTemplate（6个动作） + Preset（34个预设）
+                                                ↓
+AI 调用时：getSystemPrompt("generate_framework", context)
+           → 加载 PromptTemplate（DB 优先，fallback 硬编码）
+           → assembleBaselines（按项目 ageRange/level/orgForm/deliverableType 匹配维度）
+           → 替换 {{变量名}}（28 个预定义变量）
+           → 返回最终 prompt
+```
+
+**基线维度**：通用(1) + 年龄段 A1-A4(4) + 难度 L1-L4(4) + 组织形态 S1-S2(2) + 产出物 P1-P11(11) + 矩阵(1) = 23 条。按项目属性自动拼装，只注入匹配维度。
+
+**Prompt 模板**：6 个动作（generate_framework / revise_framework / regenerate_lesson / revise_lesson / rewrite_field / rewrite_teaching_talk），支持 `{{变量名}}` 插值，管理员可在 /admin/prompt-config 编辑。
+
+**版本管理**：基线和模板每次编辑自动创建版本记录，支持回滚和逐行 diff 对比。
+
+**零行为变化保障**：DB 无模板时 `getSystemPrompt()` 返回 null，调用方 fallback 到 `prompts.ts` 中的硬编码 prompt。
+
+**种子数据**：`npx tsx prisma/seed-baselines.ts` — 从 `docs/baseline/` 导入 23 条基线 + 从代码提取 6 个默认模板 + 34 个预设。
 
 ### CSS 设计系统
 
 `app/globals.css` — 纯 CSS，无 Tailwind，无预处理器。
 
-- `:root` 中定义所有设计令牌（颜色、间距 8px 网格、圆角、阴影、过渡）
+- `:root` 定义所有设计令牌（颜色、间距 8px 网格、圆角、阴影）
 - BEM-lite 命名：`.sidebar__nav-item--active`、`.lesson-block--box--danger`
-- 视觉基调：浅蓝紫雾光科技感（高亮度、通透、教师友好）
-- 包含微交互（hover/active）、keyframes 动画、打印媒体查询
+- 视觉基调：浅蓝紫雾光科技感
+- 按钮层级：`btn`（主要）→ `btn--soft`（次要）→ `btn--danger`（红字透明底，页面用）→ `btn--danger-fill`（白字红底，弹窗确认用）
+- 尺寸：`btn--xs` / `btn--sm` / `btn--lg`
+- Toast：`.toast-container` + `.toast--success/error/info`
+- Combobox：`.combobox` + `.combobox__dropdown`（模型搜索选择器）
 
-### 认证
+### 部署
 
-NextAuth.js v5 Credentials 提供者（用户名 + 密码，bcryptjs 哈希）。
+GitHub Actions → rsync 到腾讯云服务器 → `deploy-remote.sh`（npm ci + prisma generate + migrate deploy + build + PM2 restart）
 
-- `(app)/layout.tsx` 统一做认证检查，未登录重定向到 `/`
-- `(app)/admin/layout.tsx` 统一做 admin 角色校验
-- 各页面不再重复调用 `auth()`
-
-### 数据模型
-
-4 张表：`User` / `CoursePackage` / `Lesson` / `Attachment`
-
-关键字段：
-- `User.role` — `"teacher"` | `"admin"`
-- `Lesson.contentData` — `@db.LongText`，存储 v2 JSON（`{ hero, sections }`）
-- `Lesson.contentPath` — v1 遗留，保留但不使用
-- `CoursePackage.status` — `"published"` | `"draft"` | `"offline"`
+Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 路径有特殊配置（`proxy_buffering off` + `proxy_read_timeout 180s`）用于 SSE 流和图片生成。
 
 ## 冻结约束（不得擅自修改）
 
 1. **主链路不得增加层级**：`登录页 → 课程包列表页 → 课程包详情页 → 进入本课 → 已确认原型页`
-2. **"进入本课"行为**：通过 Next.js router 跳转至 `/lesson/[slug]/[lessonId]` 页面，主内容区由 `LessonRenderer` 组件渲染 v2 结构化 JSON（存于 `Lesson.contentData` 字段），保持完整系统导航（Sidebar + TopBar）。内容通过管理后台上传 zip 包导入数据库，不再依赖独立 HTML 文件。（历史：2026-03-14 由 `window.open` → iframe；后续迁移至 v2 JSON 渲染，见 ADR-003）
-3. **样板课内容不得替换**：第一个课程包必须是《我的神奇搭档课程包》真实内容，封面主图见 `docs/design/guidelines/extracted/claude_teacher_visual_handoff/assets/03_我的神奇搭档课程包主图_最终确认版.png`
-4. **视觉风格不得偏移**：浅蓝紫雾光科技感，设计规范见 `docs/design/guidelines/`，实现在 `app/app/globals.css`
-5. **废弃页面不得恢复**：~~单课教师课包接入页~~已废弃
-6. **导航结构已锁定**：全局采用左侧 Sidebar 方案（Layout 层常驻）。视觉交接包参考图中出现的顶部水平导航栏**不适用于本项目当前阶段**，不得引入。
+2. **"进入本课"行为**：Next.js router 跳转至 `/lesson/[slug]/[lessonId]`，由 `LessonRenderer` 渲染 v2 JSON
+3. **样板课内容不得替换**：第一个课程包必须是《我的神奇搭档课程包》
+4. **视觉风格不得偏移**：浅蓝紫雾光科技感
+5. **导航结构已锁定**：左侧 Sidebar 方案
 
-## 单课内容接入规范（当前：v2）
+## 关键设计决策
 
-> v1（iframe + HTML 文件）已废弃，v2（ZIP 上传 → JSON 入库 → LessonRenderer 渲染）为现行规范。
+- **AI 只生成内容，系统组装格式**：AI 输出 `AiLessonOutput`（简单字段），`buildContentData()` 转换为 v2 JSON。格式 100% 由代码控制。
+- **修改走增量合并**：revise API 让 AI 只输出变更字段，系统 merge 到现有数据。
+- **所有 AI 调用从数据库读配置**：无 .env fallback，未配置时抛错提示管理员。
+- **Prompt 模板 DB 优先，硬编码兜底**：`getSystemPrompt()` 优先从 DB 加载模板并替换变量，DB 无数据时 fallback 到 `prompts.ts` 硬编码。
+- **基线按维度拼装，非全量注入**：根据项目属性只注入匹配的基线维度，节省 ~60% token 消耗。
+- **图片修改与文本修改交互统一**：点击预览中的图片/板块标题 → 关联反馈输入框 → 提交修改意见。
+- **数据库 migration 工作流**：本地和生产统一用 `prisma migrate dev/deploy`，不用 `db push`。
 
-**v2 课程包 ZIP 结构：**
-```
-课程包名/
-├── package.json          # 课程包元信息（title、slug、ageRange、level 等）
-└── lessons/
-    └── lesson-01/
-        ├── lesson.json   # 课次元信息 + sections 内容字段（必填）
-        └── assets/       # 图片等静态资源
-```
+## 工作流约定
 
-**lesson.json 核心要求：** 必须包含 `sections` 字段（结构化 Block 数组），由 `POST /api/admin/upload` 上传后序列化为 `Lesson.contentData`（LongText JSON）存入数据库。
-
-**Block 类型：** text / quote / list / template / box / grid / accordion / qa_pair
-
-详细规范见：`docs/product/content-integration-spec-v2.md`
-
-## 目录结构
-
-```
-AIdash/
-├── index.html / list.html / detail.html  # 阶段一原型（只读参考）
-├── app/                        # Next.js 应用（生产）
-│   ├── app/
-│   │   ├── page.tsx            # 登录页
-│   │   ├── globals.css         # 纯 CSS 设计系统（BEM-lite）
-│   │   ├── (app)/              # Route Group（认证保护）
-│   │   │   ├── layout.tsx      # 认证 + AppShell
-│   │   │   ├── list/page.tsx   # 课程包列表页
-│   │   │   ├── detail/[slug]/  # 课程包详情页
-│   │   │   ├── lesson/[slug]/[lessonId]/  # 单课渲染页（LessonRenderer）
-│   │   │   └── admin/          # 管理后台（含 admin layout 角色校验）
-│   │   └── api/                # API 路由
-│   ├── components/             # React 组件
-│   │   ├── AppShell.tsx        # 应用外壳（Sidebar + TopBar 常驻）
-│   │   ├── Sidebar.tsx         # 自治侧栏（内部管理所有导航数据）
-│   │   ├── TopBar.tsx          # 顶栏（从 TopBarContext 读取面包屑）
-│   │   ├── TopBarContext.tsx   # 面包屑 Context + SetBreadcrumb 组件
-│   │   ├── lesson/             # LessonRenderer、CopyButton、LessonToc、ProgressBar
-│   │   ├── ui/                 # 通用 UI（已废弃，样式迁移至 globals.css）
-│   │   └── admin/              # AdminPackageList、AdminUserList、UploadModal…
-│   └── prisma/schema.prisma    # 数据库 Schema
-├── docs/
-│   ├── PROJECT_STATUS.md       # 项目进度总览（实时维护）
-│   ├── decisions/              # 重要决策记录 ADR
-│   ├── product/                # 产品与需求文档
-│   ├── tech/                   # 技术方案（架构/API/数据库）
-│   ├── design/guidelines/      # 视觉设计规范与参考图
-│   └── ops/                    # 运维与部署方案
-└── CLAUDE交接包/               # 原始交接资产（只读，不得修改）
-```
-
-## 项目管理规则
-
-### 进度追踪
-- 所有任务状态实时维护在 `docs/PROJECT_STATUS.md`
-- 每次完成任务或确认方案后必须更新该文件
-- 状态标记：✅ 已完成 / 🔵 进行中 / 🟡 待确认 / ⬜ 待启动 / 🔴 已阻塞
-
-### 文档保存
-收到"保存文档"指令时，按类型存入对应目录：
-
-| 类型 | 目录 |
-|------|------|
-| 需求、功能规格 | `docs/product/` |
-| 技术方案、架构、API、数据库 | `docs/tech/` |
-| 视觉规范、UI 基线 | `docs/design/` |
-| 部署、运维方案 | `docs/ops/` |
-| 重要决策记录 | `docs/decisions/ADR-{序号}-{描述}.md` |
-
-### 方案确认原则
-- 重要方案需与用户充分讨论后确认，再开始实现
-- 方案确认后形成对应文档，链接记录进 `PROJECT_STATUS.md`
-
-### README 自动更新规则
-每次执行 git push 前，必须更新 `README.md` 中的动态区域，确保准确反映最新版本信息。
-
-**动态区域标记**（仅更新标记内的内容，固定章节不得覆盖）：
-- `<!-- DYNAMIC:FEATURES -->` ... `<!-- /DYNAMIC:FEATURES -->` — 功能概览
-- `<!-- DYNAMIC:TECH -->` ... `<!-- /DYNAMIC:TECH -->` — 技术栈版本
-- `<!-- DYNAMIC:STRUCTURE -->` ... `<!-- /DYNAMIC:STRUCTURE -->` — 目录结构
-
-**语言要求**：中英双语，中文在前，英文在后。
-
-**目标读者**：内部团队（开发 + 产品 + 运营），兼顾项目背景、功能说明和技术细节。
-
-**固定章节**（不得自动修改）：项目简介、部署说明、使用说明、开发指南。
+- 推送前必须得到用户明确指示
+- 代码修改后运行 `npm run typecheck` + `npm test` 确认无破坏
+- Schema 修改必须同时创建 migration（`npx prisma migrate dev --name xxx`）
+- 生产服务器可通过 `ssh -p 45605 root@38.175.193.100` 访问
 
 ## 关键参考文档
 
-- 接入规范 v2（当前）：`docs/product/content-integration-spec-v2.md`
-- 接入规范 v1（已废弃，只读）：`CLAUDE交接包/source_refs/teacher-pack-content-integration-spec-v1.md`
-- 视觉设计规范：`docs/design/guidelines/extracted/claude_teacher_visual_handoff/docs/01_教师授课系统视觉设计规范.md`
-- 技术选型决策：`docs/decisions/ADR-001-nextjs-migration.md`
-- 单课页方案演进：`docs/decisions/ADR-002-lesson-iframe-approach.md`（已被 ADR-003 取代）
-- 内容接入 v2 决策：`docs/decisions/ADR-003-content-spec-v2.md`
+- 接入规范 v2：`docs/product/content-integration-spec-v2.md`
+- 课程研发 PRD：`docs/product/course-rnd-module-prd.md`
+- 基线与 Prompt 配置 PRD：`docs/product/baseline-prompt-config-prd.md`
+- 基线与 Prompt 技术方案：`docs/tech/baseline-prompt-template-implementation-plan.md`
+- 课程设计基线文档（v3 + 分维度）：`docs/baseline/`
+- 视觉设计规范：`docs/design/guidelines/`
 - 项目进度：`docs/PROJECT_STATUS.md`
+- 技术决策：`docs/decisions/ADR-*.md`
