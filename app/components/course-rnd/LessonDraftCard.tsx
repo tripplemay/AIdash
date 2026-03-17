@@ -448,25 +448,50 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
         }
       })()}
 
-      {/* 详情未展开时的意见输入 */}
-      {!expanded && !disabled && !loading && !generating && draft.contentData && (
-        <div style={{ display: "flex", gap: "var(--sp-2)", alignItems: "flex-end" }}>
-          <textarea
-            className="input"
-            style={{ height: 60, paddingTop: "var(--sp-2)", resize: "vertical", flex: 1 }}
-            placeholder="输入修改意见，AI 将按意见调整本课方案..."
-            value={feedback}
-            onChange={e => setFeedback(e.target.value)}
-          />
-          <button
-            className="btn btn--sm"
-            onClick={handleSubmitFeedback}
-            disabled={!feedback.trim()}
-            style={{ whiteSpace: "nowrap", height: 60 }}
-          >
-            按意见修改
-          </button>
-        </div>
+      {/* 详情未展开时也显示 Portal 固定反馈栏 */}
+      {!expanded && !disabled && !generating && draft.contentData && typeof document !== "undefined" && createPortal(
+        <div style={{
+          position: "fixed",
+          bottom: 0,
+          left: "var(--sidebar-w, 240px)",
+          right: 0,
+          background: "var(--panel-solid)",
+          borderTop: "1px solid var(--line)",
+          padding: "var(--sp-4) var(--sp-6)",
+          boxShadow: "0 -4px 12px rgba(0,0,0,0.1)",
+          zIndex: 50,
+        }}>
+          {loading ? (
+            <div className="ai-progress" style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)" }}>
+              <span className="ai-progress__spinner" />
+              <span className="ai-progress__step--current">AI 正在处理修改意见...</span>
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 12, marginBottom: "var(--sp-2)" }}>
+                <span className="muted">展开详情后可点击板块标题针对具体板块修改</span>
+              </div>
+              <div style={{ display: "flex", gap: "var(--sp-2)", alignItems: "flex-end" }}>
+                <textarea
+                  className="input"
+                  style={{ height: 60, paddingTop: "var(--sp-2)", resize: "vertical", flex: 1 }}
+                  placeholder="输入修改意见，AI 将按意见调整本课方案..."
+                  value={feedback}
+                  onChange={e => setFeedback(e.target.value)}
+                />
+                <button
+                  className="btn btn--sm"
+                  onClick={handleSubmitFeedback}
+                  disabled={!feedback.trim()}
+                  style={{ whiteSpace: "nowrap", height: 60 }}
+                >
+                  按意见修改
+                </button>
+              </div>
+            </>
+          )}
+        </div>,
+        document.body
       )}
 
       {/* 上次修改意见 */}
