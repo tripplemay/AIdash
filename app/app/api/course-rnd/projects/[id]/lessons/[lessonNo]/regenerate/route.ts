@@ -290,8 +290,14 @@ export async function POST(
         const imageConfig = await getProviderAndModel("lesson_cover").catch(() => null);
         if (imageConfig?.provider?.generateImage && aiOutput.hero_image_prompt) {
           try {
+            // 查询构图引导 Preset（仅 hero 图使用）
+            const compositionPreset = await prisma.preset.findFirst({
+              where: { category: "image_composition", isActive: true },
+              select: { value: true },
+            });
+            const compositionGuide = compositionPreset?.value ? `${compositionPreset.value} ` : "";
             const stylePrefix = project.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
-            const img = await imageConfig.provider.generateImage({ prompt: stylePrefix + aiOutput.hero_image_prompt, model: imageConfig.model });
+            const img = await imageConfig.provider.generateImage({ prompt: compositionGuide + stylePrefix + aiOutput.hero_image_prompt, model: imageConfig.model });
             aiOutput.hero_image_url = await saveAiImage(img.url, `lessons/${id}`);
             // 记录图片生成成本
             const imgCost = await calculateCallCostFromDb("lesson_cover", 0, 0);

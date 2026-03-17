@@ -14,6 +14,7 @@ interface Preset {
 const CATEGORIES = [
   { key: "course_direction", label: "课程方向" },
   { key: "image_style", label: "图片风格" },
+  { key: "image_composition", label: "图片构图引导" },
   { key: "core_needs_tag", label: "核心诉求标签" },
   { key: "constraints_tag", label: "补充约束标签" },
 ] as const;
