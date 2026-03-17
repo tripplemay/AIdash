@@ -56,9 +56,11 @@ interface Props {
   onAddPending: (item: PendingFeedback) => void;
   onRemovePending: (id: string) => void;
   onSubmitAllPending: () => void;
+  isActive: boolean;
+  onActivate: () => void;
 }
 
-export default function LessonDraftCard({ draft, projectId, onRevise, onRegenerate, onContentUpdate, loading, disabled, generating, progress, pendingFeedbacks, onAddPending, onRemovePending, onSubmitAllPending }: Props) {
+export default function LessonDraftCard({ draft, projectId, onRevise, onRegenerate, onContentUpdate, loading, disabled, generating, progress, pendingFeedbacks, onAddPending, onRemovePending, onSubmitAllPending, isActive, onActivate }: Props) {
   const [feedback, setFeedback] = useState("");
   const [expanded, setExpanded] = useState(!!draft.contentData && !generating);
   const [targetSection, setTargetSection] = useState<{ id: string; title: string } | null>(null);
@@ -131,6 +133,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
 
   // section / image 点击事件处理（从 LessonRenderer 内部冒泡）
   function handleContentClick(e: React.MouseEvent) {
+    onActivate(); // 切换活跃课次
     const target = e.target as HTMLElement;
 
     // 点击 hero 图片区域 → 关联到图片修改
@@ -289,7 +292,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
             {draft.contentData ? "重新生成本课方案" : "生成本课方案"}
           </button>
           {draft.contentData && (
-            <button className="btn btn--soft" onClick={() => { setExpanded(v => !v); setTargetSection(null); }}>
+            <button className="btn btn--soft" onClick={() => { setExpanded(v => !v); setTargetSection(null); onActivate(); }}>
               {expanded ? "收起详情" : "展开详情"}
             </button>
           )}
@@ -331,8 +334,8 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
         }
       })()}
 
-      {/* 统一的 Portal 固定反馈栏（展开/未展开共用） */}
-      {!disabled && !generating && draft.contentData && typeof document !== "undefined" && createPortal(
+      {/* 统一的 Portal 固定反馈栏（仅活跃课次渲染） */}
+      {isActive && !disabled && !generating && draft.contentData && typeof document !== "undefined" && createPortal(
         <div style={{
           position: "fixed",
           bottom: 0,
@@ -344,6 +347,11 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
           boxShadow: "0 -4px 12px rgba(0,0,0,0.1)",
           zIndex: 50,
         }}>
+          {/* 课次标识 */}
+          <div style={{ fontSize: 12, color: "var(--brand)", fontWeight: 600, marginBottom: "var(--sp-2)" }}>
+            第 {draft.lessonNo} 课 · {draft.title}
+          </div>
+
           {loading ? (
             <div className="ai-progress" style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)" }}>
               <span className="ai-progress__spinner" />

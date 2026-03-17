@@ -69,6 +69,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   const [generatingLessons, setGeneratingLessons] = useState<Map<number, ProgressState>>(new Map());
   const [revisingLessons, setRevisingLessons] = useState<Set<number>>(new Set());
   const [pendingFeedbacksMap, setPendingFeedbacksMap] = useState<Map<number, PendingFeedback[]>>(new Map());
+  const [activeLessonNo, setActiveLessonNo] = useState<number | null>(drafts.length > 0 ? drafts[0].lessonNo : null);
   const [coverUrl, setCoverUrl] = useState<string | null>(project.coverUrl);
   const [generatingCover, setGeneratingCover] = useState(false);
 
@@ -325,8 +326,10 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
               key={draft.id}
               draft={draft}
               projectId={project.id}
+              isActive={activeLessonNo === draft.lessonNo}
+              onActivate={() => setActiveLessonNo(draft.lessonNo)}
               onRevise={(feedback, targetSection) => handleReviselesson(draft.lessonNo, feedback, targetSection)}
-              onRegenerate={() => handleRegenerateLesson(draft.lessonNo)}
+              onRegenerate={() => { setActiveLessonNo(draft.lessonNo); handleRegenerateLesson(draft.lessonNo); }}
               onContentUpdate={(lessonNo, contentData) => {
                 setDrafts(prev => prev.map(d =>
                   d.lessonNo === lessonNo ? { ...d, contentData } : d
