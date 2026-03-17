@@ -22,6 +22,7 @@ interface Props {
   projectTitle: string;
   ageRange: string | null;
   level: string | null;
+  coverUrl?: string | null;
   lessonDrafts: LessonDraft[];
   directionSummary?: string | null;
   publishRecord?: PublishRecord | null;
@@ -31,7 +32,7 @@ function generateSlug(projectId: string): string {
   return `course-${projectId.slice(0, 8)}`;
 }
 
-export default function PublishPanel({ projectId, projectTitle, ageRange, level, lessonDrafts, directionSummary, publishRecord }: Props) {
+export default function PublishPanel({ projectId, projectTitle, ageRange, level, coverUrl, lessonDrafts, directionSummary, publishRecord }: Props) {
   const router = useRouter();
   const slug = generateSlug(projectId);
   const [title, setTitle] = useState(projectTitle);
@@ -95,6 +96,7 @@ export default function PublishPanel({ projectId, projectTitle, ageRange, level,
             ageRange: ageRange ?? "8-12",
             level: level ?? "L1",
             summary: summary || null,
+            coverImage: coverUrl || null,
           },
           lessons,
         }),

@@ -6,7 +6,7 @@ import LessonDraftCard, { type PendingFeedback } from "./LessonDraftCard";
 import AiCostPanel from "./AiCostPanel";
 import PublishPanel from "./PublishPanel";
 import { ConfirmModal } from "./CourseRndModal";
-import ValidationReportModal, { type ValidationReport } from "./ValidationReportModal";
+import ValidationReportModal, { VALIDATION_CRITERIA, type ValidationItemState, type OverallResult } from "./ValidationReportModal";
 import CoverRegenerateModal from "./CoverRegenerateModal";
 import { SetTopBar } from "@/components/TopBarContext";
 import { useToast } from "@/components/Toast";
@@ -72,7 +72,9 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   const [showUnfinalizeConfirm, setShowUnfinalizeConfirm] = useState(false);
   const [validating, setValidating] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
-  const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
+  const [validationItems, setValidationItems] = useState<ValidationItemState[]>([]);
+  const [validationOverall, setValidationOverall] = useState<OverallResult | null>(null);
+  const [validationCompleted, setValidationCompleted] = useState(false);
   const { showToast } = useToast();
   const publishPanelRef = useRef<HTMLDivElement>(null);
 
@@ -217,25 +219,81 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
     }
   }
 
-  // AI 审核
+  // AI 审核（SSE 流式）
   async function handleValidate() {
+    // 初始化 10 项为 pending，第 1 项为 checking
+    const initialItems: ValidationItemState[] = VALIDATION_CRITERIA.map((c, i) => ({
+      criterion: c,
+      status: i === 0 ? "checking" : "pending",
+    }));
+    setValidationItems(initialItems);
+    setValidationOverall(null);
+    setValidationCompleted(false);
     setValidating(true);
-    setValidationReport(null);
     setShowValidationModal(true);
     setError("");
+
     try {
       const res = await fetch(`/api/course-rnd/projects/${project.id}/validate`, { method: "POST" });
-      const json = await res.json();
-      if (res.ok) {
-        setValidationReport(json.data);
-      } else if (res.status === 503) {
-        // AI 审核未配置，关闭审核弹窗，允许直接定稿
+
+      if (res.status === 503) {
         setShowValidationModal(false);
         showToast("AI 审核服务未配置，跳过审核", "info");
         setShowFinalizeConfirm(true);
-      } else {
+        return;
+      }
+
+      if (!res.ok) {
+        const json = await res.json();
         setShowValidationModal(false);
         showToast(json.error ?? "审核失败", "error");
+        return;
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) { setShowValidationModal(false); showToast("无法读取响应", "error"); return; }
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const blocks = buffer.split("\n\n");
+        buffer = blocks.pop() ?? "";
+
+        for (const block of blocks) {
+          const eventMatch = block.match(/event: (\w+)\ndata: ([\s\S]*)/);
+          if (!eventMatch) continue;
+
+          const [, event, data] = eventMatch;
+          try {
+            const parsed = JSON.parse(data);
+
+            if (event === "item") {
+              const idx = parsed.index - 1; // 0-based
+              setValidationItems(prev => prev.map((item, i) => {
+                if (i === idx) {
+                  return { ...item, status: parsed.status, detail: parsed.detail };
+                }
+                // 将下一个 pending 项设为 checking
+                if (i === idx + 1 && item.status === "pending") {
+                  return { ...item, status: "checking" };
+                }
+                return item;
+              }));
+            } else if (event === "overall") {
+              setValidationOverall({ pass: parsed.overallPass, summary: parsed.summary });
+            } else if (event === "done") {
+              setValidationCompleted(true);
+            } else if (event === "error") {
+              setShowValidationModal(false);
+              showToast(parsed.message ?? "审核失败", "error");
+            }
+          } catch {}
+        }
       }
     } catch {
       setShowValidationModal(false);
@@ -248,7 +306,6 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   // 确认定稿
   async function handleFinalize() {
     setShowFinalizeConfirm(false);
-    setValidationReport(null);
     setShowValidationModal(false);
     setGlobalLoading(true);
     try {
@@ -380,7 +437,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
                 ));
               }}
               loading={revisingLessons.has(draft.lessonNo)}
-              disabled={isFinalized}
+              disabled={isFinalized || showValidationModal || showFinalizeConfirm}
               generating={generatingLessons.has(draft.lessonNo)}
               progress={generatingLessons.get(draft.lessonNo) ?? null}
               pendingFeedbacks={pendingFeedbacksMap.get(draft.lessonNo) ?? []}
@@ -432,6 +489,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
             projectTitle={project.title}
             ageRange={(project as { ageRange?: string }).ageRange ?? null}
             level={(project as { level?: string }).level ?? null}
+            coverUrl={coverUrl}
             lessonDrafts={drafts.map(d => ({ lessonNo: d.lessonNo, title: d.title, contentData: d.contentData }))}
             directionSummary={directionSummary}
             publishRecord={publishRecord}
@@ -474,10 +532,11 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
 
       {showValidationModal && (
         <ValidationReportModal
-          report={validationReport}
-          loading={validating}
+          items={validationItems}
+          overallResult={validationOverall}
+          completed={validationCompleted}
           onIgnoreAndFinalize={handleFinalize}
-          onGoBack={() => { setShowValidationModal(false); setValidationReport(null); }}
+          onGoBack={() => setShowValidationModal(false)}
         />
       )}
 
