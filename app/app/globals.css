@@ -801,118 +801,34 @@ img { display: block; max-width: 100%; }
   background: url("/images/login-bg.png") center / cover no-repeat fixed;
 }
 
-.login__shell {
+.login__card {
   width: 100%;
-  max-width: 1280px;
-  border-radius: var(--radius-3xl);
-  background: linear-gradient(135deg, rgba(244,247,255,0.97), rgba(238,242,255,0.97));
+  max-width: 440px;
+  background: rgba(244,247,255,0.92);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--line);
+  border-radius: var(--radius-3xl);
+  padding: var(--sp-10) var(--sp-8) var(--sp-8);
   box-shadow: 0 24px 64px rgba(112,134,210,0.14);
-  overflow: hidden;
-  position: relative;
-}
-
-.login__glow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 78% 16%, rgba(161,196,255,0.18), transparent 18%),
-    radial-gradient(circle at 22% 80%, rgba(186,201,255,0.18), transparent 24%),
-    linear-gradient(135deg, rgba(132,180,255,0.06), rgba(174,139,255,0.07));
-}
-
-.login__grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  min-height: 640px;
-}
-
-/* 左侧品牌区 */
-.login__brand {
-  padding: var(--sp-12) var(--sp-10);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  text-align: center;
 }
 
 .login__brand-logo {
   display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-8);
-}
-
-.login__brand-title {
-  font-size: 58px;
-  line-height: 1.08;
-  font-weight: 800;
-  letter-spacing: -1px;
-  margin-bottom: var(--sp-3);
-}
-
-.login__brand-subtitle {
-  font-size: 24px;
-  color: #6f80bb;
-  font-weight: 500;
+  justify-content: center;
   margin-bottom: var(--sp-4);
 }
 
-.login__brand-desc {
-  color: #7587b5;
-  line-height: 1.9;
-  font-size: 15px;
-  max-width: 480px;
+.login__brand-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   margin-bottom: var(--sp-8);
-}
-
-.login__brand-features {
-  background: rgba(255,255,255,0.64);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
-  padding: var(--sp-4) var(--sp-5);
-  box-shadow: var(--shadow-sm);
-  width: fit-content;
-}
-
-.login__brand-feature-item {
-  color: #5f73b0;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.9;
-}
-
-/* 右侧登录表单区 */
-.login__form-area {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: var(--sp-10) var(--sp-10) var(--sp-10) var(--sp-6);
-  border-left: 1px solid rgba(228,234,255,0.6);
+  color: var(--text);
 }
 
 .login__form {
-  width: 100%;
-  max-width: 400px;
-  background: rgba(255,255,255,0.76);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-2xl);
-  padding: 36px var(--sp-8) var(--sp-8);
-  box-shadow: var(--shadow-md);
-}
-
-.login__form-title {
-  font-size: 30px;
-  font-weight: 800;
-  margin-bottom: var(--sp-1);
-}
-
-.login__form-subtitle {
-  font-size: 14px;
-  color: var(--muted);
-  margin-bottom: var(--sp-8);
+  text-align: left;
 }
 
 .login__divider {
@@ -2244,5 +2160,5 @@ img { display: block; max-width: 100%; }
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar { display: none; }
-  .login__grid { grid-template-columns: 1fr; }
+  .login__card { max-width: 100%; }
 }

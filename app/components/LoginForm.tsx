@@ -28,73 +28,60 @@ export default function LoginForm() {
 
   return (
     <div className="login">
-      <div className="login__shell">
-        <div className="login__glow" />
-
-        <div className="login__grid">
-          {/* ── 左侧品牌区 ── */}
-          <div className="login__brand">
-            <div className="login__brand-logo">
-              <img src="/images/logo-sm.png" alt="AI Dash" style={{ height: 140 }} />
-            </div>
-
-            <h1 className="login__brand-title">智能课程系统</h1>
-          </div>
-
-          {/* ── 右侧登录区 ── */}
-          <div className="login__form-area">
-            <form onSubmit={handleLogin} className="login__form">
-              <h2 className="login__form-title">欢迎回来</h2>
-              <p className="login__form-subtitle">登录教师授课系统，进入课程包与授课流程</p>
-
-              <div style={{ marginBottom: "var(--sp-4)" }}>
-                <label className="field-label">账号</label>
-                <input
-                  className="input"
-                  type="text"
-                  placeholder="请输入账号"
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="field-label">密码</label>
-                <input
-                  className="input"
-                  type="password"
-                  placeholder="请输入密码"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-
-              {error && <div className="field-error">{error}</div>}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn btn--lg btn--block"
-                style={{ marginTop: "var(--sp-6)", marginBottom: "var(--sp-3)", borderRadius: "var(--radius-md)" }}
-              >
-                {loading ? "登录中..." : "登录"}
-              </button>
-
-              <div className="login__divider">其他登录方式</div>
-
-              <div className="login__social-btns">
-                <button type="button" disabled className="login__social-btn">
-                  企业微信登录
-                </button>
-                <button type="button" disabled className="login__social-btn login__social-btn--wechat">
-                  微信登录
-                </button>
-              </div>
-            </form>
-          </div>
+      <div className="login__card">
+        <div className="login__brand-logo">
+          <img src="/images/logo-sm.png" alt="AI Dash" style={{ height: 100 }} />
         </div>
+
+        <h1 className="login__brand-title">智能课程系统</h1>
+
+        <form onSubmit={handleLogin} className="login__form">
+          <div style={{ marginBottom: "var(--sp-4)" }}>
+            <label className="field-label">账号</label>
+            <input
+              className="input"
+              type="text"
+              placeholder="请输入账号"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="field-label">密码</label>
+            <input
+              className="input"
+              type="password"
+              placeholder="请输入密码"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          {error && <div className="field-error">{error}</div>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn--lg btn--block"
+            style={{ marginTop: "var(--sp-6)", marginBottom: "var(--sp-3)", borderRadius: "var(--radius-md)" }}
+          >
+            {loading ? "登录中..." : "登录"}
+          </button>
+
+          <div className="login__divider">其他登录方式</div>
+
+          <div className="login__social-btns">
+            <button type="button" disabled className="login__social-btn">
+              企业微信登录
+            </button>
+            <button type="button" disabled className="login__social-btn login__social-btn--wechat">
+              微信登录
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
