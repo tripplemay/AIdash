@@ -260,6 +260,15 @@ export async function POST(
             const stylePrefix = project.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
             const img = await imageConfig.provider.generateImage({ prompt: stylePrefix + aiOutput.hero_image_prompt, model: imageConfig.model });
             aiOutput.hero_image_url = await saveAiImage(img.url, `lessons/${id}`);
+            // 记录图片生成成本
+            const imgCost = await calculateCallCostFromDb("lesson_cover", 0, 0);
+            await prisma.courseRndAiCallLog.create({
+              data: {
+                projectId: id, pageKey: "workbench", actionType: "lesson_cover",
+                modelName: imageConfig.model, inputTokens: 0, outputTokens: 0,
+                estimatedCost: imgCost, userId: userId ?? null,
+              },
+            });
           } catch {
             // 图片生成失败不阻断主流程
           }

@@ -128,6 +128,16 @@ export async function POST(
         },
       });
 
+      // 记录图片修改成本
+      const imgCost = await calculateCallCostFromDb(actionKey, 0, 0);
+      await prisma.courseRndAiCallLog.create({
+        data: {
+          projectId: id, pageKey: "workbench", actionType: actionKey,
+          modelName: imageModel, inputTokens: 0, outputTokens: 0,
+          estimatedCost: imgCost, userId: userId ?? null,
+        },
+      });
+
       return NextResponse.json({ data: { contentData } });
     } catch (e) {
       return NextResponse.json({

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { COURSE_RND_ROLES } from "@/lib/permissions";
 import { getProviderAndModel } from "@/lib/ai/provider";
+import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { saveAiImage } from "@/lib/ai/image-store";
 
 // POST /api/course-rnd/projects/[id]/generate-cover
@@ -58,6 +59,17 @@ export async function POST(
     await prisma.courseRndProject.update({
       where: { id },
       data: { coverUrl: savedUrl },
+    });
+
+    // 记录封面生成成本
+    const userId = (session.user as { id?: string })?.id;
+    const imgCost = await calculateCallCostFromDb("package_cover", 0, 0);
+    await prisma.courseRndAiCallLog.create({
+      data: {
+        projectId: id, pageKey: "workbench", actionType: "package_cover",
+        modelName: model, inputTokens: 0, outputTokens: 0,
+        estimatedCost: imgCost, userId: userId ?? null,
+      },
     });
 
     return NextResponse.json({

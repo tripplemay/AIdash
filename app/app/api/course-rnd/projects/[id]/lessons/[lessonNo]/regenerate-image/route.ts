@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { COURSE_RND_ROLES } from "@/lib/permissions";
 import { getProviderAndModel } from "@/lib/ai/provider";
+import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { saveAiImage } from "@/lib/ai/image-store";
 import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-data";
 
@@ -99,6 +100,17 @@ export async function POST(
       data: {
         draftJson: JSON.stringify(aiOutput),
         contentData: JSON.stringify(contentData),
+      },
+    });
+
+    // 记录图片生成成本
+    const userId = (session.user as { id?: string })?.id;
+    const imgCost = await calculateCallCostFromDb(actionKey, 0, 0);
+    await prisma.courseRndAiCallLog.create({
+      data: {
+        projectId: id, pageKey: "workbench", actionType: actionKey,
+        modelName: model, inputTokens: 0, outputTokens: 0,
+        estimatedCost: imgCost, userId: userId ?? null,
       },
     });
 
