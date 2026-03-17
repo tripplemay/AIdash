@@ -14,6 +14,7 @@ interface LessonDraft {
   id: string;
   lessonNo: number;
   title: string;
+  overview: string | null;
   contentData: string | null;
   lastFeedback: string | null;
 }

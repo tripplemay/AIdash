@@ -9,6 +9,7 @@ interface LessonDraft {
   id: string;
   lessonNo: number;
   title: string;
+  overview: string | null;
   contentData: string | null;
   lastFeedback: string | null;
 }
@@ -166,9 +167,11 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
           <span className="pill" style={{ fontSize: 11 }}>第 {draft.lessonNo} 课</span>
           <span style={{ fontSize: 14, fontWeight: 700 }}>{draft.title}</span>
         </div>
-        {hero?.subtitle && (
+        {hero?.subtitle ? (
           <p className="muted" style={{ fontSize: 14, lineHeight: 1.6 }}>{hero.subtitle}</p>
-        )}
+        ) : draft.overview && !draft.contentData ? (
+          <p className="muted" style={{ fontSize: 13, lineHeight: 1.6 }}>{draft.overview}</p>
+        ) : null}
       </div>
 
       {/* 摘要信息 */}

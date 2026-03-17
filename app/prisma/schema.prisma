@@ -147,6 +147,7 @@ model CourseRndLessonDraft {
   planVersionId String
   lessonNo      Int
   title         String
+  overview      String?  @db.Text
   contentData   String?  @db.LongText // v2 完整 JSON (hero + sections)
   draftJson     String?  @db.LongText // AI 原始输出 (AiLessonOutput)
   lastFeedback  String?  @db.LongText

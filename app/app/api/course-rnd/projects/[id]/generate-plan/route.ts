@@ -69,6 +69,7 @@ export async function POST(
         planVersionId: planVersion.id,
         lessonNo: lesson.lessonNo,
         title: lesson.title,
+        overview: lesson.overview ?? null,
         contentData: null, // 待生成
       },
     });
