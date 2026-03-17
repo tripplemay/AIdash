@@ -59,13 +59,14 @@ interface Props {
   publishRecord?: PublishRecord | null;
 }
 
-export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDrafts, aiCosts, directionSummary, publishRecord }: Props) {
+export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDrafts, aiCosts, directionSummary, publishRecord: initialPublishRecord }: Props) {
   const router = useRouter();
   const [drafts, setDrafts] = useState(lessonDrafts);
   const [globalLoading, setGlobalLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState(project.status);
+  const [currentPublishRecord, setCurrentPublishRecord] = useState(initialPublishRecord);
   const [planVersion, setPlanVersion] = useState(currentPlan);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
@@ -142,7 +143,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
             } else if (event === "done") {
               setDrafts(prev => prev.map(d =>
                 d.lessonNo === lessonNo
-                  ? { ...d, contentData: JSON.stringify(parsed.contentData) }
+                  ? { ...d, contentData: JSON.stringify(parsed.contentData), lastFeedback: null }
                   : d
               ));
             } else if (event === "error") {
@@ -155,6 +156,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
       setError("网络错误，请重试");
     } finally {
       setGeneratingLessons(prev => { const next = new Map(prev); next.delete(lessonNo); return next; });
+      setPendingFeedbacksMap(prev => { const next = new Map(prev); next.delete(lessonNo); return next; });
     }
   }
 
@@ -336,6 +338,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
       const res = await fetch(`/api/course-rnd/projects/${project.id}/finalize`, { method: "PATCH" });
       if (!res.ok) { setError("撤回失败"); return; }
       setStatus("workbench");
+      setCurrentPublishRecord(null);
       showToast("已撤回定稿，可继续修改");
     } catch {
       setError("网络错误");
@@ -371,6 +374,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
       <SetTopBar
         breadcrumb="研发进度"
         title={project.title}
+        actionsKey={status}
         actions={isFinalized ? (
           <button className="btn btn--soft btn--sm btn--danger" onClick={() => setShowUnfinalizeConfirm(true)} disabled={globalLoading}>撤回定稿</button>
         ) : (
@@ -499,7 +503,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
             coverUrl={coverUrl}
             lessonDrafts={drafts.map(d => ({ lessonNo: d.lessonNo, title: d.title, contentData: d.contentData }))}
             directionSummary={directionSummary}
-            publishRecord={publishRecord}
+            publishRecord={currentPublishRecord}
           />
         </div>
       )}

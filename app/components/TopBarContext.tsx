@@ -43,17 +43,19 @@ export function useTopBar() {
 }
 
 /** 页面级组件：挂载时设置 TopBar 内容，卸载时清除 */
-export function SetTopBar({ breadcrumb, title, actions }: {
+export function SetTopBar({ breadcrumb, title, actions, actionsKey }: {
   breadcrumb?: string;
   title: string;
   actions?: ReactNode;
+  /** 当 actions 内容变化时传入不同的 key 触发更新 */
+  actionsKey?: string;
 }) {
   const { setTopBar, clearTopBar } = useTopBar();
 
   useEffect(() => {
     setTopBar({ breadcrumb: breadcrumb ?? null, title, actions: actions ?? null });
     return () => clearTopBar();
-  }, [breadcrumb, title]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [breadcrumb, title, actionsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 }
