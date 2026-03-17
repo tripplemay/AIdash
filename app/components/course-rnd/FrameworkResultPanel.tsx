@@ -24,8 +24,7 @@ interface Props {
 }
 
 const DEFAULT_COVER_PROMPT =
-  "Create a colorful, engaging educational course cover illustration for children. " +
-  "Style: cute, modern, vibrant colors, flat illustration, child-friendly, no text on the image.";
+  "色彩丰富、有吸引力的儿童教育课程封面插画，适合儿童，可爱、现代、明亮配色，扁平插画风格，画面中不要出现文字。";
 
 export default function FrameworkResultPanel({
   summary,
@@ -83,7 +82,8 @@ export default function FrameworkResultPanel({
           {generatingCover ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
               <span className="ai-progress__spinner" />
-              <span className="muted" style={{ fontSize: 11 }}>生成封面中...</span>
+              <span className="muted" style={{ fontSize: 11 }}>封面生成中</span>
+              <span className="muted" style={{ fontSize: 10 }}>可先进入下一步</span>
             </div>
           ) : coverUrl ? (
             <img
@@ -223,32 +223,48 @@ export default function FrameworkResultPanel({
       {/* 封面重新生成弹窗 */}
       {showCoverModal && (
         <div className="modal-overlay" onClick={() => setShowCoverModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <div className="modal__header">
-              <h3 className="modal__title">重新生成封面</h3>
-            </div>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
+            <h3 className="modal__title">重新生成封面</h3>
             <div className="modal__body">
-              <p className="muted" style={{ fontSize: 13, marginBottom: "var(--sp-3)" }}>
-                编辑封面生成提示词，然后点击生成。
-              </p>
-              <textarea
-                value={coverPrompt}
-                onChange={(e) => setCoverPrompt(e.target.value)}
-                rows={5}
-                style={{
-                  width: "100%",
-                  padding: "var(--sp-3)",
-                  border: "1px solid var(--line)",
-                  borderRadius: "var(--radius-md)",
-                  fontSize: 13,
-                  lineHeight: 1.6,
-                  resize: "vertical",
-                  background: "var(--bg-main)",
-                  color: "var(--text)",
-                }}
-              />
+              <div style={{ display: "flex", gap: "var(--sp-4)" }}>
+                {/* 左侧当前封面缩略图 */}
+                <div style={{
+                  width: 160, minHeight: 120, flexShrink: 0,
+                  borderRadius: "var(--radius-md)", border: "1px solid var(--line)",
+                  overflow: "hidden", background: "var(--bg-faint)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {coverUrl ? (
+                    <img src={coverUrl} alt="当前封面" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <span className="muted" style={{ fontSize: 12 }}>暂无封面</span>
+                  )}
+                </div>
+                {/* 右侧提示词编辑 */}
+                <div style={{ flex: 1 }}>
+                  <p className="muted" style={{ fontSize: 13, marginBottom: "var(--sp-2)" }}>
+                    编辑封面生成提示词，然后点击生成。
+                  </p>
+                  <textarea
+                    value={coverPrompt}
+                    onChange={(e) => setCoverPrompt(e.target.value)}
+                    rows={5}
+                    style={{
+                      width: "100%",
+                      padding: "var(--sp-3)",
+                      border: "1px solid var(--line)",
+                      borderRadius: "var(--radius-md)",
+                      fontSize: 13,
+                      lineHeight: 1.6,
+                      resize: "vertical",
+                      background: "var(--bg-main)",
+                      color: "var(--text)",
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="modal__footer">
+            <div className="modal__actions">
               <button className="btn btn--soft" onClick={() => setShowCoverModal(false)}>
                 取消
               </button>
