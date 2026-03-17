@@ -227,8 +227,9 @@ model AiActionConfig {
   actionType       String    // "text" | "image"
   providerId       String
   modelName        String
-  inputPricePerM   Float?    // 输入价格 USD/百万token
-  outputPricePerM  Float?    // 输出价格 USD/百万token
+  inputPricePerM   Float?    // 输入价格 USD/百万token（文本模型）
+  outputPricePerM  Float?    // 输出价格 USD/百万token（文本模型）
+  pricePerCall     Float?    // 单次调用价格 USD（图片模型）
   pricingSource    String?   // "auto" | "manual"
   pricingUpdatedAt DateTime?
 

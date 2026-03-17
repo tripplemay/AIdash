@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { ROLES } from "@/lib/roles";
 import { decryptApiKey } from "@/lib/crypto";
-import { testModel, fetchModelPricing } from "@/lib/ai/pricing-service";
+import { testModel, fetchModelPricing, getUsdToCny } from "@/lib/ai/pricing-service";
 
 // GET /api/admin/ai-actions — 动作配置列表（所有角色可读）
 export async function GET() {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   if (!(await requireRole([ROLES.ADMIN]))) return forbiddenResponse();
 
   const body = await request.json();
-  const { actionKey, actionLabel, actionType, providerId, modelName, skipTest, inputPricePerM, outputPricePerM } = body;
+  const { actionKey, actionLabel, actionType, providerId, modelName, skipTest, inputPricePerM, outputPricePerM, pricePerCall, priceCurrency } = body;
 
   if (!actionKey || !actionLabel || !actionType || !providerId || !modelName) {
     return NextResponse.json({ error: "缺少必填字段" }, { status: 400 });
@@ -50,37 +50,65 @@ export async function POST(request: Request) {
     }
   }
 
-  // 价格：手动输入优先，否则自动获取
-  let pricing: { inputPricePerM: number | null; outputPricePerM: number | null; pricingSource: string } = {
+  // 币种转换：用户输入 CNY 时转为 USD 存储
+  const usdToCny = priceCurrency === "CNY" ? await getUsdToCny() : 1;
+
+  // 价格处理
+  let pricingData: {
+    inputPricePerM: number | null;
+    outputPricePerM: number | null;
+    pricePerCall: number | null;
+    pricingSource: string;
+  } = {
     inputPricePerM: null,
     outputPricePerM: null,
+    pricePerCall: null,
     pricingSource: "auto",
   };
 
-  if (inputPricePerM != null && outputPricePerM != null) {
-    pricing = { inputPricePerM, outputPricePerM, pricingSource: "manual" };
+  if (actionType === "image" && pricePerCall != null) {
+    // 图片模型：按次计费（手动）
+    pricingData = {
+      inputPricePerM: null,
+      outputPricePerM: null,
+      pricePerCall: pricePerCall / usdToCny,
+      pricingSource: "manual",
+    };
+  } else if (inputPricePerM != null && outputPricePerM != null) {
+    // 文本模型：按 token 计费（手动）
+    pricingData = {
+      inputPricePerM: inputPricePerM / usdToCny,
+      outputPricePerM: outputPricePerM / usdToCny,
+      pricePerCall: null,
+      pricingSource: "manual",
+    };
   } else {
+    // 自动获取（仅文本模型有效）
     const fetched = await fetchModelPricing(provider.baseUrl, apiKey, modelName, provider.proxyUrl);
     if (fetched) {
-      pricing = { ...fetched, pricingSource: "auto" };
+      pricingData = { ...fetched, pricePerCall: null, pricingSource: "auto" };
     }
   }
 
-  const config = await prisma.aiActionConfig.upsert({
+  const hasPricing = pricingData.pricePerCall != null || (pricingData.inputPricePerM != null && pricingData.outputPricePerM != null);
+
+  await prisma.aiActionConfig.upsert({
     where: { actionKey },
     create: {
       actionKey, actionLabel, actionType, providerId, modelName,
-      inputPricePerM: pricing.inputPricePerM,
-      outputPricePerM: pricing.outputPricePerM,
-      pricingSource: pricing.pricingSource,
-      pricingUpdatedAt: pricing.inputPricePerM ? new Date() : null,
+      inputPricePerM: pricingData.inputPricePerM,
+      outputPricePerM: pricingData.outputPricePerM,
+      pricePerCall: pricingData.pricePerCall,
+      pricingSource: pricingData.pricingSource,
+      pricingUpdatedAt: hasPricing ? new Date() : null,
     },
     update: {
       actionLabel, actionType, providerId, modelName,
-      inputPricePerM: pricing.inputPricePerM,
-      outputPricePerM: pricing.outputPricePerM,
-      pricingSource: pricing.pricingSource,
-      pricingUpdatedAt: pricing.inputPricePerM ? new Date() : null,
+      inputPricePerM: pricingData.inputPricePerM,
+      outputPricePerM: pricingData.outputPricePerM,
+      pricePerCall: pricingData.pricePerCall,
+      pricingSource: pricingData.pricingSource,
+      pricingUpdatedAt: hasPricing ? new Date() : null,
     },
   });
 
@@ -92,6 +120,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     data: result,
-    pricingAvailable: pricing.inputPricePerM != null,
+    pricingAvailable: hasPricing,
   });
 }

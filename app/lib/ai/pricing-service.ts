@@ -105,6 +105,12 @@ export async function refreshAllActionPricing(): Promise<RefreshResult[]> {
       continue;
     }
 
+    // 图片模型无法自动获取 token 价格，跳过
+    if (action.actionType === "image") {
+      results.push({ actionKey: action.actionKey, status: "skipped" });
+      continue;
+    }
+
     const apiKey = decryptApiKey(action.provider.apiKeyEnc);
     const pricing = await fetchModelPricing(
       action.provider.baseUrl,
@@ -186,11 +192,20 @@ export async function calculateCallCostFromDb(
     where: { actionKey },
   });
 
-  if (!config?.inputPricePerM || !config?.outputPricePerM) {
+  if (!config) return 0;
+
+  const usdToCny = await getUsdToCny();
+
+  // 按次计费（图片模型）
+  if (config.pricePerCall != null) {
+    return config.pricePerCall * usdToCny;
+  }
+
+  // 按 token 计费（文本模型）
+  if (!config.inputPricePerM || !config.outputPricePerM) {
     return 0;
   }
 
-  const usdToCny = await getUsdToCny();
   const usdCost = (inputTokens * config.inputPricePerM + outputTokens * config.outputPricePerM) / 1_000_000;
   return usdCost * usdToCny;
 }
