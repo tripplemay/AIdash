@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu } from "lucide-react";
+import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu, Sparkles } from "lucide-react";
 import { ROLE_LABELS, type Role } from "@/lib/roles";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import SidebarNavItem from "./SidebarNavItem";
@@ -39,6 +39,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
   // admin 子页面自动检测
   const adminSection = pathname.includes("/admin/packages") ? "packages"
     : pathname.includes("/admin/users") ? "users"
+    : pathname.includes("/admin/prompt-config") ? "prompt-config"
     : undefined;
 
   // 筛选状态
@@ -220,6 +221,15 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
                   >
                     <Cpu size={14} />
                     AI 服务配置
+                  </Link>
+                )}
+                {hasPermission(userRole, PERMISSIONS.VIEW_PROMPT_CONFIG) && (
+                  <Link
+                    href="/admin/prompt-config"
+                    className={`sidebar__sub-item${pathname.includes("/admin/prompt-config") ? " sidebar__sub-item--active" : ""}`}
+                  >
+                    <Sparkles size={14} />
+                    Prompt 配置
                   </Link>
                 )}
               </div>

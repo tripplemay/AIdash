@@ -16,6 +16,10 @@ export const PERMISSIONS = {
   VIEW_ALL_LOGS: "view_all_logs",
   /** 操作日志 — 查看自己 */
   VIEW_OWN_LOGS: "view_own_logs",
+  /** 管理后台 — Prompt 配置（基线/模板/预设） */
+  PROMPT_CONFIG: "prompt_config",
+  /** 查看 Prompt 配置（只读） */
+  VIEW_PROMPT_CONFIG: "view_prompt_config",
 } as const;
 
 type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -30,6 +34,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.COURSE_RND,
     PERMISSIONS.MANAGE_PACKAGES,
     PERMISSIONS.VIEW_OWN_LOGS,
+    PERMISSIONS.VIEW_PROMPT_CONFIG,
   ],
   [ROLES.ADMIN]: [
     PERMISSIONS.VIEW_COURSES,
@@ -39,6 +44,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.AI_SETTINGS,
     PERMISSIONS.VIEW_ALL_LOGS,
     PERMISSIONS.VIEW_OWN_LOGS,
+    PERMISSIONS.PROMPT_CONFIG,
+    PERMISSIONS.VIEW_PROMPT_CONFIG,
   ],
 };
 

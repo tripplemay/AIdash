@@ -8,6 +8,7 @@ import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-data";
 import { getBaselinePrompt } from "@/lib/ai/prompts";
+import { getSystemPrompt, type TemplateContext } from "@/lib/ai/template-engine";
 import { saveAiImage } from "@/lib/ai/image-store";
 
 const SYSTEM_PROMPT = `你是课程设计助手。用户会提供当前课程方案和修改意见。
@@ -47,6 +48,12 @@ export async function POST(
   if (!feedback) {
     return NextResponse.json({ error: "请输入修改意见" }, { status: 400 });
   }
+
+  // 读取项目信息（供模板引擎使用）
+  const project = await prisma.courseRndProject.findUnique({
+    where: { id },
+    select: { title: true, ageRange: true, level: true, courseDirection: true, coreDeliverable: true },
+  });
 
   const draft = await prisma.courseRndLessonDraft.findFirst({
     where: { planVersionId, lessonNo: lessonNoInt },
@@ -151,8 +158,24 @@ ${draft.draftJson}
 
 只输出需要修改的字段 JSON。`;
 
+  // 优先使用数据库 prompt 模板，fallback 到硬编码
+  const templateCtx: TemplateContext = {
+    title: project?.title,
+    ageRange: project?.ageRange,
+    level: project?.level,
+    courseDirection: project?.courseDirection,
+    deliverableName: project?.coreDeliverable,
+    lessonNo: lessonNoInt,
+    lessonTitle: draft.title,
+    currentPlan: draft.draftJson,
+    feedback,
+    targetSection,
+  };
+  const dbPrompt = await getSystemPrompt("revise_lesson", templateCtx);
+  const systemPrompt = dbPrompt ?? (getBaselinePrompt() + SYSTEM_PROMPT);
+
   const result = await provider.chat({
-    systemPrompt: getBaselinePrompt() + SYSTEM_PROMPT,
+    systemPrompt,
     userMessage,
     model,
     maxTokens: 2048,

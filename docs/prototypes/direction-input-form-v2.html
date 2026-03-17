@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课程信息表单 v2 — 原型</title>
+<style>
+  :root {
+    --bg: #f4f2fa;
+    --surface: #fff;
+    --glass: rgba(255,255,255,0.82);
+    --glass-border: rgba(180,170,220,0.25);
+    --text: #1e1b2e;
+    --muted: #7a7494;
+    --brand: #6c5ce7;
+    --brand-light: #a29bfe;
+    --brand-bg: rgba(108,92,231,0.08);
+    --red: #e74c3c;
+    --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: var(--sp-5);
+    backdrop-filter: blur(12px);
+  }
+
+  .card__title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: var(--sp-4);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-4); }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-4); }
+  .field { margin-bottom: var(--sp-4); }
+  .field:last-child { margin-bottom: 0; }
+
+  .field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--sp-1);
+  }
+  .field-label .required { color: var(--red); }
+
+  .field-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+    line-height: 1.5;
+  }
+
+  .input {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input:focus { border-color: var(--brand-light); box-shadow: 0 0 0 3px rgba(108,92,231,0.1); }
+  .input::placeholder { color: #b8b2cc; }
+
+  textarea.input {
+    height: 80px;
+    padding: var(--sp-2) var(--sp-3);
+    resize: vertical;
+    line-height: 1.6;
+  }
+
+  /* Select */
+  .select {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7494' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  .select:focus { border-color: var(--brand-light); box-shadow: 0 0 0 3px rgba(108,92,231,0.1); }
+
+  /* 产出物：下拉 + 输入 组合 */
+  .combo-field {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: var(--sp-2);
+  }
+
+  /* Tag 选择器 */
+  .tag-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-2);
+  }
+  .tag-picker__item {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--surface);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .tag-picker__item:hover {
+    border-color: var(--brand-light);
+    color: var(--brand);
+  }
+  .tag-picker__item--active {
+    border-color: var(--brand);
+    background: var(--brand-bg);
+    color: var(--brand);
+    font-weight: 500;
+  }
+
+  /* 分隔线 */
+  .divider {
+    height: 1px;
+    background: var(--glass-border);
+    margin: var(--sp-5) 0;
+  }
+
+  /* Section 小标题 */
+  .section-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: var(--sp-3);
+    letter-spacing: 0.5px;
+  }
+
+  /* 按钮 */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--brand);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.9; }
+
+  /* 标注 */
+  .annotation {
+    position: relative;
+    outline: 2px dashed var(--brand-light);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
+  }
+  .annotation::after {
+    content: attr(data-note);
+    position: absolute;
+    right: -8px;
+    top: -10px;
+    background: var(--brand);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    z-index: 1;
+  }
+
+  .legend {
+    margin-bottom: 24px;
+    padding: 12px 16px;
+    background: var(--brand-bg);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--brand);
+    line-height: 1.8;
+  }
+  .legend strong { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="legend">
+  <strong>原型说明：</strong>
+  紫色虚线标注 = 本次改动点。其余为现有字段样式保持不变。
+</div>
+
+<div class="card">
+  <h2 class="card__title">课程信息</h2>
+
+  <!-- Row 1: 标题 + 课程方向 -->
+  <div class="grid-2">
+    <div>
+      <label class="field-label">项目标题 <span class="required">*</span></label>
+      <input class="input" value="AI 故事表达创作课" />
+    </div>
+    <div>
+      <label class="field-label">课程方向</label>
+      <input class="input" placeholder="如：用 AI 辅助学生进行故事创作" />
+    </div>
+  </div>
+
+  <!-- Row 2: 年龄段 + 难度 + 组织形态 + 课次数 -->
+  <div class="annotation" data-note="下拉选择，选项从基线读取" style="margin-bottom: var(--sp-4);">
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 120px; gap: var(--sp-4);">
+      <div>
+        <label class="field-label">年龄段</label>
+        <select class="select">
+          <option value="">请选择</option>
+          <option>A1：6-7 岁（启蒙）</option>
+          <option selected>A2：8-9 岁（基础）</option>
+          <option>A3：10-12 岁（主力）</option>
+          <option>A4：13-15 岁（进阶）</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">难度级别</label>
+        <select class="select">
+          <option value="">请选择</option>
+          <option>L1：AI 启蒙使用</option>
+          <option selected>L2：AI 基础应用</option>
+          <option>L3：AI 结构化创作</option>
+          <option>L4：AI 多轮协作</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">课程组织形态</label>
+        <select class="select">
+          <option value="">请选择</option>
+          <option selected>S1：单课闭环型</option>
+          <option>S2：系列项目型</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">预计课次数</label>
+        <input class="input" type="number" value="4" min="1" max="20" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: 产出物 -->
+  <div class="field annotation" data-note="下拉选大类 + 输入具体名称">
+    <label class="field-label">产出物形态</label>
+    <div class="combo-field">
+      <select class="select">
+        <option value="">选择大类</option>
+        <option>P1：档案类</option>
+        <option>P2：计划类</option>
+        <option selected>P3：故事类</option>
+        <option>P4：空间类</option>
+        <option>P5：发布类</option>
+        <option disabled>── 高作品感扩展 ──</option>
+        <option>P6：图片类</option>
+        <option>P7：漫画类</option>
+        <option>P8：音乐类</option>
+        <option>P9：动画类</option>
+        <option>P10：游戏类</option>
+        <option>P11：互动展示类</option>
+      </select>
+      <input class="input" placeholder="具体产出物名称，如：故事介绍页" value="故事介绍页" />
+    </div>
+    <div class="field-hint">选择产出物大类后，输入学生最终完成的具体作品名称</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 大致框架 -->
+  <div class="field annotation" data-note="优化 placeholder + 辅助说明">
+    <label class="field-label">大致框架（选填）</label>
+    <textarea class="input" placeholder="如：第1课 认识AI助手 → 第2课 故事角色设计 → 第3课 场景搭建 → 第4课 作品整合发布"></textarea>
+    <div class="field-hint">描述每课的大致主题和推进逻辑，留空则由 AI 自动规划</div>
+  </div>
+
+  <!-- 核心诉求 -->
+  <div class="field annotation" data-note="标签多选 + 自由补充">
+    <label class="field-label">核心诉求（选填）</label>
+    <div class="tag-picker">
+      <span class="tag-picker__item tag-picker__item--active">强调作品完成度</span>
+      <span class="tag-picker__item">强调动手实操</span>
+      <span class="tag-picker__item tag-picker__item--active">强化同伴协作</span>
+      <span class="tag-picker__item">降低文字负担</span>
+      <span class="tag-picker__item">增加 AI 互动环节</span>
+      <span class="tag-picker__item">适配零基础学生</span>
+      <span class="tag-picker__item tag-picker__item--active">每课独立成果</span>
+      <span class="tag-picker__item">强调创意表达</span>
+      <span class="tag-picker__item">控制课堂节奏</span>
+    </div>
+    <textarea class="input" style="height: 56px;" placeholder="补充其他诉求，如：希望融入绘本元素，适合阅读能力较弱的学生"></textarea>
+    <div class="field-hint">选择常用诉求标签，或在下方补充个性化要求</div>
+  </div>
+
+  <!-- 补充约束 -->
+  <div class="field annotation" data-note="标签多选 + 自由补充">
+    <label class="field-label">补充约束（选填）</label>
+    <div class="tag-picker">
+      <span class="tag-picker__item tag-picker__item--active">45 分钟课时</span>
+      <span class="tag-picker__item">60 分钟课时</span>
+      <span class="tag-picker__item">90 分钟课时</span>
+      <span class="tag-picker__item tag-picker__item--active">4-6 人小班</span>
+      <span class="tag-picker__item">线上授课</span>
+      <span class="tag-picker__item">无电脑环境</span>
+      <span class="tag-picker__item">禁止纯工具教学</span>
+      <span class="tag-picker__item">禁止纯知识讲授</span>
+      <span class="tag-picker__item">避免同质化</span>
+      <span class="tag-picker__item">需要家长配合</span>
+      <span class="tag-picker__item">需要提前准备素材</span>
+    </div>
+    <textarea class="input" style="height: 56px;" placeholder="补充其他约束条件，如：教室没有投影仪，需要用平板展示"></textarea>
+    <div class="field-hint">选择常用约束标签，或在下方补充特殊限制条件</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <button class="btn">生成课程框架</button>
+</div>
+
+</body>
+</html>

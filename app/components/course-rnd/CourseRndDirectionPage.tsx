@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import DirectionInputForm from "./DirectionInputForm";
+import DirectionInputForm, { type FormData } from "./DirectionInputForm";
 import { ConfirmModal } from "./CourseRndModal";
 import FrameworkResultPanel from "./FrameworkResultPanel";
 import Link from "next/link";
@@ -35,6 +35,11 @@ interface ProjectData {
   roughFramework: string | null;
   coreNeeds: string | null;
   constraints: string | null;
+  orgForm: string | null;
+  deliverableType: string | null;
+  deliverableName: string | null;
+  imageStyle: string | null;
+  imageStylePrompt: string | null;
   currentDirectionVersionId: string | null;
   directionVersions: DirectionVersion[];
 }
@@ -71,17 +76,23 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
   });
 
   // 输入表单数据
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: projectData?.title ?? "",
-    targetAudience: projectData?.targetAudience ?? "",
     courseDirection: projectData?.courseDirection ?? "",
+    courseDirectionPreset: "",
     ageRange: projectData?.ageRange ?? "",
     level: projectData?.level ?? "",
+    orgForm: projectData?.orgForm ?? "",
     lessonCount: projectData?.lessonCount ?? 4,
-    coreDeliverable: projectData?.coreDeliverable ?? "",
+    deliverableType: projectData?.deliverableType ?? "",
+    deliverableName: projectData?.deliverableName ?? projectData?.coreDeliverable ?? "",
+    imageStyle: projectData?.imageStyle ?? "",
+    imageStylePrompt: projectData?.imageStylePrompt ?? "",
     roughFramework: projectData?.roughFramework ?? "",
-    coreNeeds: projectData?.coreNeeds ?? "",
-    constraints: projectData?.constraints ?? "",
+    coreNeedsTags: [],
+    coreNeedsText: projectData?.coreNeeds ?? "",
+    constraintsTags: [],
+    constraintsText: projectData?.constraints ?? "",
   });
 
   async function handleGenerate() {
@@ -89,26 +100,50 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
     setError("");
 
     try {
+      // 将表单数据映射为 API 字段
+      const coreNeeds = [
+        ...formData.coreNeedsTags,
+        ...(formData.coreNeedsText ? [formData.coreNeedsText] : []),
+      ].join("；");
+      const constraints = [
+        ...formData.constraintsTags,
+        ...(formData.constraintsText ? [formData.constraintsText] : []),
+      ].join("；");
+      const apiPayload = {
+        title: formData.title,
+        courseDirection: formData.courseDirection,
+        ageRange: formData.ageRange,
+        level: formData.level,
+        orgForm: formData.orgForm,
+        lessonCount: formData.lessonCount,
+        deliverableType: formData.deliverableType,
+        deliverableName: formData.deliverableName,
+        coreDeliverable: formData.deliverableName,
+        imageStyle: formData.imageStyle,
+        imageStylePrompt: formData.imageStylePrompt,
+        roughFramework: formData.roughFramework,
+        coreNeeds,
+        constraints,
+      };
+
       // 如果没有项目，先创建
       let pid = projectId;
       if (!pid) {
         const createRes = await fetch("/api/course-rnd/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(apiPayload),
         });
         const createJson = await createRes.json();
         if (!createRes.ok) { setError(createJson.error); return; }
         pid = createJson.data.id;
         setProjectId(pid);
-        // 更新 URL（不刷新页面）
         window.history.replaceState(null, "", `/course-rnd/${pid}`);
       } else {
-        // 自动保存草稿
         await fetch(`/api/course-rnd/projects/${pid}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(apiPayload),
         });
       }
 
@@ -116,7 +151,7 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
       const res = await fetch(`/api/course-rnd/projects/${pid}/generate-framework`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(apiPayload),
       });
       const json = await res.json();
       if (!res.ok) {

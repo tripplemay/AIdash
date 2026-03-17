@@ -80,6 +80,8 @@ export async function PATCH(
     "ageRange", "level", "lessonCount", "coreDeliverable",
     "roughFramework", "coreNeeds", "constraints",
     "currentDirectionVersionId", "currentPlanVersionId",
+    "orgForm", "deliverableType", "deliverableName",
+    "imageStyle", "imageStylePrompt",
   ];
 
   const data: Record<string, unknown> = {};

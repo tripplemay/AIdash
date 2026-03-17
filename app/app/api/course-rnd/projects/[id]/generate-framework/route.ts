@@ -7,6 +7,7 @@ import { COURSE_RND_ROLES } from "@/lib/permissions";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { generateFrameworkPrompt, getBaselinePrompt } from "@/lib/ai/prompts";
+import { getSystemPrompt, type TemplateContext } from "@/lib/ai/template-engine";
 
 // POST /api/course-rnd/projects/[id]/generate-framework
 export async function POST(
@@ -36,6 +37,11 @@ export async function POST(
     roughFramework: project.roughFramework,
     coreNeeds: project.coreNeeds,
     constraints: project.constraints,
+    orgForm: project.orgForm,
+    deliverableType: project.deliverableType,
+    deliverableName: project.deliverableName,
+    imageStyle: project.imageStyle,
+    imageStylePrompt: project.imageStylePrompt,
   };
 
   try {
@@ -64,8 +70,26 @@ export async function POST(
 核心诉求：${inputData.coreNeeds ?? "无"}
 补充约束：${inputData.constraints ?? "无"}`;
 
+  // 优先使用数据库 prompt 模板，fallback 到硬编码
+  const templateCtx: TemplateContext = {
+    title: project.title,
+    courseDirection: inputData.courseDirection,
+    ageRange: inputData.ageRange,
+    level: inputData.level,
+    orgForm: inputData.orgForm,
+    deliverableType: inputData.deliverableType,
+    deliverableName: inputData.deliverableName ?? inputData.coreDeliverable,
+    lessonCount: inputData.lessonCount,
+    imageStylePrompt: inputData.imageStylePrompt,
+    roughFramework: inputData.roughFramework,
+    coreNeeds: inputData.coreNeeds,
+    constraints: inputData.constraints,
+  };
+  const dbPrompt = await getSystemPrompt("generate_framework", templateCtx);
+  const systemPrompt = dbPrompt ?? (getBaselinePrompt() + generateFrameworkPrompt());
+
   const result = await provider.chat({
-    systemPrompt: getBaselinePrompt() + generateFrameworkPrompt(),
+    systemPrompt,
     userMessage,
     model,
   });
@@ -101,7 +125,7 @@ export async function POST(
       summary: parsed.summary,
       frameworkJson: JSON.stringify(parsed.framework),
       isSelected: true,
-      promptSnapshot: userMessage,
+      promptSnapshot: `[SYSTEM PROMPT]\n${systemPrompt}\n\n[USER MESSAGE]\n${userMessage}`,
       modelName: result.model,
       inputTokens: result.inputTokens,
       outputTokens: result.outputTokens,
@@ -122,6 +146,11 @@ export async function POST(
       ...(inputData.roughFramework && { roughFramework: inputData.roughFramework }),
       ...(inputData.coreNeeds && { coreNeeds: inputData.coreNeeds }),
       ...(inputData.constraints && { constraints: inputData.constraints }),
+      ...(inputData.orgForm && { orgForm: inputData.orgForm }),
+      ...(inputData.deliverableType && { deliverableType: inputData.deliverableType }),
+      ...(inputData.deliverableName && { deliverableName: inputData.deliverableName }),
+      ...(inputData.imageStyle && { imageStyle: inputData.imageStyle }),
+      ...(inputData.imageStylePrompt && { imageStylePrompt: inputData.imageStylePrompt }),
     },
   });
 

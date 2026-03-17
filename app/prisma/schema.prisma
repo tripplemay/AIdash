@@ -88,6 +88,11 @@ model CourseRndProject {
   roughFramework            String?  @db.LongText
   coreNeeds                 String?  @db.LongText
   constraints               String?  @db.LongText
+  orgForm                   String?  // "S1" | "S2"
+  deliverableType           String?  // "P1" ~ "P11"
+  deliverableName           String?  // 具体产出物名称
+  imageStyle                String?  // 图片风格预设 key
+  imageStylePrompt          String?  @db.Text // 用户可编辑的图片风格描述
   currentDirectionVersionId String?
   currentPlanVersionId      String?
   coverUrl                  String?
@@ -234,4 +239,78 @@ model SystemConfig {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+// ─── 基线文档（按维度拆分） ───
+model BaselineDoc {
+  id               String   @id @default(cuid())
+  type             String   // "general" | "age" | "level" | "org_form" | "deliverable" | "matrix"
+  key              String   // "general" | "A1" ~ "A4" | "L1" ~ "L4" | "S1" ~ "S2" | "P1" ~ "P11" | "matrix"
+  label            String   // 显示名, e.g. "A2｜8-9岁 低龄基础段"
+  content          String   @db.LongText
+  sortOrder        Int      @default(0)
+  currentVersionId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  versions BaselineDocVersion[]
+
+  @@unique([type, key])
+}
+
+// ─── 基线版本历史 ───
+model BaselineDocVersion {
+  id            String   @id @default(cuid())
+  baselineDocId String
+  versionNo     Int
+  content       String   @db.LongText
+  editedById    String?
+  editSummary   String?
+  createdAt     DateTime @default(now())
+
+  baselineDoc BaselineDoc @relation(fields: [baselineDocId], references: [id], onDelete: Cascade)
+
+  @@unique([baselineDocId, versionNo])
+}
+
+// ─── 动作 Prompt 模板 ───
+model PromptTemplate {
+  id               String   @id @default(cuid())
+  actionKey        String   @unique // "generate_framework" | "revise_framework" | "regenerate_lesson" | "revise_lesson" | "rewrite_field" | "rewrite_teaching_talk"
+  actionLabel      String
+  content          String   @db.LongText
+  currentVersionId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  versions PromptTemplateVersion[]
+}
+
+// ─── Prompt 模板版本历史 ───
+model PromptTemplateVersion {
+  id           String   @id @default(cuid())
+  templateId   String
+  versionNo    Int
+  content      String   @db.LongText
+  editedById   String?
+  editSummary  String?
+  createdAt    DateTime @default(now())
+
+  template PromptTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, versionNo])
+}
+
+// ─── 预设值（课程方向、图片风格、标签等） ───
+model Preset {
+  id        String   @id @default(cuid())
+  category  String   // "course_direction" | "image_style" | "core_needs_tag" | "constraints_tag"
+  name      String
+  value     String   @db.Text
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, name])
 }

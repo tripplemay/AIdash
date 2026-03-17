@@ -7,6 +7,7 @@ import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-data";
 import { getBaselinePrompt } from "@/lib/ai/prompts";
+import { getSystemPrompt, type TemplateContext } from "@/lib/ai/template-engine";
 import { saveAiImage } from "@/lib/ai/image-store";
 
 const SECTION_STEPS = [
@@ -152,12 +153,26 @@ ${allDrafts.map(d => `第 ${d.lessonNo} 课：${d.title}`).join("\n")}
       sendEvent("progress", { step: 0, total: 7, label: "正在连接 AI 服务...", tokenCount: 0 });
 
       try {
+        // 优先使用数据库 prompt 模板，fallback 到硬编码
+        const templateCtx: TemplateContext = {
+          title: project.title,
+          ageRange: project.ageRange,
+          level: project.level,
+          lessonNo: lessonNoInt,
+          lessonTitle: draft.title,
+          allLessons: allDrafts.map(d => `第 ${d.lessonNo} 课：${d.title}`).join("\n"),
+          deliverableName: project.coreDeliverable,
+          courseDirection: project.courseDirection,
+        };
+        const dbPrompt = await getSystemPrompt("regenerate_lesson", templateCtx);
+        const systemPrompt = dbPrompt ?? (getBaselinePrompt() + SYSTEM_PROMPT);
+
         // 调用 AI（解析失败自动重试 1 次）
         let aiOutput: AiLessonOutput | null = null;
         let lastResult: { content: string; inputTokens: number; outputTokens: number; model: string } | null = null;
         for (let attempt = 0; attempt < 2; attempt++) {
           const result = await provider.chat({
-            systemPrompt: getBaselinePrompt() + SYSTEM_PROMPT,
+            systemPrompt,
             userMessage,
             model,
             maxTokens: 4096,

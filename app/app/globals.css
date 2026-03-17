@@ -148,11 +148,14 @@ img { display: block; max-width: 100%; }
   min-width: 0;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .main__content {
   padding: var(--sp-5) var(--sp-6) var(--sp-8);
   animation: fade-in 250ms ease;
+  flex: 1;
+  overflow-y: auto;
 }
 
 
@@ -2026,7 +2029,147 @@ img { display: block; max-width: 100%; }
 @keyframes toast-in { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
 @keyframes toast-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(40px); } }
 
-/* ━━━ 24. 响应式（基础） ━━━ */
+/* ━━━ 24. Prompt 配置 ━━━ */
+
+/* Tabs */
+.prompt-config__tabs {
+  display: flex; gap: var(--sp-1); border-bottom: 1px solid var(--line);
+  margin-bottom: var(--sp-4);
+}
+.prompt-config__tab {
+  padding: var(--sp-2) var(--sp-4); font-size: 14px; font-weight: 500;
+  color: var(--muted); background: none; border: none; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all 0.15s;
+}
+.prompt-config__tab:hover { color: var(--text-primary); }
+.prompt-config__tab--active {
+  color: var(--accent); border-bottom-color: var(--accent); font-weight: 600;
+}
+
+/* Baseline Manager */
+.baseline-mgr { display: flex; gap: 0; min-height: 480px; border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; background: #fff; }
+.baseline-mgr__sidebar {
+  width: 240px; flex-shrink: 0; border-right: 1px solid var(--line);
+  padding: var(--sp-3); overflow-y: auto; background: var(--bg-faint);
+}
+.baseline-mgr__content { flex: 1; padding: var(--sp-4); overflow-y: auto; }
+.baseline-mgr__type-group { margin-bottom: var(--sp-3); }
+.baseline-mgr__type-label {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  padding: var(--sp-1) var(--sp-2); margin-bottom: var(--sp-1);
+}
+.baseline-mgr__item {
+  display: block; width: 100%; text-align: left; padding: var(--sp-2) var(--sp-2);
+  font-size: 13px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-sm); color: var(--text-primary); transition: background 0.15s;
+}
+.baseline-mgr__item:hover { background: rgba(99, 102, 241, 0.06); }
+.baseline-mgr__item--active {
+  background: rgba(99, 102, 241, 0.10); color: var(--accent); font-weight: 600;
+}
+.baseline-mgr__editor {
+  width: 100%; min-height: 400px; font-family: monospace; font-size: 13px;
+  line-height: 1.6; resize: vertical;
+}
+
+/* Template Editor */
+.template-editor { display: flex; gap: 0; min-height: 520px; border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; background: #fff; }
+.template-editor__nav {
+  width: 200px; flex-shrink: 0; border-right: 1px solid var(--line);
+  padding: var(--sp-3); overflow-y: auto; background: var(--bg-faint);
+}
+.template-editor__main { flex: 1; padding: var(--sp-4); overflow-y: auto; }
+.template-editor__var-sidebar {
+  width: 240px; flex-shrink: 0; border-left: 1px solid var(--line);
+  padding: var(--sp-3); overflow-y: auto; background: var(--bg-faint);
+}
+.template-editor__nav-item {
+  display: block; width: 100%; text-align: left; padding: var(--sp-2);
+  font-size: 13px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-sm); color: var(--text-primary); transition: background 0.15s;
+}
+.template-editor__nav-item:hover { background: rgba(99, 102, 241, 0.06); }
+.template-editor__nav-item--active {
+  background: rgba(99, 102, 241, 0.10); color: var(--accent); font-weight: 600;
+}
+.template-editor__var-group { margin-bottom: var(--sp-3); }
+.template-editor__var-item {
+  display: block; width: 100%; text-align: left;
+  padding: var(--sp-1) var(--sp-2); margin-bottom: 2px;
+  font-size: 12px; font-family: monospace;
+  border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-sm); color: var(--accent);
+  transition: background 0.15s;
+}
+.template-editor__var-item:hover { background: rgba(99, 102, 241, 0.08); }
+
+/* Version History Panel */
+.version-panel {
+  position: fixed; top: 0; right: 0; width: 480px; height: 100vh;
+  background: #fff; box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+  z-index: 100; display: flex; flex-direction: column;
+}
+.version-panel__header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--sp-4); border-bottom: 1px solid var(--line);
+}
+.version-panel__list { flex: 1; overflow-y: auto; padding: var(--sp-3); }
+.version-panel__item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--sp-3); border-bottom: 1px solid var(--line);
+}
+.version-panel__item:last-child { border-bottom: none; }
+
+/* Diff View */
+.diff-view__line {
+  display: flex; font-family: monospace; font-size: 12px; line-height: 1.6;
+  padding: 0 var(--sp-2);
+}
+.diff-view__line--added { background: #dcfce7; }
+.diff-view__line--removed { background: #fee2e2; }
+.diff-view__line--unchanged { background: none; }
+.diff-view__line-no {
+  display: inline-block; width: 36px; text-align: right;
+  padding-right: var(--sp-2); color: var(--muted); flex-shrink: 0;
+  user-select: none;
+}
+.diff-view__line-prefix {
+  display: inline-block; width: 16px; flex-shrink: 0;
+  color: var(--muted); user-select: none;
+}
+.diff-view__line-content { flex: 1; white-space: pre-wrap; word-break: break-all; }
+
+/* Preset Manager */
+.preset-mgr__list { border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
+.preset-mgr__item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line);
+}
+.preset-mgr__item:last-child { border-bottom: none; }
+.preset-mgr__item-name { font-size: 14px; font-weight: 600; }
+.preset-mgr__item-value {
+  font-size: 12px; color: var(--muted); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px;
+}
+
+/* ━━━ Tag Picker ━━━ */
+.tag-picker { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.tag-picker__chip {
+  display: inline-flex; align-items: center; height: 30px; padding: 0 var(--sp-3);
+  border: 1px solid var(--line); border-radius: 15px;
+  font-size: 13px; color: var(--muted); background: var(--bg-faint);
+  cursor: pointer; user-select: none; transition: all 0.15s;
+}
+.tag-picker__chip:hover { border-color: var(--brand2); color: var(--brand); }
+.tag-picker__chip--selected {
+  border-color: var(--brand); background: rgba(108,92,231,0.08); color: var(--brand); font-weight: 500;
+}
+
+/* ━━━ Form Divider ━━━ */
+.form-divider { height: 1px; background: var(--line); margin: var(--sp-5) 0; }
+
+/* ━━━ 25. 响应式（基础） ━━━ */
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar { display: none; }

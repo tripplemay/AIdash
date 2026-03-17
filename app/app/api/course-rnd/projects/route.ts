@@ -39,7 +39,11 @@ export async function POST(request: Request) {
   if (!userId) return forbiddenResponse();
 
   const body = await request.json();
-  const { title, targetAudience, courseDirection, ageRange, level, lessonCount, coreDeliverable, roughFramework, coreNeeds, constraints } = body;
+  const {
+    title, targetAudience, courseDirection, ageRange, level, lessonCount,
+    coreDeliverable, roughFramework, coreNeeds, constraints,
+    orgForm, deliverableType, deliverableName, imageStyle, imageStylePrompt,
+  } = body;
 
   if (!title) {
     return NextResponse.json({ error: "缺少项目标题" }, { status: 400 });
@@ -53,10 +57,15 @@ export async function POST(request: Request) {
       ageRange: ageRange ?? null,
       level: level ?? null,
       lessonCount: lessonCount ?? null,
-      coreDeliverable: coreDeliverable ?? null,
+      coreDeliverable: coreDeliverable ?? deliverableName ?? null,
       roughFramework: roughFramework ?? null,
       coreNeeds: coreNeeds ?? null,
       constraints: constraints ?? null,
+      orgForm: orgForm ?? null,
+      deliverableType: deliverableType ?? null,
+      deliverableName: deliverableName ?? null,
+      imageStyle: imageStyle ?? null,
+      imageStylePrompt: imageStylePrompt ?? null,
       createdById: userId,
     },
   });
