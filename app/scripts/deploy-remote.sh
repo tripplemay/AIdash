@@ -9,6 +9,7 @@ set -e
 
 DEPLOY_DIR="/opt/aidash/app"
 UPLOADS_DIR="/opt/aidash/uploads/course-packages"
+AI_IMAGES_DIR="/opt/aidash/uploads/ai-images"
 DOMAIN="${DEPLOY_DOMAIN:-ai.dashedu.net}"
 EMAIL="${CERTBOT_EMAIL:-admin@dashedu.net}"
 
@@ -150,6 +151,7 @@ fi
 echo "▶ [7/9] 写入 .env..."
 mkdir -p "${DEPLOY_DIR}"
 mkdir -p "${UPLOADS_DIR}"
+mkdir -p "${AI_IMAGES_DIR}"
 cat > "${DEPLOY_DIR}/.env" <<ENV
 DATABASE_URL=${DATABASE_URL}
 AUTH_SECRET=${AUTH_SECRET}
@@ -157,6 +159,7 @@ AUTH_TRUST_HOST=true
 AUTH_URL=https://${DOMAIN}
 NODE_ENV=production
 UPLOADS_DIR=${UPLOADS_DIR}
+AI_IMAGES_DIR=${AI_IMAGES_DIR}
 ENV
 echo "  写入完成"
 
