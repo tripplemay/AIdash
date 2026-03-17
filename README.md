@@ -1,195 +1,173 @@
-# AI Dash — 教师授课系统 / Teacher Instruction System
+# AI Dash — 教师授课系统 + 课程研发系统
 
-> 面向教师与管理员的课程包管理与授课支撑平台。
->
-> A course package management and instruction support platform for teachers and administrators.
+> 面向教师、教研主管和管理员的 AI 驱动课程管理与研发平台。
 
 ---
 
-## 项目简介 / Overview
+## 项目简介
 
-AI Dash 是一套面向 K12 AI 教育场景的教师授课系统，帮助老师统一管理课程包、进入单课授课流程，并支持管理员通过后台上传和维护课程资产。
+AI Dash 包含两大模块：
 
-AI Dash is a teacher instruction system for K12 AI education, enabling teachers to manage course packages, enter individual lesson flows, and allowing administrators to upload and maintain course assets via a backend portal.
-
-**主链路 / Main Flow**
-
-```
-登录 → 课程包列表 → 课程包详情 → 进入本课（iframe）
-Login → Package List → Package Detail → Enter Lesson (iframe)
-```
+1. **教师授课系统** — 课程包浏览、课次内容渲染（v2 JSON → LessonRenderer）
+2. **课程研发模块** — AI 驱动的课程设计工作台（方向确认 → 框架生成 → 详细方案 → 审核 → 发布）
 
 ---
 
-<!-- DYNAMIC:FEATURES -->
-## 功能概览 / Features
+## 功能概览
 
-### 教师端 / Teacher
+### 教师端
 
-- 课程包列表：按年龄段、级别、关键词筛选浏览
-- 课程包详情：查看封面、简介、元信息与课次列表
-- 进入本课：在系统导航框架内通过 iframe 加载单课 HTML 内容
-- 锚点导航：详情页侧边栏可快速跳转至"课程包详情"和"课次列表"区块
-- 课程包树：侧边栏按年龄段/级别联动筛选课程包
+- 课程包列表：按年龄段、级别筛选浏览
+- 课程包详情：封面、简介、课次列表
+- 单课渲染：v2 JSON 结构化内容，7 个教学板块
+- 侧边栏课次导航：进入单课后可快速切换
 
-### 管理员端 / Admin
+### 课程研发（教研主管 / 管理员）
 
-- 课程包管理：上传标准 zip 包，自动解析并入库
-- 用户管理：新增、编辑、禁用教师账号，重置密码
+- **研发进度看板**：手风琴布局（进行中/已定稿/已结束），一行一卡
+- **方向确认**：结构化表单（下拉选择年龄段/难度/组织形态/产出物 + 标签多选核心诉求/约束 + 图片风格预设）→ AI 生成框架 + 自动生成封面
+- **框架修订**：输入修改意见，AI 增量调整框架，保留未变动部分
+- **工作台**：逐课生成详细方案（真实流式进度）→ 逐课修改（支持暂存多条意见批量提交）→ 保存版本
+- **AI 审核**：定稿前 AI 按基线逐项检查（10 项），输出审核报告，可忽略并定稿或返回修改
+- **一键发布**：自动预填课程包信息，发布到教师端课程库
 
-### 通用 / Common
+### 管理后台
 
-- 角色权限：教师与管理员菜单独立，管理员在任意页面可直达后台
-- 用户头像下拉：显示当前用户信息，支持退出登录
-- 打印优化：单课页支持打印样式，隐藏导航与交互元素
-<!-- /DYNAMIC:FEATURES -->
+- **课程包管理**：上传 zip 接入、上下线、删除
+- **用户管理**：新增/编辑/重置密码/删除用户
+- **AI 服务配置**：服务商管理（含代理）、动作→模型映射、价格管理、连接测试
+- **Prompt 配置**：基线编辑（按维度拆分，版本管理 + diff 对比 + 回滚）、提示词模板编辑（变量点击插入）、预设管理（课程方向/图片风格/标签）
+- **操作日志**：全操作审计记录
 
 ---
 
-<!-- DYNAMIC:TECH -->
-## 技术栈 / Tech Stack
+## 技术栈
 
 | 层级 | 技术 |
 |------|------|
 | 框架 | Next.js 16 (App Router) + React 19 |
-| 样式 | Tailwind CSS + CSS Variables（浅蓝紫雾光科技感主题）|
-| 数据库 | 腾讯云 TDSQL-C PostgreSQL（MySQL 协议）|
+| 样式 | 纯 CSS 设计系统（BEM-lite，浅蓝紫雾光科技感）|
+| 数据库 | MySQL（本地 + 生产统一） |
 | ORM | Prisma 6 |
 | 认证 | NextAuth.js v5 (Credentials) |
-| 图标 | lucide-react |
-| 部署 | VPS + PM2 + Nginx + GitHub Actions CI/CD |
-| 课程包存储 | 服务器持久目录 `/opt/aidash/uploads/course-packages/`（独立于应用目录）|
-<!-- /DYNAMIC:TECH -->
+| AI | OpenAI 兼容 API（支持 OpenRouter / PackyAPI 等），流式 SSE |
+| 代理 | SOCKS5/HTTP 代理（Xray），按服务商配置 |
+| 部署 | 腾讯云 VPS + PM2 + Nginx + GitHub Actions CI/CD |
 
 ---
 
-<!-- DYNAMIC:STRUCTURE -->
-## 目录结构 / Directory Structure
+## 核心架构
+
+### AI 生成流程
 
 ```
-AIdash/
-├── app/                        # Next.js 应用主目录
-│   ├── app/                    # App Router 页面
-│   │   ├── page.tsx            # 登录页
-│   │   ├── list/               # 课程包列表页
-│   │   ├── detail/[slug]/      # 课程包详情页
-│   │   ├── lesson/[slug]/[lessonId]/  # 单课页（iframe）
-│   │   ├── admin/
-│   │   │   ├── packages/       # 管理员：课程包管理
-│   │   │   └── users/          # 管理员：用户管理
-│   │   └── api/
-│   │       ├── auth/           # NextAuth 认证
-│   │       ├── packages/       # 课程包查询接口
-│   │       ├── course-files/   # 课程包文件动态服务
-│   │       └── admin/          # 管理员操作接口（上传、用户 CRUD）
-│   ├── components/             # 共用组件
-│   │   ├── Sidebar.tsx         # 侧边栏（多 variant）
-│   │   ├── TopBar.tsx          # 顶部导航栏
-│   │   ├── SidebarNavItem.tsx  # 侧边栏菜单项（图标 + hover）
-│   │   ├── DetailSidebarNav.tsx # 详情页锚点导航
-│   │   ├── SidebarFilterTree.tsx # 课程包树联动筛选
-│   │   ├── UserAvatarDropdown.tsx # 头像下拉菜单
-│   │   └── admin/              # 管理员专用组件
-│   ├── prisma/
-│   │   ├── schema.prisma       # 数据库模型（User / CoursePackage / Lesson / Attachment）
-│   │   └── seed.ts             # 初始账号数据
-│   └── scripts/
-│       └── deploy-remote.sh    # 服务器端部署脚本
-├── docs/                       # 项目文档
-│   ├── PROJECT_STATUS.md       # 项目进度总览
-│   ├── decisions/              # 架构决策记录 ADR
-│   ├── product/                # 产品需求文档
-│   ├── tech/                   # 技术方案
-│   ├── design/                 # UI/UX 规范
-│   └── ops/                    # 运维部署方案
-└── .github/workflows/
-    └── deploy.yml              # GitHub Actions 自动部署
+用户填写表单 → AI 生成框架 + 封面 → 用户修订/确认
+    → 逐课 AI 生成详细方案（流式 SSE）→ 用户修改（暂存+批量提交）
+    → AI 审核 → 定稿 → 一键发布
 ```
-<!-- /DYNAMIC:STRUCTURE -->
+
+### 基线与 Prompt 模板
+
+```
+管理员配置：BaselineDoc（23条，按维度拆分） + PromptTemplate（6个动作） + Preset（34+预设）
+    ↓
+AI 调用时：按项目属性（年龄段/难度/组织形态/产出物）自动拼装匹配基线
+    → 模板变量替换（28个预定义变量）→ 最终 prompt
+```
+
+### 角色与权限
+
+| 角色 | 教师端 | 课程研发 | 管理后台 | Prompt 配置 |
+|------|--------|---------|---------|------------|
+| teacher | 浏览课程 | - | - | 只读 |
+| rd_manager | 浏览课程 | 全功能 | 课程包管理 | 只读 |
+| admin | 浏览课程 | 全功能 | 全功能 | 编辑 |
+
+### 数据模型
+
+- **核心表**：User / CoursePackage / Lesson / Attachment
+- **课程研发表**：CourseRndProject / DirectionVersion / PlanVersion / LessonDraft / AiCallLog / PublishRecord
+- **AI 配置表**：AiProvider / AiActionConfig
+- **基线与 Prompt 表**：BaselineDoc / BaselineDocVersion / PromptTemplate / PromptTemplateVersion / Preset
+- **系统表**：OperationLog / SystemConfig
 
 ---
 
-## 部署说明 / Deployment
+## 部署说明
 
-### CI/CD 流程 / CI/CD Flow
+### CI/CD 流程
 
-推送至 `main` 分支后自动触发：
+推送 `app/` 目录变更至 `main` 分支后自动触发：
 
 1. GitHub Actions 执行 TypeScript 类型检查
-2. `rsync` 将 `app/` 同步至服务器 `/opt/aidash/app/`（排除 `.env`、`node_modules`、`.next`）
-3. 服务器执行 `deploy-remote.sh`：安装依赖 → Prisma 迁移 → 构建 → PM2 重载
+2. rsync 同步 `app/` 到服务器
+3. 服务器执行 `deploy-remote.sh`：npm ci → prisma generate → migrate deploy → build → PM2 restart
 
-### 环境变量 / Environment Variables
+### 环境变量
 
 | 变量 | 说明 |
 |------|------|
-| `DATABASE_URL` | 腾讯云 TDSQL-C 连接串（mysql://...）|
+| `DATABASE_URL` | MySQL 连接串 |
 | `AUTH_SECRET` | NextAuth 密钥 |
-| `AUTH_TRUST_HOST` | `true`（Nginx 反代必须）|
-| `AUTH_URL` | 生产域名（https://your-domain.com）|
-| `UPLOADS_DIR` | 课程包上传目录（`/opt/aidash/uploads/course-packages/`）|
+| `AUTH_TRUST_HOST` | `true`（Nginx 反代必须） |
+| `ENCRYPTION_KEY` | AES-256-GCM 密钥（加密 AI API Key） |
 
-### 首次部署后 / After First Deploy
+### 首次部署后
 
-1. 登录管理员后台（`/admin/packages`）
-2. 上传符合接入规范 v1 的课程包 zip 文件
-3. 课程包自动解析入库并上线
+1. `npx prisma db seed` — 初始化默认账号
+2. `npx tsx prisma/seed-baselines.ts` — 导入基线 + Prompt 模板 + 预设
+3. 管理后台 → AI 服务配置 → 添加服务商 + 配置动作映射
+4. 管理后台 → 课程包管理 → 上传课程包 zip
 
 ---
 
-## 使用说明 / Usage
+## 开发指南
 
-### 默认账号 / Default Accounts
+### 本地环境搭建
+
+```bash
+cd app
+npm install
+cp .env.example .env              # 填入本地 MySQL 连接串 + 密钥
+brew services start mysql          # 启动本地 MySQL
+npx prisma migrate dev             # 创建表结构
+npx prisma db seed                 # 初始化账号（teacher01/teacher123、admin/admin123、rd01/rd123456）
+npx tsx prisma/seed-baselines.ts   # 导入基线 + 模板 + 预设
+npm run dev                        # http://localhost:3000
+```
+
+### 常用命令
+
+```bash
+npm run dev                        # 启动开发服务器
+npm run typecheck                  # TypeScript 类型检查
+npm test                           # Jest 运行全部测试
+npx jest __tests__/path/file.test.ts  # 运行单个测试
+npx prisma migrate dev --name xxx  # 创建数据库迁移
+npx prisma studio                  # GUI 数据库管理
+```
+
+### 默认账号
 
 | 角色 | 账号 | 密码 |
 |------|------|------|
 | 教师 | `teacher01` | `teacher123` |
 | 管理员 | `admin` | `admin123` |
-
-> ⚠️ 生产环境请及时修改密码。
-
-### 课程包接入规范 / Course Package Spec
-
-上传的 zip 必须符合以下结构：
-
-```
-{slug}/
-├── package.json          # 课程包元信息（package_slug、package_title、age_range、level、lessons）
-├── assets/images/        # 封面图
-└── lessons/
-    └── {lesson_dir}/
-        ├── lesson.json   # 课次元信息（lesson_no、lesson_title、entry_file、attachments）
-        ├── index.html    # 单课入口（可独立运行）
-        ├── assets/
-        └── attachments/
-```
+| 教研主管 | `rd01` | `rd123456` |
 
 ---
 
-## 开发指南 / Development
+## 文档索引
 
-### 本地环境搭建 / Local Setup
-
-```bash
-cd app
-npm install
-cp .env.example .env        # 填入本地数据库连接串
-npx prisma migrate dev
-npm run seed                # 初始化账号数据
-npm run dev                 # 启动开发服务器 http://localhost:3000
-```
-
-### 常用命令 / Commands
-
-```bash
-npm run dev          # 启动开发服务器
-npm run build        # 生产构建
-npm run typecheck    # TypeScript 类型检查
-npm run seed         # 重置/初始化种子数据（账号）
-npx prisma studio    # 可视化数据库管理
-npx prisma migrate dev --name <name>  # 新建数据库迁移
-```
-
-### 课程包本地测试 / Local Course Package Testing
-
-本地开发时，课程包文件存放于 `app/public/course-packages/`（不提交 git）。通过管理员后台上传 zip 即可自动解析至该目录。
+| 文档 | 路径 |
+|------|------|
+| 项目进度 | `docs/PROJECT_STATUS.md` |
+| 课程研发 PRD | `docs/product/course-rnd-module-prd.md` |
+| 基线与 Prompt PRD | `docs/product/baseline-prompt-config-prd.md` |
+| 接入规范 v2 | `docs/product/content-integration-spec-v2.md` |
+| 课程设计基线（分维度） | `docs/baseline/` |
+| 上下文流程分析 | `docs/tech/course-generation-context-flow.md` |
+| 工作流优化方案 | `docs/tech/course-workflow-optimization-plan.md` |
+| 基线模板技术方案 | `docs/tech/baseline-prompt-template-implementation-plan.md` |
+| 技术决策 | `docs/decisions/ADR-*.md` |
+| 视觉设计规范 | `docs/design/guidelines/` |
