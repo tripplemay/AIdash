@@ -24,7 +24,7 @@ interface LessonNavData {
 export default function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const canAccessAdmin = hasPermission(userRole, PERMISSIONS.MANAGE_PACKAGES) || hasPermission(userRole, PERMISSIONS.MANAGE_USERS);
+  const canAccessAdmin = hasPermission(userRole, PERMISSIONS.MANAGE_PACKAGES) || hasPermission(userRole, PERMISSIONS.MANAGE_USERS) || hasPermission(userRole, PERMISSIONS.VIEW_AI_SETTINGS) || hasPermission(userRole, PERMISSIONS.VIEW_PROMPT_CONFIG);
   const canAccessRnd = hasPermission(userRole, PERMISSIONS.COURSE_RND);
   const initial = userName.charAt(0).toUpperCase();
 
@@ -39,6 +39,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
   // admin 子页面自动检测
   const adminSection = pathname.includes("/admin/packages") ? "packages"
     : pathname.includes("/admin/users") ? "users"
+    : pathname.includes("/admin/ai-settings") ? "ai-settings"
     : pathname.includes("/admin/prompt-config") ? "prompt-config"
     : undefined;
 
@@ -191,13 +192,15 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
             />
             {adminExpanded && (
               <div className="sidebar__sub-content">
-                <Link
-                  href="/admin/packages"
-                  className={`sidebar__sub-item${adminSection === "packages" ? " sidebar__sub-item--active" : ""}`}
-                >
-                  <Package size={14} />
-                  课程包管理
-                </Link>
+                {hasPermission(userRole, PERMISSIONS.MANAGE_PACKAGES) && (
+                  <Link
+                    href="/admin/packages"
+                    className={`sidebar__sub-item${adminSection === "packages" ? " sidebar__sub-item--active" : ""}`}
+                  >
+                    <Package size={14} />
+                    课程包管理
+                  </Link>
+                )}
                 {hasPermission(userRole, PERMISSIONS.MANAGE_USERS) && (
                   <Link
                     href="/admin/users"
@@ -207,17 +210,19 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
                     用户管理
                   </Link>
                 )}
-                <Link
-                  href="/admin/operation-logs"
-                  className={`sidebar__sub-item${pathname.includes("/admin/operation-logs") ? " sidebar__sub-item--active" : ""}`}
-                >
-                  <FileText size={14} />
-                  操作日志
-                </Link>
-                {hasPermission(userRole, PERMISSIONS.AI_SETTINGS) && (
+                {hasPermission(userRole, PERMISSIONS.VIEW_OWN_LOGS) && (
+                  <Link
+                    href="/admin/operation-logs"
+                    className={`sidebar__sub-item${pathname.includes("/admin/operation-logs") ? " sidebar__sub-item--active" : ""}`}
+                  >
+                    <FileText size={14} />
+                    操作日志
+                  </Link>
+                )}
+                {hasPermission(userRole, PERMISSIONS.VIEW_AI_SETTINGS) && (
                   <Link
                     href="/admin/ai-settings"
-                    className={`sidebar__sub-item${pathname.includes("/admin/ai-settings") ? " sidebar__sub-item--active" : ""}`}
+                    className={`sidebar__sub-item${adminSection === "ai-settings" ? " sidebar__sub-item--active" : ""}`}
                   >
                     <Cpu size={14} />
                     AI 服务配置

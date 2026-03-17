@@ -13,9 +13,9 @@ function normalizeBaseUrl(url: string): string {
     .replace(/\/+$/, "");
 }
 
-// GET /api/admin/ai-providers — 列表（脱敏）
+// GET /api/admin/ai-providers — 列表（脱敏，所有角色可读）
 export async function GET() {
-  if (!(await requireRole([ROLES.ADMIN]))) return forbiddenResponse();
+  if (!(await requireRole([ROLES.TEACHER, ROLES.RD_MANAGER, ROLES.ADMIN]))) return forbiddenResponse();
 
   const providers = await prisma.aiProvider.findMany({
     orderBy: { createdAt: "asc" },

@@ -16,11 +16,12 @@ interface Provider {
 
 interface Props {
   provider: Provider;
+  canEdit?: boolean;
   onUpdate: (updated: Provider) => void;
   onDelete: (id: string) => void;
 }
 
-export default function ProviderCard({ provider, onUpdate, onDelete }: Props) {
+export default function ProviderCard({ provider, canEdit = true, onUpdate, onDelete }: Props) {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({
     name: provider.name,
@@ -128,19 +129,23 @@ export default function ProviderCard({ provider, onUpdate, onDelete }: Props) {
               {testResult.message}
             </span>
           )}
-          <button className="btn btn--soft btn--xs" onClick={handleTest} disabled={testing}>
-            {testing ? "测试中..." : "测试连接"}
-          </button>
-          <button
-            className={`btn btn--xs ${provider.isActive ? "btn--soft" : "btn--primary"}`}
-            onClick={handleToggleActive}
-          >
-            {provider.isActive ? "禁用" : "启用"}
-          </button>
-          <button className="btn btn--soft btn--xs" onClick={() => { setEditing(!editing); setError(""); }}>
-            {editing ? "取消" : "编辑"}
-          </button>
-          <button className="btn btn--soft btn--xs btn--danger" onClick={handleDelete}>删除</button>
+          {canEdit && (
+            <>
+              <button className="btn btn--soft btn--xs" onClick={handleTest} disabled={testing}>
+                {testing ? "测试中..." : "测试连接"}
+              </button>
+              <button
+                className={`btn btn--xs ${provider.isActive ? "btn--soft" : "btn--primary"}`}
+                onClick={handleToggleActive}
+              >
+                {provider.isActive ? "禁用" : "启用"}
+              </button>
+              <button className="btn btn--soft btn--xs" onClick={() => { setEditing(!editing); setError(""); }}>
+                {editing ? "取消" : "编辑"}
+              </button>
+              <button className="btn btn--soft btn--xs btn--danger" onClick={handleDelete}>删除</button>
+            </>
+          )}
         </div>
       </div>
 

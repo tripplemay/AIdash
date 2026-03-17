@@ -10,9 +10,9 @@ import {
   getUsdToCny,
 } from "@/lib/ai/pricing-service";
 
-// GET /api/admin/refresh-pricing — 获取当前价格状态
+// GET /api/admin/refresh-pricing — 获取当前价格状态（所有角色可读）
 export async function GET() {
-  if (!(await requireRole([ROLES.ADMIN]))) return forbiddenResponse();
+  if (!(await requireRole([ROLES.TEACHER, ROLES.RD_MANAGER, ROLES.ADMIN]))) return forbiddenResponse();
 
   const rate = await getUsdToCny();
   const config = await prisma.systemConfig.findUnique({ where: { key: "usd_to_cny" } });

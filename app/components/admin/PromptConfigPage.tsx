@@ -19,6 +19,20 @@ export default function PromptConfigPage({ canEdit }: Props) {
     <>
       <SetTopBar breadcrumb="管理后台" title="Prompt 配置" />
 
+      {!canEdit && (
+        <div style={{
+          padding: "var(--sp-3) var(--sp-4)",
+          marginBottom: "var(--sp-4)",
+          borderRadius: "var(--radius-md)",
+          background: "var(--brand-light, #eef3ff)",
+          border: "1px solid var(--brand-border, #c5d0f0)",
+          fontSize: 13,
+          color: "var(--muted)",
+        }}>
+          该页面由管理员统一配置，您可以查看当前配置
+        </div>
+      )}
+
       <div className="prompt-config__tabs">
         {TABS.map((label, idx) => (
           <button

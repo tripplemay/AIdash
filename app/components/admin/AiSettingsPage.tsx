@@ -49,7 +49,7 @@ const DEFAULT_ACTIONS = [
   { key: "package_cover", label: "课程包封面图", type: "image" },
 ];
 
-export default function AiSettingsPage() {
+export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }) {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [actions, setActions] = useState<ActionConfig[]>([]);
   const [pricingInfo, setPricingInfo] = useState<PricingInfo | null>(null);
@@ -139,6 +139,20 @@ export default function AiSettingsPage() {
         title="AI 服务配置"
       />
 
+      {!canEdit && (
+        <div style={{
+          padding: "var(--sp-3) var(--sp-4)",
+          marginBottom: "var(--sp-4)",
+          borderRadius: "var(--radius-md)",
+          background: "var(--brand-light, #eef3ff)",
+          border: "1px solid var(--brand-border, #c5d0f0)",
+          fontSize: 13,
+          color: "var(--muted)",
+        }}>
+          该页面由管理员统一配置，您可以查看当前配置
+        </div>
+      )}
+
       {error && <div className="field-error" style={{ marginBottom: "var(--sp-4)" }}>{error}</div>}
 
       {/* 用量统计 */}
@@ -148,7 +162,7 @@ export default function AiSettingsPage() {
       <div className="card--glass" style={{ padding: "var(--sp-5)", marginBottom: "var(--sp-5)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--sp-4)" }}>
           <h3 style={{ fontSize: 16, fontWeight: 700 }}>AI 服务提供商</h3>
-          <button className="btn btn--sm" onClick={() => setShowAddProvider(true)}>+ 添加</button>
+          {canEdit && <button className="btn btn--sm" onClick={() => setShowAddProvider(true)}>+ 添加</button>}
         </div>
 
         {providers.length === 0 && !showAddProvider && (
@@ -162,6 +176,7 @@ export default function AiSettingsPage() {
             <ProviderCard
               key={p.id}
               provider={p}
+              canEdit={canEdit}
               onUpdate={updated => setProviders(prev => prev.map(pp => pp.id === updated.id ? updated : pp))}
               onDelete={id => setProviders(prev => prev.filter(pp => pp.id !== id))}
             />
@@ -219,9 +234,11 @@ export default function AiSettingsPage() {
               )}
             </p>
           </div>
-          <button className="btn btn--soft btn--sm" onClick={handleRefreshPricing} disabled={refreshing}>
-            {refreshing ? "刷新中..." : "刷新价格"}
-          </button>
+          {canEdit && (
+            <button className="btn btn--soft btn--sm" onClick={handleRefreshPricing} disabled={refreshing}>
+              {refreshing ? "刷新中..." : "刷新价格"}
+            </button>
+          )}
         </div>
 
         <div style={{ display: "grid", gap: "var(--sp-3)" }}>
@@ -242,6 +259,7 @@ export default function AiSettingsPage() {
                   pricingSource: existing.pricingSource,
                   pricingUpdatedAt: existing.pricingUpdatedAt,
                 } : undefined}
+                canEdit={canEdit}
                 onSave={(providerId, modelName) => handleSaveAction(da.key, da.label, da.type, providerId, modelName)}
               />
             );

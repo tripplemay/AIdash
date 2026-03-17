@@ -7,9 +7,9 @@ import { ROLES } from "@/lib/roles";
 import { decryptApiKey } from "@/lib/crypto";
 import { testModel, fetchModelPricing } from "@/lib/ai/pricing-service";
 
-// GET /api/admin/ai-actions — 动作配置列表
+// GET /api/admin/ai-actions — 动作配置列表（所有角色可读）
 export async function GET() {
-  if (!(await requireRole([ROLES.ADMIN]))) return forbiddenResponse();
+  if (!(await requireRole([ROLES.TEACHER, ROLES.RD_MANAGER, ROLES.ADMIN]))) return forbiddenResponse();
 
   const actions = await prisma.aiActionConfig.findMany({
     include: { provider: { select: { id: true, name: true } } },

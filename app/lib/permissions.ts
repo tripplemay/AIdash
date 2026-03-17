@@ -10,8 +10,10 @@ export const PERMISSIONS = {
   MANAGE_PACKAGES: "manage_packages",
   /** 管理后台 — 用户管理 */
   MANAGE_USERS: "manage_users",
-  /** 管理后台 — AI 设置 */
+  /** 管理后台 — AI 设置（编辑） */
   AI_SETTINGS: "ai_settings",
+  /** 查看 AI 设置（只读） */
+  VIEW_AI_SETTINGS: "view_ai_settings",
   /** 操作日志 — 查看全部 */
   VIEW_ALL_LOGS: "view_all_logs",
   /** 操作日志 — 查看自己 */
@@ -28,12 +30,15 @@ type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [ROLES.TEACHER]: [
     PERMISSIONS.VIEW_COURSES,
+    PERMISSIONS.VIEW_AI_SETTINGS,
+    PERMISSIONS.VIEW_PROMPT_CONFIG,
   ],
   [ROLES.RD_MANAGER]: [
     PERMISSIONS.VIEW_COURSES,
     PERMISSIONS.COURSE_RND,
     PERMISSIONS.MANAGE_PACKAGES,
     PERMISSIONS.VIEW_OWN_LOGS,
+    PERMISSIONS.VIEW_AI_SETTINGS,
     PERMISSIONS.VIEW_PROMPT_CONFIG,
   ],
   [ROLES.ADMIN]: [
@@ -42,6 +47,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.MANAGE_PACKAGES,
     PERMISSIONS.MANAGE_USERS,
     PERMISSIONS.AI_SETTINGS,
+    PERMISSIONS.VIEW_AI_SETTINGS,
     PERMISSIONS.VIEW_ALL_LOGS,
     PERMISSIONS.VIEW_OWN_LOGS,
     PERMISSIONS.PROMPT_CONFIG,
@@ -62,7 +68,7 @@ export function hasRole(role: string, allowedRoles: Role[]): boolean {
 }
 
 /** 可访问管理后台的角色 */
-export const ADMIN_PANEL_ROLES: Role[] = [ROLES.RD_MANAGER, ROLES.ADMIN];
+export const ADMIN_PANEL_ROLES: Role[] = [ROLES.TEACHER, ROLES.RD_MANAGER, ROLES.ADMIN];
 
 /** 可访问课程研发的角色 */
 export const COURSE_RND_ROLES: Role[] = [ROLES.RD_MANAGER, ROLES.ADMIN];

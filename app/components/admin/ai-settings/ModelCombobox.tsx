@@ -16,9 +16,10 @@ interface Props {
   actionType?: "text" | "image";
   placeholder?: string;
   loading?: boolean;
+  disabled?: boolean;
 }
 
-export default function ModelCombobox({ models, value, onChange, actionType, placeholder = "搜索或输入模型 ID", loading }: Props) {
+export default function ModelCombobox({ models, value, onChange, actionType, placeholder = "搜索或输入模型 ID", loading, disabled }: Props) {
   const [query, setQuery] = useState(value);
   const [open, setOpen] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(-1);
@@ -110,7 +111,7 @@ export default function ModelCombobox({ models, value, onChange, actionType, pla
         onFocus={() => { if (availableModels.length > 0) setOpen(true); }}
         onKeyDown={handleKeyDown}
         placeholder={loading ? "加载模型列表..." : placeholder}
-        disabled={loading}
+        disabled={loading || disabled}
         role="combobox"
         aria-expanded={open}
         aria-autocomplete="list"

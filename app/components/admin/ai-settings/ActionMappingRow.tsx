@@ -25,11 +25,12 @@ interface Props {
   currentProviderId: string;
   currentModelName: string;
   currentPricing?: { inputPricePerM: number | null; outputPricePerM: number | null; pricingSource: string | null; pricingUpdatedAt: string | null };
+  canEdit?: boolean;
   onSave: (providerId: string, modelName: string) => Promise<{ pricingAvailable?: boolean; testFailed?: boolean; error?: string }>;
 }
 
 export default function ActionMappingRow({
-  actionKey, actionLabel, actionType, providers, currentProviderId, currentModelName, currentPricing, onSave,
+  actionKey, actionLabel, actionType, providers, currentProviderId, currentModelName, currentPricing, canEdit = true, onSave,
 }: Props) {
   const [providerId, setProviderId] = useState(currentProviderId);
   const [modelName, setModelName] = useState(currentModelName);
@@ -110,6 +111,7 @@ export default function ActionMappingRow({
           style={{ height: 34, fontSize: 12 }}
           value={providerId}
           onChange={e => handleProviderChange(e.target.value)}
+          disabled={!canEdit}
         >
           <option value="">选择服务商</option>
           {availableProviders.map(p => (
@@ -122,15 +124,18 @@ export default function ActionMappingRow({
           onChange={setModelName}
           actionType={actionType as "text" | "image"}
           loading={loadingModels}
+          disabled={!canEdit}
         />
-        <button
-          className="btn btn--sm"
-          onClick={handleSave}
-          disabled={saving || !changed || !providerId || !modelName}
-          style={{ whiteSpace: "nowrap" }}
-        >
-          {saving ? "测试并保存中..." : currentProviderId ? "更新" : "保存"}
-        </button>
+        {canEdit && (
+          <button
+            className="btn btn--sm"
+            onClick={handleSave}
+            disabled={saving || !changed || !providerId || !modelName}
+            style={{ whiteSpace: "nowrap" }}
+          >
+            {saving ? "测试并保存中..." : currentProviderId ? "更新" : "保存"}
+          </button>
+        )}
       </div>
 
       {/* 状态提示 + 价格信息 */}
