@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import Image from "next/image";
 
 export default function LoginForm() {
   const [username, setUsername] = useState("");
@@ -36,29 +35,10 @@ export default function LoginForm() {
           {/* ── 左侧品牌区 ── */}
           <div className="login__brand">
             <div className="login__brand-logo">
-              <img src="/images/logo-sm.png" alt="AI Dash" style={{ height: 56 }} />
+              <img src="/images/logo-sm.png" alt="AI Dash" style={{ height: 140 }} />
             </div>
 
-            <h1 className="login__brand-title">教师授课系统</h1>
-            <p className="login__brand-subtitle">开启智能备课新体验</p>
-            <p className="login__brand-desc">
-              借助 AI 智备课、互动课堂指导与智能复盘，帮助老师更高效地进入课程、管理课包与组织授课流程。
-            </p>
-
-            <div style={{ display: "flex", gap: "var(--sp-4)", flexWrap: "wrap", alignItems: "flex-end" }}>
-              <div className="login__brand-features">
-                {["AI 智能备课", "互动课堂指导", "AI 复盘助力提升"].map(item => (
-                  <div key={item} className="login__brand-feature-item">{item}</div>
-                ))}
-              </div>
-              <Image
-                src="/images/login-brand-reference.png"
-                alt="首页参考图"
-                width={280}
-                height={200}
-                style={{ borderRadius: 20, objectFit: "cover", boxShadow: "var(--shadow-md)" }}
-              />
-            </div>
+            <h1 className="login__brand-title">智能课程系统</h1>
           </div>
 
           {/* ── 右侧登录区 ── */}

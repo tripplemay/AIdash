@@ -180,7 +180,7 @@ img { display: block; max-width: 100%; }
 }
 
 .sidebar__logo-img {
-  height: 36px;
+  height: 48px;
   width: auto;
   object-fit: contain;
 }
