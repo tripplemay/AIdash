@@ -178,20 +178,14 @@ export function rewriteTeachingTalkPrompt(): string {
 export function validateLessonPrompt(): string {
   return `你是课程质量审核员。请根据课程设计基线逐项检查以下课程方案。
 
-输出格式（JSON）：
-{
-  "overallPass": true或false,
-  "items": [
-    {
-      "criterion": "检查项名称",
-      "status": "pass" 或 "warning" 或 "fail",
-      "detail": "具体问题描述（pass 时可省略）"
-    }
-  ],
-  "summary": "一句话总结审核结论"
-}
+每完成一个检查项，立即输出一行，格式严格为：
+序号|status|detail
+其中 status 为 pass、warning 或 fail，detail 为具体说明。
 
-检查项必须包括：
+全部检查完成后，输出最后一行：
+OVERALL|pass或fail|一句话总结审核结论
+
+检查项必须按顺序逐项检查：
 1. 课次目标清晰度 — 每课是否有明确、具体、可衡量的教学目标
 2. AI 环节实际价值 — AI 的参与是否有真实教学价值，而非装饰性使用
 3. 课堂流程时间分配 — 各环节时间总和是否覆盖整堂课，分配是否合理
@@ -203,5 +197,18 @@ export function validateLessonPrompt(): string {
 9. 课次独立性 — 每课是否有独立可展示的阶段性成果
 10. 禁止跑偏检查 — 是否存在纯工具教学、纯知识讲授、概念过虚等问题
 
-只输出 JSON，不要输出其他内容。`;
+示例输出：
+1|pass|每课目标明确，表述具体可衡量
+2|warning|第3课 AI 环节偏装饰性，建议加强交互设计
+3|pass|时间分配合理，总计覆盖 45 分钟
+4|fail|第2课仅2个卡点，应至少4个
+5|pass|模板具体，可直接使用
+6|pass|内容适合目标年龄段
+7|pass|课次间有清晰递进
+8|pass|每课产出有成品感
+9|pass|每课有独立可展示成果
+10|pass|无跑偏问题
+OVERALL|warning|整体方案质量良好，第3课 AI 环节和第2课卡点需改进
+
+严格按此格式输出，每检查完一项立即输出一行。不要输出其他内容。`;
 }
