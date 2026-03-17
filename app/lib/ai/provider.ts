@@ -414,32 +414,42 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
       }
 
       // 回退：/images/generations（DALL-E 等标准接口）
-      const controller2 = new AbortController();
-      const timer2 = setTimeout(() => controller2.abort(), 120_000);
+      // 尝试多个尺寸：默认尺寸 → 高分辨率（适配 seedream 等要求高像素的模型）
+      const sizesToTry = [size, "2560x1440"];
+      for (const trySize of sizesToTry) {
+        const controller2 = new AbortController();
+        const timer2 = setTimeout(() => controller2.abort(), 120_000);
 
-      try {
-        const res = await proxyFetch(imageUrl, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ model, prompt, n: 1, size }),
-          signal: controller2.signal,
-          proxyUrl,
-        });
+        try {
+          const res = await proxyFetch(imageUrl, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ model, prompt, n: 1, size: trySize }),
+            signal: controller2.signal,
+            proxyUrl,
+          });
 
-        if (res.ok) {
-          const json = await res.json();
-          const url = json.data?.[0]?.url ?? json.data?.[0]?.b64_json;
-          if (url) return { url, model };
+          if (res.ok) {
+            const json = await res.json();
+            const url = json.data?.[0]?.url ?? json.data?.[0]?.b64_json;
+            if (url) return { url, model };
+          }
+
+          const text = await res.text();
+          // 如果是尺寸相关的错误且还有更大尺寸可试，继续
+          if (text.includes("size") || text.includes("pixel")) {
+            continue;
+          }
+          throw new Error(`Image generation failed ${res.status}: ${text}`);
+        } finally {
+          clearTimeout(timer2);
         }
-
-        const text = await res.text();
-        throw new Error(`Image generation failed ${res.status}: ${text}`);
-      } finally {
-        clearTimeout(timer2);
       }
+
+      throw new Error("图片生成失败：所有尺寸均不被支持");
 
     },
   };
