@@ -43,6 +43,7 @@ const DEFAULT_ACTIONS = [
   { key: "regenerate_lesson", label: "生成/重新生成课次", type: "text" },
   { key: "revise_lesson", label: "按意见修改课次", type: "text" },
   { key: "rewrite_field", label: "单字段改写", type: "text" },
+  { key: "validate_lesson", label: "课次审核", type: "text" },
   { key: "lesson_cover", label: "课次封面图", type: "image" },
   { key: "lesson_illustration", label: "课内插图", type: "image" },
   { key: "package_cover", label: "课程包封面图", type: "image" },
