@@ -299,13 +299,6 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                 <LessonRenderer content={parsed} preview />
               </div>
 
-              {/* 提示：点击板块可关联 */}
-              {!targetSection && !loading && !disabled && (
-                <div className="muted" style={{ fontSize: 12, marginTop: "var(--sp-2)", textAlign: "center" }}>
-                  点击上方板块标题可关联修改意见到具体板块
-                </div>
-              )}
-
               {/* 固定在视口底部的意见输入框（通过 Portal 渲染到 body，绕过 backdrop-filter 对 fixed 的影响） */}
               {!disabled && typeof document !== "undefined" && createPortal(
                 <div style={{
@@ -315,8 +308,8 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                   right: 0,
                   background: "var(--panel-solid)",
                   borderTop: "1px solid var(--line)",
-                  padding: "var(--sp-3) var(--sp-6)",
-                  boxShadow: "0 -2px 8px rgba(0,0,0,0.08)",
+                  padding: "var(--sp-4) var(--sp-6)",
+                  boxShadow: "0 -4px 12px rgba(0,0,0,0.1)",
                   zIndex: 50,
                 }}>
                   {/* 修改中提示 */}
@@ -329,6 +322,13 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
 
                   {!loading && (
                     <>
+                      {/* 未选区块时的提示 */}
+                      {!targetSection && pendingFeedbacks.length === 0 && (
+                        <div className="muted" style={{ fontSize: 12, marginBottom: "var(--sp-2)" }}>
+                          点击上方板块标题可针对具体板块输入修改意见
+                        </div>
+                      )}
+
                       {/* 暂存列表 */}
                       {pendingFeedbacks.length > 0 && (
                         <div style={{ marginBottom: "var(--sp-2)", padding: "var(--sp-2) var(--sp-3)", background: "var(--bg-faint)", borderRadius: "var(--radius-sm)", fontSize: 13 }}>
