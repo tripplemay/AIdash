@@ -36,8 +36,7 @@ export default function LoginForm() {
           {/* ── 左侧品牌区 ── */}
           <div className="login__brand">
             <div className="login__brand-logo">
-              <div className="sidebar__logo-mark" style={{ width: 48, height: 48, borderRadius: 16 }} />
-              <span style={{ fontSize: 36, fontWeight: 800, color: "var(--text)" }}>AI Dash</span>
+              <img src="/images/logo-sm.png" alt="AI Dash" style={{ height: 56 }} />
             </div>
 
             <h1 className="login__brand-title">教师授课系统</h1>

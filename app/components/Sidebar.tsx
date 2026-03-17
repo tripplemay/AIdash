@@ -134,8 +134,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
   return (
     <aside className="sidebar">
       <Link href="/list" className="sidebar__logo">
-        <div className="sidebar__logo-mark" />
-        <span className="sidebar__logo-text">AI Dash</span>
+        <img src="/images/logo-sm.png" alt="AI Dash" className="sidebar__logo-img" />
       </Link>
 
       <div className="sidebar__user-wrap">
