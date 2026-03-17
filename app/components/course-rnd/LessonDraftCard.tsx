@@ -20,6 +20,7 @@ interface ProgressState {
   total: number;
   label: string;
   tokenCount: number;
+  streamText?: string;
 }
 
 const SECTION_LABELS = [
@@ -236,6 +237,45 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                   <span className="ai-progress__spinner" />
                 </span>
                 {progress.label}
+              </div>
+            )}
+
+            {/* 流式文本输出预览 */}
+            {progress.streamText && (
+              <div style={{
+                marginTop: "var(--sp-3)",
+                position: "relative",
+              }}>
+                <div
+                  ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}
+                  style={{
+                    height: 130,
+                    overflowY: "auto",
+                    padding: "var(--sp-3)",
+                    background: "var(--bg-faint)",
+                    border: "1px solid var(--line)",
+                    borderRadius: "var(--radius-sm)",
+                    fontFamily: "monospace",
+                    fontSize: 12,
+                    lineHeight: 1.6,
+                    color: "var(--muted)",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {progress.streamText}
+                </div>
+                <div style={{
+                  position: "absolute",
+                  bottom: "var(--sp-2)",
+                  right: "var(--sp-3)",
+                  fontSize: 11,
+                  color: "var(--muted)",
+                  background: "var(--bg-faint)",
+                  padding: "0 var(--sp-1)",
+                }}>
+                  已接收 {progress.streamText.length.toLocaleString()} 字
+                </div>
               </div>
             )}
           </div>

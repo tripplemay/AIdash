@@ -197,6 +197,7 @@ export async function POST(
             let streamedContent = "";
             let lastStep = 0;
             let lastHeartbeatChars = 0;
+            let lastSentChars = 0;
 
             while (true) {
               const iterResult = await generator.next();
@@ -215,11 +216,15 @@ export async function POST(
               if (stepChanged || heartbeat) {
                 lastStep = step;
                 lastHeartbeatChars = chunk.totalChars;
+                const textDelta = streamedContent.slice(lastSentChars);
+                lastSentChars = streamedContent.length;
                 sendEvent("progress", {
                   step,
                   total: 7,
                   label: `正在生成「${SECTION_STEPS[step]?.label ?? ""}」...`,
                   tokenCount: Math.round(chunk.totalChars / 2.5),
+                  textDelta,
+                  totalChars: chunk.totalChars,
                 });
               }
             }

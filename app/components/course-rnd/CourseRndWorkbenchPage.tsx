@@ -65,7 +65,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
   const { showToast } = useToast();
 
   // 每课独立的进度状态
-  type ProgressState = { step: number; total: number; label: string; tokenCount: number };
+  type ProgressState = { step: number; total: number; label: string; tokenCount: number; streamText?: string };
   const [generatingLessons, setGeneratingLessons] = useState<Map<number, ProgressState>>(new Map());
   const [revisingLessons, setRevisingLessons] = useState<Set<number>>(new Set());
   const [pendingFeedbacksMap, setPendingFeedbacksMap] = useState<Map<number, PendingFeedback[]>>(new Map());
@@ -116,7 +116,13 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
             const parsed = JSON.parse(data);
 
             if (event === "progress") {
-              setGeneratingLessons(prev => new Map(prev).set(lessonNo, parsed));
+              setGeneratingLessons(prev => {
+                const next = new Map(prev);
+                const existing = next.get(lessonNo);
+                const streamText = (existing?.streamText ?? "") + (parsed.textDelta ?? "");
+                next.set(lessonNo, { ...parsed, streamText });
+                return next;
+              });
             } else if (event === "done") {
               setDrafts(prev => prev.map(d =>
                 d.lessonNo === lessonNo
