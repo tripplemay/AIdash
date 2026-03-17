@@ -228,6 +228,16 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                 </div>
               );
             })}
+
+            {/* 7步完成后的额外阶段（如封面图生成） */}
+            {progress.step > 7 && (
+              <div className="ai-progress__step ai-progress__step--current">
+                <span style={{ width: 20, display: "flex", justifyContent: "center" }}>
+                  <span className="ai-progress__spinner" />
+                </span>
+                {progress.label}
+              </div>
+            )}
           </div>
         );
       })()}

@@ -21,6 +21,19 @@ const SECTION_STEPS = [
   { id: "review", label: "课后复盘记录区" },
 ];
 
+/** 根据已接收的 JSON 文本检测当前正在生成哪个板块 */
+function detectSectionStep(content: string): number {
+  // 按 JSON 字段出现顺序检测（后出现的优先级高）
+  if (content.includes('"review_questions"') || content.includes('"parent_message"')) return 7;
+  if (content.includes('"outcome_template"') || content.includes('"demo_case"')) return 6;
+  if (content.includes('"issues"')) return 5;
+  if (content.includes('"flow"')) return 4;
+  if (content.includes('"teacher_prep"') || content.includes('"equipment"')) return 3;
+  if (content.includes('"ai_value_quote"') || content.includes('"ai_rounds"')) return 2;
+  if (content.includes('"positioning"') || content.includes('"title"')) return 1;
+  return 0;
+}
+
 const SYSTEM_PROMPT = `你是课程设计助手。请根据用户提供的课程信息生成教学方案。
 
 输出要求：只输出 JSON，不要用 markdown 代码块包裹，不要输出其他文字。
@@ -173,7 +186,7 @@ export async function POST(
           let result: { content: string; inputTokens: number; outputTokens: number; model: string };
 
           if (provider.chatStream) {
-            // Streaming mode: real progress
+            // Streaming mode: real section detection
             const generator = provider.chatStream({
               systemPrompt,
               userMessage,
@@ -181,22 +194,29 @@ export async function POST(
               maxTokens: 4096,
             });
 
+            let streamedContent = "";
+            let lastStep = 0;
+
             while (true) {
               const iterResult = await generator.next();
               if (iterResult.done) {
-                // iterResult.value is ChatResult
                 result = iterResult.value;
                 break;
               }
-              // iterResult.value is ChatStreamChunk
               const chunk = iterResult.value;
-              const estimatedTokens = Math.round(chunk.totalChars / 2.5);
-              sendEvent("progress", {
-                step: Math.min(6, Math.floor(estimatedTokens / 300)),
-                total: 7,
-                label: `正在生成中（已接收 ${chunk.totalChars} 字符）...`,
-                tokenCount: estimatedTokens,
-              });
+              streamedContent += chunk.text;
+
+              // 根据 JSON 字段名检测当前生成的板块
+              const step = detectSectionStep(streamedContent);
+              if (step !== lastStep) {
+                lastStep = step;
+                sendEvent("progress", {
+                  step,
+                  total: 7,
+                  label: `正在生成「${SECTION_STEPS[step]?.label ?? ""}」...`,
+                  tokenCount: Math.round(chunk.totalChars / 2.5),
+                });
+              }
             }
           } else {
             // Non-streaming fallback: fake progress timer
@@ -252,8 +272,11 @@ export async function POST(
           return;
         }
 
+        // 7 步文本生成完成
+        sendEvent("progress", { step: 7, total: 7, label: "文本生成完成", tokenCount: lastResult?.outputTokens ?? 0 });
+
         // 生成 Hero 封面图（仅此一张，其他图片待 v2 规范扩展 image block 后再加）
-        sendEvent("progress", { step: 6, total: 7, label: "正在生成封面图...", tokenCount: 0 });
+        sendEvent("progress", { step: 8, total: 8, label: "正在生成封面图...", tokenCount: 0 });
         const imageConfig = await getProviderAndModel("lesson_cover").catch(() => null);
         if (imageConfig?.provider?.generateImage && aiOutput.hero_image_prompt) {
           try {
