@@ -305,17 +305,18 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                 </div>
               )}
 
-              {/* sticky 意见输入框 */}
+              {/* 固定在视口底部的意见输入框 */}
               {!disabled && (
                 <div style={{
-                  position: "sticky",
-                  bottom: "var(--sp-3)",
+                  position: "fixed",
+                  bottom: 0,
+                  left: "var(--sidebar-w, 240px)",
+                  right: 0,
                   background: "var(--panel-solid)",
                   borderTop: "1px solid var(--line)",
-                  padding: "var(--sp-3)",
-                  marginTop: "var(--sp-3)",
-                  borderRadius: "var(--radius-md)",
-                  boxShadow: "var(--shadow-sm)",
+                  padding: "var(--sp-3) var(--sp-6)",
+                  boxShadow: "0 -2px 8px rgba(0,0,0,0.08)",
+                  zIndex: 50,
                 }}>
                   {/* 修改中提示 */}
                   {loading && (
