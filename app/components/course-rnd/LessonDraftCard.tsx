@@ -346,13 +346,6 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
 
                   {!loading && (
                     <>
-                      {/* 未选区块时的提示 */}
-                      {!targetSection && pendingFeedbacks.length === 0 && (
-                        <div className="muted" style={{ fontSize: 12, marginBottom: "var(--sp-2)" }}>
-                          点击上方板块标题可针对具体板块输入修改意见
-                        </div>
-                      )}
-
                       {/* 暂存列表 */}
                       {pendingFeedbacks.length > 0 && (
                         <div style={{ marginBottom: "var(--sp-2)", padding: "var(--sp-2) var(--sp-3)", background: "var(--bg-faint)", borderRadius: "var(--radius-sm)", fontSize: 13 }}>
@@ -369,27 +362,22 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                         </div>
                       )}
 
-                      {/* 关联标签 */}
-                      {targetSection && (
-                        <div style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "var(--sp-2)",
-                          marginBottom: "var(--sp-2)",
-                          fontSize: 13,
-                        }}>
-                          <span className="pill" style={{ fontSize: 11 }}>
-                            针对：{targetSection.title}
-                          </span>
-                          <button
-                            className="btn--ghost"
-                            onClick={() => setTargetSection(null)}
-                            style={{ fontSize: 12, padding: "2px 6px", border: "none", background: "none", cursor: "pointer", color: "var(--muted)" }}
-                          >
-                            ✕ 取消
-                          </button>
-                        </div>
-                      )}
+                      {/* 提示行：未选时显示操作提示，选中时显示区块名+取消 */}
+                      <div style={{ fontSize: 12, marginBottom: "var(--sp-2)", display: "flex", alignItems: "center", gap: "var(--sp-2)" }}>
+                        {targetSection ? (
+                          <>
+                            <span className="pill" style={{ fontSize: 11 }}>针对：{targetSection.title}</span>
+                            <button
+                              onClick={() => setTargetSection(null)}
+                              style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted)", fontSize: 12, padding: "0 4px" }}
+                            >
+                              ✕ 取消
+                            </button>
+                          </>
+                        ) : (
+                          <span className="muted">点击上方板块标题可针对具体板块输入修改意见</span>
+                        )}
+                      </div>
 
                       <div style={{ display: "flex", gap: "var(--sp-2)", alignItems: "flex-end" }}>
                         <textarea
