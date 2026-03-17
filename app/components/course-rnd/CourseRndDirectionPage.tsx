@@ -191,8 +191,8 @@ export default function CourseRndDirectionPage({ projectData, recentProjects }: 
         versionId: json.data.directionVersionId,
       });
 
-      // 框架生成成功后，异步生成封面（不阻塞）
-      generateCoverAsync(pid);
+      // 仅在没有封面时自动生成（重新生成/修改框架不重复生成）
+      if (!coverUrl) generateCoverAsync(pid);
     } catch {
       setError("网络错误，请重试");
     } finally {
