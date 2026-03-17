@@ -7,7 +7,7 @@ import { ROLES } from "@/lib/roles";
 
 // GET /api/admin/ai-usage?range=today|week|month|all
 export async function GET(request: Request) {
-  if (!(await requireRole([ROLES.ADMIN]))) return forbiddenResponse();
+  if (!(await requireRole([ROLES.TEACHER, ROLES.RD_MANAGER, ROLES.ADMIN]))) return forbiddenResponse();
 
   const url = new URL(request.url);
   const range = url.searchParams.get("range") ?? "all";
