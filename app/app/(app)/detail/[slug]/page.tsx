@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SetTopBar } from "@/components/TopBarContext";
 import EnterLessonButton from "@/components/EnterLessonButton";
 import { isLessonAccessible } from "@/lib/lesson-utils";
+import { formatAgeRange, loadAgeRangeLabels } from "@/lib/age-range-labels";
 import Image from "next/image";
 
 export default async function DetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -25,6 +26,8 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
 
   if (!pkg) notFound();
 
+  const ageRangeLabels = await loadAgeRangeLabels();
+
   return (
     <>
       <SetTopBar
@@ -46,7 +49,7 @@ export default async function DetailPage({ params }: { params: Promise<{ slug: s
 
           <div className="detail-meta-grid">
             {[
-              { label: "适用年龄段", value: `${pkg.ageRange} 岁` },
+              { label: "适用年龄段", value: formatAgeRange(pkg.ageRange, ageRangeLabels) },
               { label: "级别", value: pkg.level },
               { label: "状态", value: pkg.status === "published" ? "已发布" : "草稿", green: pkg.status === "published" },
               { label: "接入方式", value: "标准单课成品包" },

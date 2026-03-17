@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SetTopBar } from "@/components/TopBarContext";
+import { formatAgeRange } from "@/lib/age-range-labels";
 import { useToast } from "@/components/Toast";
 import { ConfirmModal } from "./CourseRndModal";
 
@@ -32,6 +33,7 @@ interface Props {
   projectCosts: Record<string, number>;
   totalCost: number;
   totalCalls: number;
+  ageRangeLabels?: Record<string, string>;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: string; color: string }> = {
@@ -81,7 +83,7 @@ function timeAgo(date: Date): string {
   return new Date(date).toLocaleDateString("zh-CN");
 }
 
-function ProjectCard({ project, cost, onDelete }: { project: ProjectSummary; cost: number; onDelete: (id: string) => void }) {
+function ProjectCard({ project, cost, onDelete, ageRangeLabels }: { project: ProjectSummary; cost: number; onDelete: (id: string) => void; ageRangeLabels?: Record<string, string> }) {
   const config = getStatusConfig(project);
   const progress = getProgress(project);
   const link = getProjectLink(project);
@@ -103,7 +105,7 @@ function ProjectCard({ project, cost, onDelete }: { project: ProjectSummary; cos
         {(project.ageRange || project.level || project.lessonCount) && (
           <div className="muted" style={{ fontSize: 12, marginBottom: "var(--sp-2)" }}>
             {[
-              project.ageRange && `${project.ageRange} 岁`,
+              project.ageRange && formatAgeRange(project.ageRange, ageRangeLabels),
               project.level,
               project.lessonCount && `${project.lessonCount} 节课`,
             ].filter(Boolean).join(" · ")}
@@ -130,7 +132,7 @@ function ProjectCard({ project, cost, onDelete }: { project: ProjectSummary; cos
   );
 }
 
-export default function CourseRndDashboard({ projects: initialProjects, projectCosts, totalCost, totalCalls }: Props) {
+export default function CourseRndDashboard({ projects: initialProjects, projectCosts, totalCost, totalCalls, ageRangeLabels }: Props) {
   const [projects, setProjects] = useState(initialProjects);
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["inProgress"]));
@@ -197,6 +199,7 @@ export default function CourseRndDashboard({ projects: initialProjects, projectC
                     project={p}
                     cost={projectCosts[p.id] ?? 0}
                     onDelete={id => setDeleteTarget(projects.find(pp => pp.id === id) ?? null)}
+                    ageRangeLabels={ageRangeLabels}
                   />
                 ))}
               </div>

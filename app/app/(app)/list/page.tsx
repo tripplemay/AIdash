@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import PackageGrid from "@/components/PackageGrid";
 import { SetTopBar } from "@/components/TopBarContext";
+import { loadAgeRangeLabels } from "@/lib/age-range-labels";
 
 export default async function ListPage({
   searchParams,
@@ -29,11 +30,13 @@ export default async function ListPage({
     orderBy: { createdAt: "asc" },
   });
 
+  const ageRangeLabels = await loadAgeRangeLabels();
+
   return (
     <>
       <SetTopBar title="课程包列表" />
       <div className="card--glass" style={{ padding: "var(--sp-5)" }}>
-        <PackageGrid packages={packages} />
+        <PackageGrid packages={packages} ageRangeLabels={ageRangeLabels} />
       </div>
     </>
   );

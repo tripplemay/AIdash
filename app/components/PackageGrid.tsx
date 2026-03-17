@@ -25,7 +25,10 @@ interface CoursePackage {
 
 interface Props {
   packages: CoursePackage[];
+  ageRangeLabels?: Record<string, string>;
 }
+
+import { formatAgeRange } from "@/lib/age-range-labels";
 
 const PLACEHOLDER_COLORS: Record<number, string> = {
   0: "linear-gradient(135deg,#f0f7ff,#e0f0ff)",
@@ -33,7 +36,7 @@ const PLACEHOLDER_COLORS: Record<number, string> = {
   2: "linear-gradient(135deg,#fff3e8,#fff8f0)",
 };
 
-export default function PackageGrid({ packages }: Props) {
+export default function PackageGrid({ packages, ageRangeLabels }: Props) {
   if (packages.length === 0) {
     return (
       <div className="text-center muted" style={{ padding: "var(--sp-12) 0", fontSize: 15 }}>
@@ -57,7 +60,7 @@ export default function PackageGrid({ packages }: Props) {
               {pkg.coverImage && (
                 <Image src={pkg.coverImage} alt={pkg.title} fill style={{ objectFit: "cover" }} />
               )}
-              <span className="pkg-card__badge">{pkg.ageRange}岁 · {pkg.level}</span>
+              <span className="pkg-card__badge">{formatAgeRange(pkg.ageRange, ageRangeLabels)} · {pkg.level}</span>
             </div>
 
             {/* 内容 */}
@@ -66,7 +69,7 @@ export default function PackageGrid({ packages }: Props) {
               {firstLesson ? (
                 <>
                   <div className="pkg-card__meta">
-                    <div>● 适用年龄：{pkg.ageRange} 岁</div>
+                    <div>● 适用年龄：{formatAgeRange(pkg.ageRange, ageRangeLabels)}</div>
                     <div>● 第 {firstLesson.lessonNo} 课《{firstLesson.title}》</div>
                     {firstLesson.outputSummary && (
                       <div>● 本课成果：{firstLesson.outputSummary}</div>

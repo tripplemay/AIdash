@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import CourseRndDashboard from "@/components/course-rnd/CourseRndDashboard";
+import { loadAgeRangeLabels } from "@/lib/age-range-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -64,12 +65,15 @@ export default async function CourseRndPage() {
     costMap[pc.projectId] = pc._sum.estimatedCost ?? 0;
   }
 
+  const ageRangeLabels = await loadAgeRangeLabels();
+
   return (
     <CourseRndDashboard
       projects={projects}
       projectCosts={costMap}
       totalCost={totalCost._sum.estimatedCost ?? 0}
       totalCalls={totalCost._count}
+      ageRangeLabels={ageRangeLabels}
     />
   );
 }
