@@ -55,7 +55,7 @@ export default async function WorkbenchPage({
     directionSummary = dirVersion?.summary ?? null;
   }
 
-  // 检查本次定稿后是否已发布（用 OperationLog 的 finalize 时间判断）
+  // 检查本次定稿后是否已发布
   let publishRecord: { id: string; packageSlug: string; packageTitle: string; createdAt: Date } | null = null;
   const lastFinalizeLog = await prisma.operationLog.findFirst({
     where: { targetId: projectId, module: "course_rnd", action: "finalize" },
@@ -63,7 +63,7 @@ export default async function WorkbenchPage({
     select: { createdAt: true },
   });
   if (lastFinalizeLog) {
-    // 只查找定稿之后的发布记录
+    // 有定稿日志：只查找定稿之后的发布记录
     const publishAfterFinalize = await prisma.courseRndPublishRecord.findFirst({
       where: { projectId, createdAt: { gt: lastFinalizeLog.createdAt } },
       orderBy: { createdAt: "desc" },
@@ -71,6 +71,16 @@ export default async function WorkbenchPage({
     });
     if (publishAfterFinalize) {
       publishRecord = publishAfterFinalize;
+    }
+  } else {
+    // 无定稿日志（老项目）：直接查最新发布记录
+    const latestPublish = await prisma.courseRndPublishRecord.findFirst({
+      where: { projectId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, packageSlug: true, packageTitle: true, createdAt: true },
+    });
+    if (latestPublish) {
+      publishRecord = latestPublish;
     }
   }
 
