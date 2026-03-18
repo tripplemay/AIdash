@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu, Sparkles } from "lucide-react";
+import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu, Sparkles, Activity } from "lucide-react";
 import { ROLE_LABELS, type Role } from "@/lib/roles";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import SidebarNavItem from "./SidebarNavItem";
@@ -24,7 +24,7 @@ interface LessonNavData {
 export default function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const canAccessAdmin = hasPermission(userRole, PERMISSIONS.MANAGE_PACKAGES) || hasPermission(userRole, PERMISSIONS.MANAGE_USERS) || hasPermission(userRole, PERMISSIONS.VIEW_AI_SETTINGS) || hasPermission(userRole, PERMISSIONS.VIEW_PROMPT_CONFIG);
+  const canAccessAdmin = hasPermission(userRole, PERMISSIONS.MANAGE_PACKAGES) || hasPermission(userRole, PERMISSIONS.MANAGE_USERS) || hasPermission(userRole, PERMISSIONS.VIEW_AI_SETTINGS) || hasPermission(userRole, PERMISSIONS.VIEW_PROMPT_CONFIG) || hasPermission(userRole, PERMISSIONS.VIEW_AI_LOGS);
   const canAccessRnd = hasPermission(userRole, PERMISSIONS.COURSE_RND);
   const initial = userName.charAt(0).toUpperCase();
 
@@ -39,6 +39,7 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
   // admin 子页面自动检测
   const adminSection = pathname.includes("/admin/packages") ? "packages"
     : pathname.includes("/admin/users") ? "users"
+    : pathname.includes("/admin/ai-logs") ? "ai-logs"
     : pathname.includes("/admin/ai-settings") ? "ai-settings"
     : pathname.includes("/admin/prompt-config") ? "prompt-config"
     : undefined;
@@ -216,6 +217,15 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
                   >
                     <FileText size={14} />
                     操作日志
+                  </Link>
+                )}
+                {hasPermission(userRole, PERMISSIONS.VIEW_AI_LOGS) && (
+                  <Link
+                    href="/admin/ai-logs"
+                    className={`sidebar__sub-item${adminSection === "ai-logs" ? " sidebar__sub-item--active" : ""}`}
+                  >
+                    <Activity size={14} />
+                    AI 调用记录
                   </Link>
                 )}
                 {hasPermission(userRole, PERMISSIONS.VIEW_AI_SETTINGS) && (
