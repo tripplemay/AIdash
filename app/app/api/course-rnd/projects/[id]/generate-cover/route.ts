@@ -60,36 +60,28 @@ export async function POST(
     if (body.customPrompt) customPrompt = body.customPrompt;
   } catch {}
 
-  // 构图引导
-  const compositionPreset = await prisma.preset.findFirst({
-    where: { category: "image_composition", isActive: true },
-    select: { value: true },
-  });
-  const compositionGuide = compositionPreset?.value ? `${compositionPreset.value} ` : "";
-  const ageHint = project.ageRange ? `Designed for ${project.ageRange} age group. ` : "";
-  const stylePrefix = project.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
+  // 构建 prompt
+  const templateCtx: TemplateContext = {
+    title: project.title,
+    courseDirection: project.courseDirection,
+    ageRange: project.ageRange,
+    level: project.level,
+    orgForm: project.orgForm,
+    deliverableType: project.deliverableType,
+    deliverableName: project.deliverableName ?? project.coreDeliverable,
+    imageStylePrompt: project.imageStylePrompt,
+    coreNeeds: project.coreNeeds,
+    constraints: project.constraints,
+  };
+  const dbPrompt = await resolveImagePrompt("package_cover", templateCtx);
+  const basePrompt = dbPrompt ?? defaultCoverPrompt(project);
 
   let prompt: string;
   if (customPrompt) {
-    // 自定义 prompt：加构图引导 + 年龄 + 风格
-    prompt = compositionGuide + ageHint + stylePrefix + customPrompt;
+    // 用户补充描述：基础模板 + 用户描述
+    prompt = basePrompt + "\n\nAdditional requirements: " + customPrompt;
   } else {
-    // 优先使用 DB 模板，回退到硬编码
-    const templateCtx: TemplateContext = {
-      title: project.title,
-      courseDirection: project.courseDirection,
-      ageRange: project.ageRange,
-      level: project.level,
-      orgForm: project.orgForm,
-      deliverableType: project.deliverableType,
-      deliverableName: project.deliverableName ?? project.coreDeliverable,
-      imageStylePrompt: project.imageStylePrompt,
-      coreNeeds: project.coreNeeds,
-      constraints: project.constraints,
-    };
-    const dbPrompt = await resolveImagePrompt("package_cover", templateCtx);
-    const basePrompt = dbPrompt ?? defaultCoverPrompt(project);
-    prompt = compositionGuide + basePrompt;
+    prompt = basePrompt;
   }
 
   try {

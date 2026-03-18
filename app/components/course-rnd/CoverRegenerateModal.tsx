@@ -2,18 +2,14 @@
 
 import { useState } from "react";
 
-const DEFAULT_COVER_PROMPT =
-  "色彩丰富、有吸引力的儿童教育课程封面插画，适合儿童，可爱、现代、明亮配色，扁平插画风格，画面中不要出现文字。";
-
 interface Props {
   coverUrl: string | null;
-  defaultPrompt?: string;
   onGenerate: (customPrompt?: string) => void;
   onClose: () => void;
 }
 
-export default function CoverRegenerateModal({ coverUrl, defaultPrompt, onGenerate, onClose }: Props) {
-  const [prompt, setPrompt] = useState(defaultPrompt ?? DEFAULT_COVER_PROMPT);
+export default function CoverRegenerateModal({ coverUrl, onGenerate, onClose }: Props) {
+  const [prompt, setPrompt] = useState("");
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -37,12 +33,13 @@ export default function CoverRegenerateModal({ coverUrl, defaultPrompt, onGenera
             {/* 右侧提示词编辑 */}
             <div style={{ flex: 1 }}>
               <p className="muted" style={{ fontSize: 13, marginBottom: "var(--sp-2)" }}>
-                编辑封面生成提示词，然后点击生成。
+                描述您想要的封面效果（可选），留空则根据课程信息自动生成。
               </p>
               <textarea
                 value={prompt}
                 onChange={e => setPrompt(e.target.value)}
                 rows={5}
+                placeholder="例如：加入未来城市元素、换成科技风格、色调更温暖..."
                 style={{
                   width: "100%",
                   padding: "var(--sp-3)",
