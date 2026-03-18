@@ -30,11 +30,11 @@ export default function PresetManager({ canEdit }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>(CATEGORIES[0].key);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", value: "" });
+  const [saving, setSaving] = useState(false);
   const [addingNew, setAddingNew] = useState(false);
   const [newForm, setNewForm] = useState({ name: "", value: "" });
-  const [savingId, setSavingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const fetchPresets = useCallback(async (category: string) => {
@@ -46,37 +46,37 @@ export default function PresetManager({ canEdit }: Props) {
         showToast(json.error ?? "加载失败", "error");
         return;
       }
-      setPresets(json.data ?? []);
+      const data: Preset[] = json.data ?? [];
+      setPresets(data);
+      if (data.length > 0 && !selectedId) {
+        setSelectedId(data[0].id);
+        setEditForm({ name: data[0].name, value: data[0].value });
+      }
     } catch {
       showToast("加载失败", "error");
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, selectedId]);
 
   useEffect(() => {
-    fetchPresets(activeCategory);
-    setEditingId(null);
+    setSelectedId(null);
     setAddingNew(false);
-  }, [activeCategory, fetchPresets]);
+    fetchPresets(activeCategory);
+  }, [activeCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function startEdit(preset: Preset) {
-    setEditingId(preset.id);
+  function handleSelect(preset: Preset) {
+    setSelectedId(preset.id);
     setEditForm({ name: preset.name, value: preset.value });
     setAddingNew(false);
   }
 
-  function cancelEdit() {
-    setEditingId(null);
-    setEditForm({ name: "", value: "" });
-  }
+  async function handleSave() {
+    if (!selectedId || !editForm.name.trim()) return;
 
-  async function handleSaveEdit() {
-    if (!editingId || !editForm.name.trim()) return;
-
-    setSavingId(editingId);
+    setSaving(true);
     try {
-      const res = await fetch(`/api/admin/presets/${editingId}`, {
+      const res = await fetch(`/api/admin/presets/${selectedId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: editForm.name.trim(), value: editForm.value.trim() }),
@@ -89,21 +89,20 @@ export default function PresetManager({ canEdit }: Props) {
       showToast("保存成功");
       setPresets((prev) =>
         prev.map((p) =>
-          p.id === editingId ? { ...p, name: editForm.name.trim(), value: editForm.value.trim() } : p
+          p.id === selectedId ? { ...p, name: editForm.name.trim(), value: editForm.value.trim() } : p
         )
       );
-      setEditingId(null);
     } catch {
       showToast("操作失败", "error");
     } finally {
-      setSavingId(null);
+      setSaving(false);
     }
   }
 
   async function handleAdd() {
     if (!newForm.name.trim()) return;
 
-    setSavingId("new");
+    setSaving(true);
     try {
       const res = await fetch("/api/admin/presets", {
         method: "POST",
@@ -120,13 +119,16 @@ export default function PresetManager({ canEdit }: Props) {
         return;
       }
       showToast("新增成功");
-      setPresets((prev) => [...prev, json.data]);
+      const created: Preset = json.data;
+      setPresets((prev) => [...prev, created]);
+      setSelectedId(created.id);
+      setEditForm({ name: created.name, value: created.value });
       setAddingNew(false);
       setNewForm({ name: "", value: "" });
     } catch {
       showToast("操作失败", "error");
     } finally {
-      setSavingId(null);
+      setSaving(false);
     }
   }
 
@@ -139,8 +141,17 @@ export default function PresetManager({ canEdit }: Props) {
         return;
       }
       showToast("已删除");
-      setPresets((prev) => prev.filter((p) => p.id !== id));
+      const remaining = presets.filter((p) => p.id !== id);
+      setPresets(remaining);
       setConfirmDeleteId(null);
+      if (selectedId === id) {
+        if (remaining.length > 0) {
+          setSelectedId(remaining[0].id);
+          setEditForm({ name: remaining[0].name, value: remaining[0].value });
+        } else {
+          setSelectedId(null);
+        }
+      }
     } catch {
       showToast("操作失败", "error");
     }
@@ -173,163 +184,177 @@ export default function PresetManager({ canEdit }: Props) {
     }
   }
 
+  const selected = presets.find((p) => p.id === selectedId);
+  const categoryLabel = CATEGORIES.find((c) => c.key === activeCategory)?.label ?? "";
+
   return (
-    <div>
-      <div className="prompt-config__tabs">
+    <div className="baseline-mgr">
+      {/* 左侧：分类 + 预设项列表 */}
+      <div className="baseline-mgr__sidebar">
         {CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            className={`prompt-config__tab${cat.key === activeCategory ? " prompt-config__tab--active" : ""}`}
-            onClick={() => setActiveCategory(cat.key)}
-          >
-            {cat.label}
-          </button>
+          <div key={cat.key} className="baseline-mgr__type-group">
+            <div
+              className="baseline-mgr__type-label"
+              style={{ cursor: "pointer" }}
+              onClick={() => setActiveCategory(cat.key)}
+            >
+              {cat.label}
+            </div>
+            {activeCategory === cat.key && presets.map((preset, index) => (
+              <div key={preset.id} className="preset-mgr__sidebar-item">
+                <button
+                  className={`baseline-mgr__item${preset.id === selectedId ? " baseline-mgr__item--active" : ""}`}
+                  onClick={() => handleSelect(preset)}
+                  style={{ flex: 1 }}
+                >
+                  {preset.name}
+                </button>
+                {canEdit && (
+                  <div className="preset-mgr__sort-btns">
+                    <button
+                      className="btn btn--ghost btn--xs"
+                      onClick={() => handleMove(index, "up")}
+                      disabled={index === 0}
+                      title="上移"
+                    >
+                      <ChevronUp size={12} />
+                    </button>
+                    <button
+                      className="btn btn--ghost btn--xs"
+                      onClick={() => handleMove(index, "down")}
+                      disabled={index === presets.length - 1}
+                      title="下移"
+                    >
+                      <ChevronDown size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+            {activeCategory === cat.key && canEdit && (
+              <button
+                className="baseline-mgr__item"
+                style={{ color: "var(--brand)", fontSize: 12 }}
+                onClick={() => {
+                  setActiveCategory(cat.key);
+                  setAddingNew(true);
+                  setSelectedId(null);
+                  setNewForm({ name: "", value: "" });
+                }}
+              >
+                + 新增
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
-      {loading && (
-        <div className="muted editor-empty">
-          加载中...
-        </div>
-      )}
-
-      {!loading && (
-        <div className="preset-mgr__list">
-          {presets.length === 0 && !addingNew && (
-            <div className="muted editor-empty">
-              暂无预设项
+      {/* 右侧：编辑区 */}
+      <div className="baseline-mgr__content">
+        {addingNew ? (
+          <>
+            <div className="editor-header">
+              <h3 className="editor-header__title">新增{categoryLabel}预设</h3>
             </div>
-          )}
 
-          {presets.map((preset, index) => (
-            <div key={preset.id} className="preset-mgr__item">
-              {editingId === preset.id ? (
-                <div className="preset-mgr__form">
-                  <input
-                    className="input input--sm preset-mgr__form-input"
-                    placeholder="名称"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-                  />
-                  <textarea
-                    className="input input--sm preset-mgr__form-input"
-                    placeholder="值（可选）"
-                    rows={3}
-                    value={editForm.value}
-                    onChange={(e) => setEditForm((f) => ({ ...f, value: e.target.value }))}
-                  />
-                  <div className="editor-footer__btn-group">
-                    <button
-                      className="btn btn--sm"
-                      onClick={handleSaveEdit}
-                      disabled={savingId === preset.id || !editForm.name.trim()}
-                    >
-                      {savingId === preset.id ? "保存中..." : "保存"}
-                    </button>
-                    <button className="btn btn--soft btn--sm" onClick={cancelEdit}>
-                      取消
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="preset-mgr__item-content">
-                    <div className="preset-mgr__item-name">{preset.name}</div>
-                    {preset.value && (
-                      <div className="preset-mgr__item-value">{preset.value}</div>
-                    )}
-                  </div>
+            <div style={{ marginBottom: "var(--sp-3)" }}>
+              <label className="field-label">名称</label>
+              <input
+                className="input"
+                value={newForm.name}
+                onChange={(e) => setNewForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="输入预设名称"
+              />
+            </div>
 
-                  {canEdit && (
-                    <div className="preset-mgr__item-controls">
-                      <button
-                        className="btn btn--soft btn--xs"
-                        onClick={() => handleMove(index, "up")}
-                        disabled={index === 0}
-                        title="上移"
-                      >
-                        <ChevronUp size={14} />
-                      </button>
-                      <button
-                        className="btn btn--soft btn--xs"
-                        onClick={() => handleMove(index, "down")}
-                        disabled={index === presets.length - 1}
-                        title="下移"
-                      >
-                        <ChevronDown size={14} />
-                      </button>
-                      <button
-                        className="btn btn--soft btn--xs"
-                        onClick={() => startEdit(preset)}
-                      >
-                        编辑
-                      </button>
-                      <button
-                        className="btn btn--danger btn--xs"
-                        onClick={() => setConfirmDeleteId(preset.id)}
-                      >
-                        删除
-                      </button>
-                    </div>
-                  )}
-                </>
+            <div style={{ marginBottom: "var(--sp-3)" }}>
+              <label className="field-label">值（可选）</label>
+              <textarea
+                className="input baseline-mgr__editor"
+                rows={8}
+                value={newForm.value}
+                onChange={(e) => setNewForm((f) => ({ ...f, value: e.target.value }))}
+                placeholder="输入预设值"
+              />
+            </div>
+
+            <div className="editor-footer__btn-group">
+              <button
+                className="btn btn--sm"
+                onClick={handleAdd}
+                disabled={saving || !newForm.name.trim()}
+              >
+                {saving ? "保存中..." : "保存"}
+              </button>
+              <button
+                className="btn btn--soft btn--sm"
+                onClick={() => {
+                  setAddingNew(false);
+                  if (presets.length > 0) {
+                    setSelectedId(presets[0].id);
+                    setEditForm({ name: presets[0].name, value: presets[0].value });
+                  }
+                }}
+              >
+                取消
+              </button>
+            </div>
+          </>
+        ) : selected ? (
+          <>
+            <div className="editor-header">
+              <h3 className="editor-header__title">{selected.name}</h3>
+              {canEdit && (
+                <button
+                  className="btn btn--soft btn--sm btn--danger"
+                  onClick={() => setConfirmDeleteId(selected.id)}
+                >
+                  删除
+                </button>
               )}
             </div>
-          ))}
 
-          {addingNew && (
-            <div className="preset-mgr__item preset-mgr__item--new">
-              <div className="preset-mgr__form">
-                <input
-                  className="input input--sm preset-mgr__form-input"
-                  placeholder="名称"
-                  value={newForm.name}
-                  onChange={(e) => setNewForm((f) => ({ ...f, name: e.target.value }))}
-                />
-                <textarea
-                  className="input input--sm preset-mgr__form-input"
-                  placeholder="值（可选）"
-                  rows={3}
-                  value={newForm.value}
-                  onChange={(e) => setNewForm((f) => ({ ...f, value: e.target.value }))}
-                />
+            <div style={{ marginBottom: "var(--sp-3)" }}>
+              <label className="field-label">名称</label>
+              <input
+                className="input"
+                value={editForm.name}
+                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                readOnly={!canEdit}
+              />
+            </div>
+
+            <div style={{ marginBottom: "var(--sp-3)" }}>
+              <label className="field-label">值（可选）</label>
+              <textarea
+                className="input baseline-mgr__editor"
+                rows={8}
+                value={editForm.value}
+                onChange={(e) => setEditForm((f) => ({ ...f, value: e.target.value }))}
+                readOnly={!canEdit}
+              />
+            </div>
+
+            {canEdit && (
+              <div className="editor-footer">
                 <div className="editor-footer__btn-group">
                   <button
                     className="btn btn--sm"
-                    onClick={handleAdd}
-                    disabled={savingId === "new" || !newForm.name.trim()}
+                    onClick={handleSave}
+                    disabled={saving}
                   >
-                    {savingId === "new" ? "保存中..." : "保存"}
-                  </button>
-                  <button
-                    className="btn btn--soft btn--sm"
-                    onClick={() => {
-                      setAddingNew(false);
-                      setNewForm({ name: "", value: "" });
-                    }}
-                  >
-                    取消
+                    {saving ? "保存中..." : "保存"}
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {canEdit && !addingNew && (
-        <div className="preset-mgr__add-bar">
-          <button
-            className="btn btn--soft btn--sm"
-            onClick={() => {
-              setAddingNew(true);
-              setEditingId(null);
-            }}
-          >
-            + 新增
-          </button>
-        </div>
-      )}
+            )}
+          </>
+        ) : (
+          <div className="muted editor-empty">
+            请从左侧选择预设项
+          </div>
+        )}
+      </div>
 
       {confirmDeleteId && (
         <ConfirmModal

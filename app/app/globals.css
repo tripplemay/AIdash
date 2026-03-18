@@ -2113,18 +2113,50 @@ img { display: block; max-width: 100%; }
 }
 .diff-view__line-content { flex: 1; white-space: pre-wrap; word-break: break-all; }
 
-/* Preset Manager */
-.preset-mgr__list { border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
-.preset-mgr__item {
+/* AI Call Log */
+.ai-log__filters {
   display: flex; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line);
+  margin-bottom: var(--sp-4); flex-wrap: wrap;
 }
-.preset-mgr__item:last-child { border-bottom: none; }
-.preset-mgr__item-name { font-size: 14px; font-weight: 600; }
-.preset-mgr__item-value {
-  font-size: 12px; color: var(--muted); margin-top: 2px;
-  line-height: 1.5;
+.ai-log__range-tabs { display: flex; gap: var(--sp-1); }
+.ai-log__pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--sp-4); margin-top: var(--sp-4);
 }
+.table__row--active { background: rgba(99, 102, 241, 0.06); }
+
+/* AI Call Log Detail */
+.ai-log-detail__meta {
+  margin-bottom: var(--sp-4); padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+.ai-log-detail__meta-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--sp-1) 0; font-size: 13px;
+}
+.ai-log-detail__meta-label { color: var(--muted); font-weight: 500; }
+.ai-log-detail__section { margin-bottom: var(--sp-4); }
+.ai-log-detail__section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--sp-2);
+}
+.ai-log-detail__section-title { font-size: 13px; font-weight: 600; }
+.ai-log-detail__pre {
+  background: var(--bg-faint); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: var(--sp-3);
+  font-family: monospace; font-size: 12px; line-height: 1.6;
+  max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+}
+
+/* Preset Manager */
+.preset-mgr__sidebar-item {
+  display: flex; align-items: center; gap: 2px;
+}
+.preset-mgr__sidebar-item .baseline-mgr__item { text-align: left; }
+.preset-mgr__sort-btns {
+  display: flex; flex-direction: column; flex-shrink: 0;
+}
+.preset-mgr__sort-btns .btn { padding: 0 2px; min-width: auto; height: auto; }
 
 /* ━━━ Tag Picker ━━━ */
 .tag-picker { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-2); }
