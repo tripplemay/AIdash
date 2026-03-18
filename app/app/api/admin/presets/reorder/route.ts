@@ -16,11 +16,14 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "ids 必须为非空数组" }, { status: 400 });
   }
 
+  // 按 ID 排序后更新，保证锁定顺序一致，避免并发死锁
+  const idToOrder = new Map(ids.map((id: string, index: number) => [id, index]));
+  const sortedIds = [...ids].sort();
   await prisma.$transaction(
-    ids.map((id: string, index: number) =>
+    sortedIds.map((id: string) =>
       prisma.preset.update({
         where: { id },
-        data: { sortOrder: index },
+        data: { sortOrder: idToOrder.get(id)! },
       })
     )
   );

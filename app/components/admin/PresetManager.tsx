@@ -36,6 +36,7 @@ export default function PresetManager({ canEdit }: Props) {
   const [addingNew, setAddingNew] = useState(false);
   const [newForm, setNewForm] = useState({ name: "", value: "" });
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
 
   const fetchPresets = useCallback(async (category: string) => {
     setLoading(true);
@@ -158,6 +159,7 @@ export default function PresetManager({ canEdit }: Props) {
   }
 
   async function handleMove(index: number, direction: "up" | "down") {
+    if (reordering) return;
     const swapIndex = direction === "up" ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= presets.length) return;
 
@@ -166,6 +168,7 @@ export default function PresetManager({ canEdit }: Props) {
     reordered[index] = reordered[swapIndex];
     reordered[swapIndex] = temp;
     setPresets(reordered);
+    setReordering(true);
 
     try {
       const res = await fetch("/api/admin/presets/reorder", {
@@ -181,6 +184,8 @@ export default function PresetManager({ canEdit }: Props) {
     } catch {
       showToast("操作失败", "error");
       await fetchPresets(activeCategory);
+    } finally {
+      setReordering(false);
     }
   }
 
@@ -214,7 +219,7 @@ export default function PresetManager({ canEdit }: Props) {
                     <button
                       className="btn btn--ghost btn--xs"
                       onClick={() => handleMove(index, "up")}
-                      disabled={index === 0}
+                      disabled={index === 0 || reordering}
                       title="上移"
                     >
                       <ChevronUp size={12} />
@@ -222,7 +227,7 @@ export default function PresetManager({ canEdit }: Props) {
                     <button
                       className="btn btn--ghost btn--xs"
                       onClick={() => handleMove(index, "down")}
-                      disabled={index === presets.length - 1}
+                      disabled={index === presets.length - 1 || reordering}
                       title="下移"
                     >
                       <ChevronDown size={12} />
