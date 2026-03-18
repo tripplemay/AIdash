@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import LessonRenderer from "@/components/lesson/LessonRenderer";
 import type { LessonContent } from "@/types/lesson-content";
@@ -82,27 +82,26 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
   const [regeneratingImage, setRegeneratingImage] = useState<string | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
-  // 解析 contentData
-  let hero: { title?: string; subtitle?: string; goal?: string; outcome?: string; imageUrl?: string } | null = null;
-  let sections: Array<{ id: string; title: string }> = [];
-  let sectionCount = 0;
-  let images: { hero?: string; illustration?: string; template?: string } = {};
-  try {
-    if (draft.contentData) {
-      const parsed = JSON.parse(draft.contentData);
-      hero = parsed.hero ?? null;
-      sectionCount = parsed.sections?.length ?? 0;
-      sections = (parsed.sections ?? []).map((s: { id: string; title: string }) => ({ id: s.id, title: s.title }));
-      if (hero?.imageUrl) images.hero = hero.imageUrl;
-      // 从 sections 中提取插图和模板图
-      for (const s of parsed.sections ?? []) {
-        for (const b of s.blocks ?? []) {
-          if (b.imageUrl && s.id === "materials") images.template = b.imageUrl;
-          else if (b.imageUrl) images.illustration = b.imageUrl;
-        }
+  // 解析 contentData（缓存，只在 contentData 变化时重新解析）
+  const parsedContent = useMemo(() => {
+    if (!draft.contentData) return null;
+    try { return JSON.parse(draft.contentData); } catch { return null; }
+  }, [draft.contentData]);
+
+  const hero = parsedContent?.hero ?? null;
+  const sectionCount = parsedContent?.sections?.length ?? 0;
+  const sections: Array<{ id: string; title: string }> = (parsedContent?.sections ?? []).map((s: { id: string; title: string }) => ({ id: s.id, title: s.title }));
+  const images = useMemo(() => {
+    const result: { hero?: string; illustration?: string; template?: string } = {};
+    if (hero?.imageUrl) result.hero = hero.imageUrl;
+    for (const s of parsedContent?.sections ?? []) {
+      for (const b of s.blocks ?? []) {
+        if (b.imageUrl && s.id === "materials") result.template = b.imageUrl;
+        else if (b.imageUrl) result.illustration = b.imageUrl;
       }
     }
-  } catch {}
+    return result;
+  }, [parsedContent, hero]);
 
   async function handleRegenerateImage(imageType: "hero" | "illustration" | "template") {
     setRegeneratingImage(imageType);
@@ -301,10 +300,9 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
       )}
 
       {/* 展开预览 + sticky 意见输入 */}
-      {expanded && draft.contentData && (() => {
-        try {
-          const parsed = JSON.parse(draft.contentData) as LessonContent;
-          return (
+      {expanded && parsedContent && (() => {
+        const parsed = parsedContent as LessonContent;
+        return (
             <div style={{ display: "flex", flexDirection: "column" }}>
               {/* 可滚动的内容区 */}
               <div
@@ -330,9 +328,6 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
               {/* 展开时的内容区到此结束 */}
             </div>
           );
-        } catch {
-          return <div className="muted small">内容格式异常，无法预览</div>;
-        }
       })()}
 
       {/* 统一的 Portal 固定反馈栏（仅活跃课次渲染） */}

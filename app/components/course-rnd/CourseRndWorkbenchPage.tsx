@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import LessonDraftCard, { type PendingFeedback } from "./LessonDraftCard";
 import AiCostPanel from "./AiCostPanel";
@@ -59,9 +59,13 @@ interface Props {
   publishRecord?: PublishRecord | null;
 }
 
+const EMPTY_FEEDBACKS: PendingFeedback[] = [];
+const PAGE_SIZE = 20;
+
 export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDrafts, aiCosts, directionSummary, publishRecord: initialPublishRecord }: Props) {
   const router = useRouter();
   const [drafts, setDrafts] = useState(lessonDrafts);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [globalLoading, setGlobalLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
@@ -431,67 +435,76 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
         </div>
       )}
 
-      {/* 课次草稿列表 */}
+      {/* 课次草稿列表（分页加载） */}
       {drafts.length > 0 && (
-        <div style={{ display: "grid", gap: "var(--sp-5)" }}>
-          {drafts.map(draft => (
-            <LessonDraftCard
-              key={draft.id}
-              draft={draft}
-              projectId={project.id}
-              isActive={activeLessonNo === draft.lessonNo}
-              onActivate={() => setActiveLessonNo(draft.lessonNo)}
-              onRevise={(feedback, targetSection) => handleReviselesson(draft.lessonNo, feedback, targetSection)}
-              onRegenerate={() => { setActiveLessonNo(draft.lessonNo); handleRegenerateLesson(draft.lessonNo); }}
-              onContentUpdate={(lessonNo, contentData) => {
-                setDrafts(prev => prev.map(d =>
-                  d.lessonNo === lessonNo ? { ...d, contentData } : d
-                ));
-              }}
-              loading={revisingLessons.has(draft.lessonNo)}
-              disabled={isFinalized || showValidationModal || showFinalizeConfirm}
-              generating={generatingLessons.has(draft.lessonNo)}
-              progress={generatingLessons.get(draft.lessonNo) ?? null}
-              pendingFeedbacks={pendingFeedbacksMap.get(draft.lessonNo) ?? []}
-              onAddPending={(item) => {
-                setPendingFeedbacksMap(prev => {
-                  const next = new Map(prev);
-                  const list = [...(next.get(draft.lessonNo) ?? []), item];
-                  next.set(draft.lessonNo, list);
-                  return next;
-                });
-              }}
-              onRemovePending={(id) => {
-                setPendingFeedbacksMap(prev => {
-                  const next = new Map(prev);
-                  const list = (next.get(draft.lessonNo) ?? []).filter(f => f.id !== id);
-                  if (list.length === 0) next.delete(draft.lessonNo);
-                  else next.set(draft.lessonNo, list);
-                  return next;
-                });
-              }}
-              onSubmitAllPending={() => {
-                const items = pendingFeedbacksMap.get(draft.lessonNo) ?? [];
-                if (items.length === 0) return;
-                // 合并多条意见为一条文本
-                const mergedFeedback = items.map(item =>
-                  item.sectionTitle
-                    ? `针对「${item.sectionTitle}」：${item.feedback}`
-                    : item.feedback
-                ).join("\n");
-                // 不传 targetSection，让 AI 自由判断修改范围
-                handleReviselesson(draft.lessonNo, mergedFeedback);
-                // 清空暂存
-                setPendingFeedbacksMap(prev => {
-                  const next = new Map(prev);
-                  next.delete(draft.lessonNo);
-                  return next;
-                });
-              }}
-              onConfirmAll={handleValidate}
-            />
-          ))}
-        </div>
+        <>
+          <div style={{ display: "grid", gap: "var(--sp-5)" }}>
+            {drafts.slice(0, visibleCount).map(draft => (
+              <LessonDraftCard
+                key={draft.id}
+                draft={draft}
+                projectId={project.id}
+                isActive={activeLessonNo === draft.lessonNo}
+                onActivate={() => setActiveLessonNo(draft.lessonNo)}
+                onRevise={(feedback, targetSection) => handleReviselesson(draft.lessonNo, feedback, targetSection)}
+                onRegenerate={() => { setActiveLessonNo(draft.lessonNo); handleRegenerateLesson(draft.lessonNo); }}
+                onContentUpdate={(lessonNo, contentData) => {
+                  setDrafts(prev => prev.map(d =>
+                    d.lessonNo === lessonNo ? { ...d, contentData } : d
+                  ));
+                }}
+                loading={revisingLessons.has(draft.lessonNo)}
+                disabled={isFinalized || showValidationModal || showFinalizeConfirm}
+                generating={generatingLessons.has(draft.lessonNo)}
+                progress={generatingLessons.get(draft.lessonNo) ?? null}
+                pendingFeedbacks={pendingFeedbacksMap.get(draft.lessonNo) ?? EMPTY_FEEDBACKS}
+                onAddPending={(item) => {
+                  setPendingFeedbacksMap(prev => {
+                    const next = new Map(prev);
+                    const list = [...(next.get(draft.lessonNo) ?? []), item];
+                    next.set(draft.lessonNo, list);
+                    return next;
+                  });
+                }}
+                onRemovePending={(id) => {
+                  setPendingFeedbacksMap(prev => {
+                    const next = new Map(prev);
+                    const list = (next.get(draft.lessonNo) ?? []).filter(f => f.id !== id);
+                    if (list.length === 0) next.delete(draft.lessonNo);
+                    else next.set(draft.lessonNo, list);
+                    return next;
+                  });
+                }}
+                onSubmitAllPending={() => {
+                  const items = pendingFeedbacksMap.get(draft.lessonNo) ?? [];
+                  if (items.length === 0) return;
+                  const mergedFeedback = items.map(item =>
+                    item.sectionTitle
+                      ? `针对「${item.sectionTitle}」：${item.feedback}`
+                      : item.feedback
+                  ).join("\n");
+                  handleReviselesson(draft.lessonNo, mergedFeedback);
+                  setPendingFeedbacksMap(prev => {
+                    const next = new Map(prev);
+                    next.delete(draft.lessonNo);
+                    return next;
+                  });
+                }}
+                onConfirmAll={handleValidate}
+              />
+            ))}
+          </div>
+          {visibleCount < drafts.length && (
+            <div style={{ textAlign: "center", marginTop: "var(--sp-4)" }}>
+              <button
+                className="btn btn--soft"
+                onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+              >
+                加载更多（已显示 {Math.min(visibleCount, drafts.length)}/{drafts.length} 课）
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* 发布面板（定稿后显示） */}
