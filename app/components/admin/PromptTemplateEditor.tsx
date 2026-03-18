@@ -45,7 +45,7 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
       const data: Template[] = json.data ?? [];
       setTemplates(data);
       if (data.length > 0 && !selectedId) {
-        setSelectedId(data[0].id);
+        setSelectedId(data[0].actionKey);
         setContent(data[0].content);
       }
     } catch {
@@ -72,10 +72,10 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
     loadVars();
   }, []);
 
-  const selected = templates.find((t) => t.id === selectedId);
+  const selected = templates.find((t) => t.actionKey === selectedId);
 
   function handleSelect(template: Template) {
-    setSelectedId(template.id);
+    setSelectedId(template.actionKey);
     setContent(template.content);
   }
 
@@ -118,7 +118,7 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
       }
       showToast("保存成功");
       setTemplates((prev) =>
-        prev.map((t) => (t.id === selectedId ? { ...t, content } : t))
+        prev.map((t) => (t.actionKey === selectedId ? { ...t, content } : t))
       );
       setEditSummary("");
     } catch {
@@ -139,7 +139,7 @@ export default function PromptTemplateEditor({ canEdit }: Props) {
         {templates.map((t) => (
           <button
             key={t.id}
-            className={`template-editor__nav-item${t.id === selectedId ? " template-editor__nav-item--active" : ""}`}
+            className={`template-editor__nav-item${t.actionKey === selectedId ? " template-editor__nav-item--active" : ""}`}
             onClick={() => handleSelect(t)}
           >
             {t.actionLabel}
