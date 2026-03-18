@@ -55,12 +55,24 @@ export default async function WorkbenchPage({
     directionSummary = dirVersion?.summary ?? null;
   }
 
-  // 获取最新发布记录
-  const publishRecord = await prisma.courseRndPublishRecord.findFirst({
-    where: { projectId },
+  // 检查本次定稿后是否已发布（用 OperationLog 的 finalize 时间判断）
+  let publishRecord: { id: string; packageSlug: string; packageTitle: string; createdAt: Date } | null = null;
+  const lastFinalizeLog = await prisma.operationLog.findFirst({
+    where: { targetId: projectId, module: "course_rnd", action: "finalize" },
     orderBy: { createdAt: "desc" },
-    select: { id: true, packageSlug: true, packageTitle: true, createdAt: true },
+    select: { createdAt: true },
   });
+  if (lastFinalizeLog) {
+    // 只查找定稿之后的发布记录
+    const publishAfterFinalize = await prisma.courseRndPublishRecord.findFirst({
+      where: { projectId, createdAt: { gt: lastFinalizeLog.createdAt } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, packageSlug: true, packageTitle: true, createdAt: true },
+    });
+    if (publishAfterFinalize) {
+      publishRecord = publishAfterFinalize;
+    }
+  }
 
   return (
     <CourseRndWorkbenchPage

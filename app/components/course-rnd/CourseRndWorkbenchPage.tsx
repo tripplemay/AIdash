@@ -321,6 +321,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
       const res = await fetch(`/api/course-rnd/projects/${project.id}/finalize`, { method: "POST" });
       if (!res.ok) { setError("定稿失败"); return; }
       setStatus("finalized");
+      setCurrentPublishRecord(null);
       // 定稿后滚动到发布区
       setTimeout(() => publishPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
     } catch {
