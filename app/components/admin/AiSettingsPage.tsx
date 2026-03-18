@@ -27,6 +27,7 @@ interface ActionConfig {
   modelName: string;
   inputPricePerM: number | null;
   outputPricePerM: number | null;
+  pricePerCall: number | null;
   pricingSource: string | null;
   pricingUpdatedAt: string | null;
   provider?: { id: string; name: string };
@@ -248,6 +249,7 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
                 currentPricing={existing ? {
                   inputPricePerM: existing.inputPricePerM,
                   outputPricePerM: existing.outputPricePerM,
+                  pricePerCall: existing.pricePerCall,
                   pricingSource: existing.pricingSource,
                   pricingUpdatedAt: existing.pricingUpdatedAt,
                 } : undefined}

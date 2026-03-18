@@ -124,7 +124,7 @@ export function buildContentData(input: AiLessonOutput) {
             ? [
                 {
                   type: "grid",
-                  cols: Math.min(input.ai_rounds.length, 3) as 2 | 3,
+                  cols: Math.max(2, Math.min(input.ai_rounds.length, 3)) as 2 | 3,
                   items: input.ai_rounds.map((r) => ({
                     type: "box" as const,
                     pill: { text: r.name, color: "blue" as const },
