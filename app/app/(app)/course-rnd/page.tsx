@@ -62,7 +62,7 @@ export default async function CourseRndPage() {
 
   const costMap: Record<string, number> = {};
   for (const pc of projectCosts) {
-    costMap[pc.projectId] = pc._sum.estimatedCost ?? 0;
+    if (pc.projectId) costMap[pc.projectId] = pc._sum.estimatedCost ?? 0;
   }
 
   const ageRangeLabels = await loadAgeRangeLabels();

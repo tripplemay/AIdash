@@ -74,7 +74,7 @@ server {
     client_max_body_size 60m;
 
     # SSE + 图片生成等长耗时端点：关闭缓冲，延长超时
-    location ~ ^/api/course-rnd/ {
+    location ~ ^/api/(course-rnd|chat)/ {
         proxy_pass http://localhost:3002;
         proxy_http_version 1.1;
         proxy_set_header Host \$host;

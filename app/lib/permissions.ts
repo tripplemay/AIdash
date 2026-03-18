@@ -24,6 +24,8 @@ export const PERMISSIONS = {
   VIEW_PROMPT_CONFIG: "view_prompt_config",
   /** 查看 AI 调用记录 */
   VIEW_AI_LOGS: "view_ai_logs",
+  /** AI 对话 */
+  ASK_AI: "ask_ai",
 } as const;
 
 type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -34,6 +36,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.VIEW_COURSES,
     PERMISSIONS.VIEW_AI_SETTINGS,
     PERMISSIONS.VIEW_PROMPT_CONFIG,
+    PERMISSIONS.ASK_AI,
   ],
   [ROLES.RD_MANAGER]: [
     PERMISSIONS.VIEW_COURSES,
@@ -43,6 +46,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.VIEW_AI_SETTINGS,
     PERMISSIONS.VIEW_PROMPT_CONFIG,
     PERMISSIONS.VIEW_AI_LOGS,
+    PERMISSIONS.ASK_AI,
   ],
   [ROLES.ADMIN]: [
     PERMISSIONS.VIEW_COURSES,
@@ -56,6 +60,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.PROMPT_CONFIG,
     PERMISSIONS.VIEW_PROMPT_CONFIG,
     PERMISSIONS.VIEW_AI_LOGS,
+    PERMISSIONS.ASK_AI,
   ],
 };
 

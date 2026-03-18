@@ -13,6 +13,8 @@ export interface ChatParams {
   model: string;
   temperature?: number;
   maxTokens?: number;
+  /** Optional pre-built messages array. When provided, systemPrompt/userMessage are ignored for the API body. */
+  messages?: Array<{ role: string; content: string }>;
 }
 
 export interface ChatResult {
@@ -178,9 +180,14 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
   };
 
   return {
-    async chat({ systemPrompt, userMessage, model, temperature = 0.7, maxTokens = 8192 }) {
+    async chat({ systemPrompt, userMessage, model, temperature = 0.7, maxTokens = 8192, messages: customMessages }) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      const apiMessages = customMessages ?? [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ];
 
       try {
         const res = await proxyFetch(chatUrl, {
@@ -188,10 +195,7 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
           headers: commonHeaders,
           body: JSON.stringify({
             model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userMessage },
-            ],
+            messages: apiMessages,
             temperature,
             max_tokens: maxTokens,
           }),
@@ -218,16 +222,18 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
       }
     },
 
-    async *chatStream({ systemPrompt, userMessage, model, temperature = 0.7, maxTokens = 8192 }): AsyncGenerator<ChatStreamChunk, ChatResult> {
+    async *chatStream({ systemPrompt, userMessage, model, temperature = 0.7, maxTokens = 8192, messages: customMessages }): AsyncGenerator<ChatStreamChunk, ChatResult> {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+      const apiMessages = customMessages ?? [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ];
+
       const bodyPayload = JSON.stringify({
         model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
-        ],
+        messages: apiMessages,
         temperature,
         max_tokens: maxTokens,
         stream: true,

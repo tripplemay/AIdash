@@ -75,16 +75,18 @@ export async function GET(request: Request) {
   ]);
 
   // 查询项目标题
-  const projectIds = [...new Set(logs.map(l => l.projectId))];
-  const projects = await prisma.courseRndProject.findMany({
-    where: { id: { in: projectIds } },
-    select: { id: true, title: true },
-  });
+  const projectIds = [...new Set(logs.map(l => l.projectId).filter((id): id is string => id != null))];
+  const projects = projectIds.length > 0
+    ? await prisma.courseRndProject.findMany({
+        where: { id: { in: projectIds } },
+        select: { id: true, title: true },
+      })
+    : [];
   const titleMap = new Map(projects.map(p => [p.id, p.title]));
 
   const data = logs.map(l => ({
     ...l,
-    projectTitle: titleMap.get(l.projectId) ?? "未知项目",
+    projectTitle: l.projectId ? (titleMap.get(l.projectId) ?? "未知项目") : "AI 对话",
   }));
 
   return NextResponse.json({ data, total, page, pageSize });

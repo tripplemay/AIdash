@@ -21,6 +21,7 @@ model User {
   courseRndProjects  CourseRndProject[]
   publishRecords     CourseRndPublishRecord[]
   operationLogs      OperationLog[]
+  chatConversations  ChatConversation[]
 }
 
 // ─── 课程包 ───
@@ -162,8 +163,8 @@ model CourseRndLessonDraft {
 // ─── AI 调用日志 ───
 model CourseRndAiCallLog {
   id            String   @id @default(cuid())
-  projectId     String
-  pageKey       String   // "direction" | "workbench"
+  projectId     String?
+  pageKey       String   // "direction" | "workbench" | "chat"
   actionType    String   // generate_framework, regenerate_lesson, revise_lesson, etc.
   modelName     String
   inputTokens   Int      @default(0)
@@ -317,4 +318,27 @@ model Preset {
   updatedAt DateTime @updatedAt
 
   @@unique([category, name])
+}
+
+// ─── AI 对话 ───
+model ChatConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String   @default("新对话")
+  mode      String   @default("general") // "general" | "course_design"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String   // "user" | "assistant"
+  content        String   @db.LongText
+  createdAt      DateTime @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }

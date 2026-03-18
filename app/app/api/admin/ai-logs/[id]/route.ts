@@ -25,13 +25,17 @@ export async function GET(
     return NextResponse.json({ error: "记录不存在" }, { status: 404 });
   }
 
-  // rd_manager 只能查看自己项目的日志
+  // rd_manager 只能查看自己项目的日志（对话日志无 projectId，允许查看自己的）
   if (role === ROLES.RD_MANAGER && userId) {
-    const project = await prisma.courseRndProject.findUnique({
-      where: { id: log.projectId },
-      select: { createdById: true },
-    });
-    if (project?.createdById !== userId) {
+    if (log.projectId) {
+      const project = await prisma.courseRndProject.findUnique({
+        where: { id: log.projectId },
+        select: { createdById: true },
+      });
+      if (project?.createdById !== userId) {
+        return forbiddenResponse();
+      }
+    } else if (log.userId !== userId) {
       return forbiddenResponse();
     }
   }

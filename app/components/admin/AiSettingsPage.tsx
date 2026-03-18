@@ -48,6 +48,7 @@ const DEFAULT_ACTIONS = [
   { key: "lesson_cover", label: "课次封面图", type: "image" },
   { key: "lesson_illustration", label: "课内插图", type: "image" },
   { key: "package_cover", label: "课程包封面图", type: "image" },
+  { key: "chat", label: "AI 对话", type: "text" },
 ];
 
 export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }) {
