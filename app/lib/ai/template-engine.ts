@@ -165,7 +165,7 @@ export async function getSystemPrompt(
  * Resolve an image prompt template from DB — only variable replacement, no baseline injection.
  * Returns null if no template is configured for this actionKey.
  */
-export async function resolveImagePrompt(
+export async function resolveLightPrompt(
   actionKey: string,
   context: TemplateContext,
 ): Promise<string | null> {

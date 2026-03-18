@@ -202,22 +202,40 @@ export default function ActionMappingRow({
           </span>
         )}
         {hasPricing && !status && (
-          <span className="muted" style={{ fontSize: 11 }}>
-            {hasCallPricing
-              ? `$${currentPricing!.pricePerCall!.toFixed(4)}/次`
-              : `$${currentPricing!.inputPricePerM!.toFixed(2)}/M 输入 · $${currentPricing!.outputPricePerM!.toFixed(2)}/M 输出`
-            }
-            {isManual && " (手动)"}
+          <span style={{ fontSize: 11, display: "inline-flex", alignItems: "center", gap: "var(--sp-2)" }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: isManual ? "#e67e22" : "var(--green)", padding: "1px 6px", borderRadius: "var(--radius-sm)", background: isManual ? "#fef9e7" : "var(--green-light)" }}>
+              {isManual ? "手动" : "自动"}
+            </span>
+            <span className="muted">
+              {hasCallPricing
+                ? `$${currentPricing!.pricePerCall!.toFixed(4)}/次`
+                : `$${currentPricing!.inputPricePerM!.toFixed(2)}/M 输入 · $${currentPricing!.outputPricePerM!.toFixed(2)}/M 输出`
+              }
+            </span>
           </span>
         )}
+        {!hasPricing && !status && currentProviderId && (
+          <span className="muted" style={{ fontSize: 11 }}>未设置</span>
+        )}
         {canEdit && currentProviderId && !showManualPricing && (
-          <button
-            className="btn btn--ghost btn--xs"
-            style={{ fontSize: 11, marginLeft: "var(--sp-2)" }}
-            onClick={() => setShowManualPricing(true)}
-          >
-            {hasPricing ? "修改价格" : "手动设置价格"}
-          </button>
+          <span style={{ display: "inline-flex", gap: "var(--sp-1)", marginLeft: "var(--sp-2)" }}>
+            <button
+              className="btn btn--ghost btn--xs"
+              style={{ fontSize: 11 }}
+              onClick={() => setShowManualPricing(true)}
+            >
+              {hasPricing ? "修改价格" : "手动设置价格"}
+            </button>
+            {isManual && (
+              <button
+                className="btn btn--ghost btn--xs"
+                style={{ fontSize: 11 }}
+                onClick={() => onSave(providerId, modelName)}
+              >
+                恢复自动
+              </button>
+            )}
+          </span>
         )}
       </div>
 

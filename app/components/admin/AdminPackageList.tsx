@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import UploadModal from "./UploadModal";
 import { formatAgeRange } from "@/lib/age-range-labels";
 import { SetTopBar } from "@/components/TopBarContext";
 
@@ -39,7 +38,6 @@ const LEVEL_OPTIONS = [
 
 export default function AdminPackageList({ packages, ageRangeLabels }: { packages: PackageRow[]; ageRangeLabels?: Record<string, string> }) {
   const router = useRouter();
-  const [showUpload, setShowUpload] = useState(false);
   const [confirm, setConfirm] = useState<{ type: "delete" | "offline" | "online"; slug: string; title: string } | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [editPkg, setEditPkg] = useState<{ slug: string; title: string; ageRange: string; level: string } | null>(null);
@@ -89,7 +87,6 @@ export default function AdminPackageList({ packages, ageRangeLabels }: { package
       <SetTopBar
         breadcrumb="管理后台"
         title="课程包管理"
-        actions={<button className="btn btn--sm" onClick={() => setShowUpload(true)}>上传课程包 zip</button>}
       />
 
       <div className="table-wrap">
@@ -141,10 +138,6 @@ export default function AdminPackageList({ packages, ageRangeLabels }: { package
           </tbody>
         </table>
       </div>
-
-      {showUpload && (
-        <UploadModal onClose={() => setShowUpload(false)} onSuccess={() => { setShowUpload(false); router.refresh(); }} />
-      )}
 
       {editPkg && (
         <div className="modal-overlay" onClick={() => setEditPkg(null)}>

@@ -7,7 +7,7 @@ import { COURSE_RND_ROLES } from "@/lib/permissions";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { saveAiImage } from "@/lib/ai/image-store";
-import { resolveImagePrompt, type TemplateContext } from "@/lib/ai/template-engine";
+import { resolveLightPrompt, type TemplateContext } from "@/lib/ai/template-engine";
 
 /** 硬编码回退 prompt（DB 无模板时使用） */
 function defaultCoverPrompt(project: {
@@ -73,7 +73,7 @@ export async function POST(
     coreNeeds: project.coreNeeds,
     constraints: project.constraints,
   };
-  const dbPrompt = await resolveImagePrompt("package_cover", templateCtx);
+  const dbPrompt = await resolveLightPrompt("package_cover", templateCtx);
   const basePrompt = dbPrompt ?? defaultCoverPrompt(project);
 
   let prompt: string;

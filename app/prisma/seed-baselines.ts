@@ -516,6 +516,14 @@ OVERALL|warning|整体方案质量良好，第3课 AI 环节和第2课卡点需�
 {{分层规则矩阵}}`,
   },
   {
+    actionKey: "generate_title",
+    actionLabel: "生成课程名称",
+    content: `请为以下课程生成一个简洁有吸引力的项目名称，只输出名称文字，不要输出其他内容。
+课程方向：{{课程方向}}
+目标年龄段：{{年龄段标签}}
+难度级别：{{级别标签}}`,
+  },
+  {
     actionKey: "package_cover",
     actionLabel: "课程包封面图",
     content: `Create a colorful, engaging educational course cover illustration.

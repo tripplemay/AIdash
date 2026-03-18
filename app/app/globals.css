@@ -1851,6 +1851,7 @@ img { display: block; max-width: 100%; }
 }
 .action-mapping-row__meta {
   min-height: 18px; margin-top: 2px; padding-left: 160px;
+  display: flex; align-items: center;
 }
 .action-mapping-row__status { font-size: 11px; }
 .action-mapping-row__status--ok { color: var(--green); }
@@ -2179,7 +2180,20 @@ img { display: block; max-width: 100%; }
   border-color: var(--brand); background: rgba(108,92,231,0.08); color: var(--brand); font-weight: 500;
 }
 
-/* ━━━ Form Divider ━━━ */
+/* ━━━ Form Section ━━━ */
+.form-section {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4) var(--sp-5);
+  margin-bottom: var(--sp-4);
+  background: rgba(255,255,255,0.5);
+}
+.form-section__title {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line);
+}
 .form-divider { height: 1px; background: var(--line); margin: var(--sp-5) 0; }
 
 /* ━━━ Kanban Accordion ━━━ */
