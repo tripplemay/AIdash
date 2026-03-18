@@ -79,9 +79,9 @@ JSON 格式如下（所有字段必填）：
   },
   "review_questions": ["课后复盘问题1", "问题2"],
   "parent_message": "家长沟通简版话术（一段话）",
-  "hero_image_prompt": "课次主图的英文描述（用于 AI 绘画，描述一个适合儿童教育的可爱插画场景，和课程主题相关）",
-  "illustration_prompt": "课内插图的英文描述（用于 AI 绘画，描述教师示范案例的可视化场景）",
-  "template_image_prompt": "作品模板图的英文描述（用于 AI 绘画，描述学生成果作品的示意图）"
+  "hero_image_prompt": "课次主图的英文描述（用于 AI 绘画，必须根据目标年龄段调整画面风格：低龄段用简单可爱、色彩鲜明的元素，高龄段可用更精细复杂的场景。描述要和课程主题相关）",
+  "illustration_prompt": "课内插图的英文描述（用于 AI 绘画，风格需适配目标年龄段，描述教师示范案例的可视化场景）",
+  "template_image_prompt": "作品模板图的英文描述（用于 AI 绘画，风格需适配目标年龄段，描述学生成果作品的示意图）"
 }
 
 注意：
@@ -297,7 +297,8 @@ export async function POST(
             });
             const compositionGuide = compositionPreset?.value ? `${compositionPreset.value} ` : "";
             const stylePrefix = project.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
-            const img = await imageConfig.provider.generateImage({ prompt: compositionGuide + stylePrefix + aiOutput.hero_image_prompt, model: imageConfig.model });
+            const ageHint = project.ageRange ? `Designed for ${project.ageRange} age group. ` : "";
+            const img = await imageConfig.provider.generateImage({ prompt: compositionGuide + ageHint + stylePrefix + aiOutput.hero_image_prompt, model: imageConfig.model });
             aiOutput.hero_image_url = await saveAiImage(img.url, `lessons/${id}`);
             // 记录图片生成成本
             const imgCost = await calculateCallCostFromDb("lesson_cover", 0, 0);

@@ -176,6 +176,7 @@ export async function POST(
     level: project.level,
     orgForm: project.orgForm,
     deliverableType: project.deliverableType,
+    deliverableName: project.coreDeliverable,
     coreNeeds: project.coreNeeds,
     constraints: project.constraints,
     courseSummary,

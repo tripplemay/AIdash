@@ -64,6 +64,8 @@ export async function POST(
 课程方向：${inputData.courseDirection ?? "未指定"}
 年龄段：${inputData.ageRange ?? "未指定"}
 级别：${inputData.level ?? "未指定"}
+课程组织形态：${inputData.orgForm ?? "未指定"}
+产出物类型：${inputData.deliverableType ?? "未指定"}
 课次数：${inputData.lessonCount ?? "未指定"}
 核心产出物：${inputData.coreDeliverable ?? "未指定"}
 大致框架：${inputData.roughFramework ?? "无"}

@@ -7,6 +7,25 @@ import { COURSE_RND_ROLES } from "@/lib/permissions";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { saveAiImage } from "@/lib/ai/image-store";
+import { resolveImagePrompt, type TemplateContext } from "@/lib/ai/template-engine";
+
+/** 硬编码回退 prompt（DB 无模板时使用） */
+function defaultCoverPrompt(project: {
+  title: string;
+  ageRange: string | null;
+  level: string | null;
+  courseDirection: string | null;
+  imageStylePrompt: string | null;
+}): string {
+  const style = project.imageStylePrompt ?? "cute, modern, vibrant colors, flat illustration, child-friendly";
+  return (
+    `Create a colorful, engaging educational course cover illustration. ` +
+    `Course: "${project.title}". ` +
+    `Designed for ${project.ageRange ?? "children"} age group, level: ${project.level ?? "beginner"}. ` +
+    `Direction: ${project.courseDirection ?? "creative learning"}. ` +
+    `Style: ${style}. No text on the image.`
+  );
+}
 
 // POST /api/course-rnd/projects/[id]/generate-cover
 // body (optional): { customPrompt?: string }
@@ -41,16 +60,37 @@ export async function POST(
     if (body.customPrompt) customPrompt = body.customPrompt;
   } catch {}
 
-  const styleDesc = project.imageStylePrompt
-    ?? "cute, modern, vibrant colors, flat illustration, child-friendly";
-  const prompt = customPrompt ?? (
-    `Create a colorful, engaging educational course cover illustration for children. ` +
-    `The course is titled "${project.title}", ` +
-    `designed for ${project.ageRange ?? "children"} age group, ` +
-    `level: ${project.level ?? "beginner"}. ` +
-    `Direction: ${project.courseDirection ?? "creative learning"}. ` +
-    `Style: ${styleDesc}, no text on the image.`
-  );
+  // 构图引导
+  const compositionPreset = await prisma.preset.findFirst({
+    where: { category: "image_composition", isActive: true },
+    select: { value: true },
+  });
+  const compositionGuide = compositionPreset?.value ? `${compositionPreset.value} ` : "";
+  const ageHint = project.ageRange ? `Designed for ${project.ageRange} age group. ` : "";
+  const stylePrefix = project.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
+
+  let prompt: string;
+  if (customPrompt) {
+    // 自定义 prompt：加构图引导 + 年龄 + 风格
+    prompt = compositionGuide + ageHint + stylePrefix + customPrompt;
+  } else {
+    // 优先使用 DB 模板，回退到硬编码
+    const templateCtx: TemplateContext = {
+      title: project.title,
+      courseDirection: project.courseDirection,
+      ageRange: project.ageRange,
+      level: project.level,
+      orgForm: project.orgForm,
+      deliverableType: project.deliverableType,
+      deliverableName: project.deliverableName ?? project.coreDeliverable,
+      imageStylePrompt: project.imageStylePrompt,
+      coreNeeds: project.coreNeeds,
+      constraints: project.constraints,
+    };
+    const dbPrompt = await resolveImagePrompt("package_cover", templateCtx);
+    const basePrompt = dbPrompt ?? defaultCoverPrompt(project);
+    prompt = compositionGuide + basePrompt;
+  }
 
   try {
     const img = await provider.generateImage({ prompt, model });

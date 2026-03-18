@@ -13,6 +13,9 @@ jest.mock("@/lib/prisma", () => ({
     courseRndAiCallLog: {
       create: jest.fn(),
     },
+    preset: {
+      findFirst: jest.fn(),
+    },
   },
 }));
 jest.mock("@/lib/ai/provider", () => ({ getProviderAndModel: jest.fn() }));

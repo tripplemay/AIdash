@@ -160,3 +160,24 @@ export async function getSystemPrompt(
 ): Promise<string | null> {
   return resolveTemplate(actionKey, context);
 }
+
+/**
+ * Resolve an image prompt template from DB — only variable replacement, no baseline injection.
+ * Returns null if no template is configured for this actionKey.
+ */
+export async function resolveImagePrompt(
+  actionKey: string,
+  context: TemplateContext,
+): Promise<string | null> {
+  const template = await prisma.promptTemplate.findUnique({
+    where: { actionKey },
+    select: { content: true },
+  });
+
+  if (!template) return null;
+
+  const labels = await loadLabels(context);
+  const emptyBaselines = { general: "", age: "", level: "", orgForm: "", deliverable: "", matrix: "" };
+  const variables = buildVariableMap(context, emptyBaselines, labels);
+  return interpolate(template.content, variables);
+}

@@ -420,6 +420,17 @@ JSON 格式如下（所有字段必填）：
 
 只输出授课表达示例文本。`,
   },
+  {
+    actionKey: "package_cover",
+    actionLabel: "课程包封面图",
+    content: `Create a colorful, engaging educational course cover illustration.
+Course: "{{项目标题}}"
+Direction: {{课程方向}}
+Target audience: {{年龄段标签}}, {{级别标签}}
+Style: {{图片风格描述}}
+The illustration should match the age group — use age-appropriate visual complexity, color palette, and character design.
+No text on the image.`,
+  },
 ];
 
 async function seedPromptTemplates() {

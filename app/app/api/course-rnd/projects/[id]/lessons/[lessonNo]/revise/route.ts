@@ -101,10 +101,16 @@ export async function POST(
       : targetSection === "illustration" ? "illustration_prompt"
       : "template_image_prompt";
     const originalPrompt = (currentOutput as unknown as Record<string, unknown>)[promptField] as string ?? "";
+    // 查询构图引导 Preset（仅 hero 图使用）
+    const compositionPreset = targetSection === "hero_image"
+      ? await prisma.preset.findFirst({ where: { category: "image_composition", isActive: true }, select: { value: true } })
+      : null;
+    const compositionGuide = compositionPreset?.value ? `${compositionPreset.value} ` : "";
     const stylePrefix = project?.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
+    const ageHint = project?.ageRange ? `Designed for ${project.ageRange} age group. ` : "";
     const generationPrompt = originalPrompt
-      ? `${stylePrefix}${originalPrompt}\n\nAdditional requirements: ${feedback}`
-      : `${stylePrefix}${feedback}`;
+      ? `${compositionGuide}${ageHint}${stylePrefix}${originalPrompt}\n\nAdditional requirements: ${feedback}`
+      : `${compositionGuide}${ageHint}${stylePrefix}${feedback}`;
 
     try {
       const img = await imageProvider.generateImage({ prompt: generationPrompt, model: imageModel });

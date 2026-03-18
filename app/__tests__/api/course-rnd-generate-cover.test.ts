@@ -10,6 +10,15 @@ jest.mock("@/lib/prisma", () => ({
     courseRndAiCallLog: {
       create: jest.fn(),
     },
+    preset: {
+      findFirst: jest.fn(),
+    },
+    promptTemplate: {
+      findUnique: jest.fn(),
+    },
+    baselineDoc: {
+      findUnique: jest.fn(),
+    },
   },
 }));
 jest.mock("@/lib/ai/provider", () => ({ getProviderAndModel: jest.fn() }));
@@ -165,8 +174,9 @@ describe("POST /api/course-rnd/projects/[id]/generate-cover", () => {
     );
     expect(res.status).toBe(200);
 
-    expect(mockGenerateImage).toHaveBeenCalledWith(
-      expect.objectContaining({ prompt: "A cat in space" })
-    );
+    // Custom prompt is prefixed with age hint + style
+    const calledPrompt = mockGenerateImage.mock.calls[0][0].prompt;
+    expect(calledPrompt).toContain("A cat in space");
+    expect(calledPrompt).toContain("Designed for A1 age group");
   });
 });

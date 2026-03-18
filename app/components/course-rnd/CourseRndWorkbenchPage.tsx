@@ -488,6 +488,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
                   return next;
                 });
               }}
+              onConfirmAll={handleValidate}
             />
           ))}
         </div>

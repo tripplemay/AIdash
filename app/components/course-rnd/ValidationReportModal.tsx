@@ -211,8 +211,10 @@ export default function ValidationReportModal({ items, overallResult, completed,
         {/* Actions — only show when completed */}
         {completed && (
           <div className="modal__actions" style={{ animation: "fade-in 0.3s ease-out" }}>
-            <button className="btn btn--soft" onClick={onIgnoreAndFinalize}>忽略并定稿</button>
-            <button className="btn" onClick={onGoBack}>返回修改</button>
+            <button className="btn btn--soft" onClick={onGoBack}>返回修改</button>
+            <button className="btn" onClick={onIgnoreAndFinalize}>
+              {overallResult?.pass ? "确认定稿" : "忽略并定稿"}
+            </button>
           </div>
         )}
       </div>

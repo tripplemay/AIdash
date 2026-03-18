@@ -82,12 +82,23 @@ export async function POST(
     deliverableName: project.deliverableName ?? project.coreDeliverable,
     coreNeeds: project.coreNeeds,
     constraints: project.constraints,
+    imageStylePrompt: project.imageStylePrompt,
     feedback,
   };
   const dbPrompt = await getSystemPrompt("revise_framework", templateCtx);
   const systemPrompt = dbPrompt ?? (getBaselinePrompt() + reviseFrameworkPrompt());
 
-  const userMessage = `当前框架：
+  const userMessage = `课程信息：
+课程标题：${project.title}
+课程方向：${project.courseDirection ?? "未指定"}
+年龄段：${project.ageRange ?? "未指定"}
+级别：${project.level ?? "未指定"}
+课程组织形态：${project.orgForm ?? "未指定"}
+产出物类型：${project.deliverableType ?? "未指定"}
+核心诉求：${project.coreNeeds ?? "无"}
+补充约束：${project.constraints ?? "无"}
+
+当前框架：
 ${currentVersion.frameworkJson}
 
 修改意见：${feedback}

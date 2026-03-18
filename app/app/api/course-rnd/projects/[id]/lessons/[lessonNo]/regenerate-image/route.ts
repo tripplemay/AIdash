@@ -86,8 +86,14 @@ export async function POST(
 
   // 生成图片
   try {
+    // 查询构图引导 Preset
+    const compositionPreset = imageType === "hero"
+      ? await prisma.preset.findFirst({ where: { category: "image_composition", isActive: true }, select: { value: true } })
+      : null;
+    const compositionGuide = compositionPreset?.value ? `${compositionPreset.value} ` : "";
     const stylePrefix = project.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
-    const img = await provider.generateImage({ prompt: stylePrefix + prompt, model });
+    const ageHint = project.ageRange ? `Designed for ${project.ageRange} age group. ` : "";
+    const img = await provider.generateImage({ prompt: compositionGuide + ageHint + stylePrefix + prompt, model });
     const savedUrl = await saveAiImage(img.url, `lessons/${id}`);
 
     // 更新 draftJson 和 contentData

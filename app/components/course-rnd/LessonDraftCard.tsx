@@ -56,11 +56,12 @@ interface Props {
   onAddPending: (item: PendingFeedback) => void;
   onRemovePending: (id: string) => void;
   onSubmitAllPending: () => void;
+  onConfirmAll?: () => void;
   isActive: boolean;
   onActivate: () => void;
 }
 
-export default function LessonDraftCard({ draft, projectId, onRevise, onRegenerate, onContentUpdate, loading, disabled, generating, progress, pendingFeedbacks, onAddPending, onRemovePending, onSubmitAllPending, isActive, onActivate }: Props) {
+export default function LessonDraftCard({ draft, projectId, onRevise, onRegenerate, onContentUpdate, loading, disabled, generating, progress, pendingFeedbacks, onAddPending, onRemovePending, onSubmitAllPending, onConfirmAll, isActive, onActivate }: Props) {
   const [feedback, setFeedback] = useState("");
   const [expanded, setExpanded] = useState(!!draft.contentData && !generating);
   const [targetSection, setTargetSection] = useState<{ id: string; title: string } | null>(null);
@@ -450,6 +451,15 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                       : "按意见修改"}
                   </button>
                 </div>
+                {onConfirmAll && (
+                  <button
+                    className="btn btn--soft btn--sm"
+                    onClick={onConfirmAll}
+                    style={{ whiteSpace: "nowrap", marginLeft: "var(--sp-2)" }}
+                  >
+                    所有课程已确认
+                  </button>
+                )}
               </div>
             </>
           )}
