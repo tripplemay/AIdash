@@ -62,7 +62,7 @@
   --transition-slow:   300ms ease;
 
   /* 布局 */
-  --sidebar-w: 200px;
+  --sidebar-w: 240px;
 
   /* 字体 */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
@@ -293,10 +293,17 @@ img { display: block; max-width: 100%; }
   color: var(--brand);
 }
 
+.sidebar__sub-item--child {
+  font-weight: 400;
+  font-size: 12px;
+}
 .sidebar__sub-item--active {
   background: rgba(126,149,255,0.08);
   color: var(--brand);
   font-weight: 700;
+}
+.sidebar__sub-item--child.sidebar__sub-item--active {
+  font-weight: 600;
 }
 
 /* 展开子内容 */
@@ -804,8 +811,9 @@ img { display: block; max-width: 100%; }
 .login__card {
   width: 100%;
   max-width: 440px;
-  background: rgba(244,247,255,0.92);
-  backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--line);
   border-radius: var(--radius-3xl);
   padding: var(--sp-10) var(--sp-8) var(--sp-8);

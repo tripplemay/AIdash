@@ -215,7 +215,6 @@ export default function CourseRndDashboard({ projects: initialProjects, projectC
       <SetTopBar
         breadcrumb="课程研发"
         title="研发进度管理"
-        actions={<Link href="/course-rnd/new" className="btn btn--sm">+ 新建项目</Link>}
       />
 
       {/* AI 费用总览 */}
@@ -224,7 +223,7 @@ export default function CourseRndDashboard({ projects: initialProjects, projectC
         background: "var(--bg-faint)",
         border: "1px solid var(--line)",
         borderRadius: "var(--radius-md)",
-        marginBottom: "var(--sp-5)",
+        marginBottom: "var(--sp-4)",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -234,6 +233,13 @@ export default function CourseRndDashboard({ projects: initialProjects, projectC
           AI 费用总览：{totalCalls} 次调用 ｜ 进行中 {inProgress.length} 个 ｜ 已定稿 {finalized.length} 个
         </span>
         <span style={{ fontWeight: 700, color: "var(--brand)" }}>总计 ¥{totalCost.toFixed(2)}</span>
+      </div>
+
+      {/* 新建项目 */}
+      <div style={{ marginBottom: "var(--sp-5)" }}>
+        <Link href="/course-rnd/new" className="btn btn--lg btn--block" style={{ borderRadius: "var(--radius-md)" }}>
+          + 新建项目
+        </Link>
       </div>
 
       {/* 手风琴看板 */}

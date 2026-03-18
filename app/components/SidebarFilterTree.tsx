@@ -70,7 +70,7 @@ export default function SidebarFilterTree({
                   return (
                     <button
                       key={level.key}
-                      className={`sidebar__sub-item${levelActive ? " sidebar__sub-item--active" : ""}`}
+                      className={`sidebar__sub-item sidebar__sub-item--child${levelActive ? " sidebar__sub-item--active" : ""}`}
                       onClick={() => navigate(ageRange, level.key)}
                     >
                       {level.label}
