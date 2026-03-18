@@ -140,6 +140,8 @@ export async function POST(
           projectId: id, pageKey: "workbench", actionType: actionKey,
           modelName: imageModel, inputTokens: 0, outputTokens: 0,
           estimatedCost: imgCost, userId: userId ?? null,
+          promptLog: generationPrompt,
+          messageLog: null,
         },
       });
 
@@ -253,6 +255,8 @@ ${draft.draftJson}
       outputTokens: result.outputTokens,
       estimatedCost: cost,
       userId: userId ?? null,
+      promptLog: systemPrompt,
+      messageLog: userMessage,
     },
   });
 

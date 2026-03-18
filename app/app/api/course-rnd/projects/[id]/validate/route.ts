@@ -347,6 +347,8 @@ export async function POST(
             outputTokens,
             estimatedCost: cost,
             userId: userId ?? null,
+            promptLog: systemPrompt,
+            messageLog: userMessage,
           },
         });
 

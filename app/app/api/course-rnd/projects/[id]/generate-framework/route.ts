@@ -168,6 +168,8 @@ export async function POST(
       outputTokens: result.outputTokens,
       estimatedCost: cost,
       userId: userId ?? null,
+      promptLog: systemPrompt,
+      messageLog: userMessage,
     },
   });
 

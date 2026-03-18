@@ -93,7 +93,8 @@ export async function POST(
     const compositionGuide = compositionPreset?.value ? `${compositionPreset.value} ` : "";
     const stylePrefix = project.imageStylePrompt ? `Style: ${project.imageStylePrompt}. ` : "";
     const ageHint = project.ageRange ? `Designed for ${project.ageRange} age group. ` : "";
-    const img = await provider.generateImage({ prompt: compositionGuide + ageHint + stylePrefix + prompt, model });
+    const finalImagePrompt = compositionGuide + ageHint + stylePrefix + prompt;
+    const img = await provider.generateImage({ prompt: finalImagePrompt, model });
     const savedUrl = await saveAiImage(img.url, `lessons/${id}`);
 
     // 更新 draftJson 和 contentData
@@ -117,6 +118,8 @@ export async function POST(
         projectId: id, pageKey: "workbench", actionType: actionKey,
         modelName: model, inputTokens: 0, outputTokens: 0,
         estimatedCost: imgCost, userId: userId ?? null,
+        promptLog: finalImagePrompt,
+        messageLog: null,
       },
     });
 

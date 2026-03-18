@@ -170,6 +170,8 @@ ${currentVersion.frameworkJson}
       outputTokens: result.outputTokens,
       estimatedCost: cost,
       userId: userId ?? null,
+      promptLog: systemPrompt,
+      messageLog: userMessage,
     },
   });
 

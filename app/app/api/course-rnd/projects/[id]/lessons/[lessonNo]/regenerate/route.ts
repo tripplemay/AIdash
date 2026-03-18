@@ -307,6 +307,8 @@ export async function POST(
                 projectId: id, pageKey: "workbench", actionType: "lesson_cover",
                 modelName: imageConfig.model, inputTokens: 0, outputTokens: 0,
                 estimatedCost: imgCost, userId: userId ?? null,
+                promptLog: compositionGuide + ageHint + stylePrefix + aiOutput.hero_image_prompt,
+                messageLog: null,
               },
             });
           } catch {
@@ -338,6 +340,8 @@ export async function POST(
             outputTokens: lastResult?.outputTokens ?? 0,
             estimatedCost: cost,
             userId: userId ?? null,
+            promptLog: systemPrompt,
+            messageLog: userMessage,
           },
         });
 

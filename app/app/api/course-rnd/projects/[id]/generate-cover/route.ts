@@ -109,6 +109,8 @@ export async function POST(
         projectId: id, pageKey: "workbench", actionType: "package_cover",
         modelName: model, inputTokens: 0, outputTokens: 0,
         estimatedCost: imgCost, userId: userId ?? null,
+        promptLog: prompt,
+        messageLog: null,
       },
     });
 
