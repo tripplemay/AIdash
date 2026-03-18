@@ -1966,6 +1966,7 @@ img { display: block; max-width: 100%; }
 /* Template editor textarea */
 .template-editor__textarea {
   width: 100%; font-family: monospace; font-size: 13px; line-height: 1.6;
+  min-height: 400px; resize: vertical;
 }
 
 /* Variable sidebar header / group label */

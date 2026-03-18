@@ -296,7 +296,15 @@ const PROMPT_TEMPLATES: Array<{
 - 标题要简洁有吸引力
 - 概述要体现本课的核心价值和学生产出
 - 课次之间要有清晰的递进关系
-- 只输出 JSON，不要输出其他内容`,
+- 只输出 JSON，不要输出其他内容
+
+# 课程设计基线（请严格遵循）
+{{通用基线}}
+{{年龄段基线}}
+{{级别基线}}
+{{组织形态基线}}
+{{产出物基线}}
+{{分层规则矩阵}}`,
   },
   {
     actionKey: "revise_framework",
@@ -314,7 +322,15 @@ const PROMPT_TEMPLATES: Array<{
 注意：
 - 保持未被提及的部分不变
 - 只调整用户要求改的部分
-- 只输出 JSON`,
+- 只输出 JSON
+
+# 课程设计基线（请严格遵循）
+{{通用基线}}
+{{年龄段基线}}
+{{级别基线}}
+{{组织形态基线}}
+{{产出物基线}}
+{{分层规则矩阵}}`,
   },
   {
     actionKey: "regenerate_lesson",
@@ -374,7 +390,15 @@ JSON 格式如下（所有字段必填）：
 - 不是每个环节都有 ai_template，没有的设为 null
 - checkpoint 没有的设为 null
 - issues 至少 4 个
-- 内容要具体实用，教师拿到就能直接上课`,
+- 内容要具体实用，教师拿到就能直接上课
+
+# 课程设计基线（请严格遵循）
+{{通用基线}}
+{{年龄段基线}}
+{{级别基线}}
+{{组织形态基线}}
+{{产出物基线}}
+{{分层规则矩阵}}`,
   },
   {
     actionKey: "revise_lesson",
@@ -397,7 +421,15 @@ JSON 格式如下（所有字段必填）：
 注意：
 - 只输出变更的字段
 - 如果修改的是数组中的某一项（如 flow 的某个环节），输出完整数组（包含未变更的项）
-- 字段名必须和原方案一致`,
+- 字段名必须和原方案一致
+
+# 课程设计基线（请严格遵循）
+{{通用基线}}
+{{年龄段基线}}
+{{级别基线}}
+{{组织形态基线}}
+{{产出物基线}}
+{{分层规则矩阵}}`,
   },
   {
     actionKey: "rewrite_field",
@@ -406,7 +438,15 @@ JSON 格式如下（所有字段必填）：
 
 请根据用户的意见改写指定内容，保持其他部分不变。
 
-只输出改写后的文本内容（不是 JSON）。`,
+只输出改写后的文本内容（不是 JSON）。
+
+# 课程设计基线（请严格遵循）
+{{通用基线}}
+{{年龄段基线}}
+{{级别基线}}
+{{组织形态基线}}
+{{产出物基线}}
+{{分层规则矩阵}}`,
   },
   {
     actionKey: "rewrite_teaching_talk",
@@ -418,7 +458,15 @@ JSON 格式如下（所有字段必填）：
 - 包含关键节点的过渡话术
 - 简洁实用，不要过长
 
-只输出授课表达示例文本。`,
+只输出授课表达示例文本。
+
+# 课程设计基线（请严格遵循）
+{{通用基线}}
+{{年龄段基线}}
+{{级别基线}}
+{{组织形态基线}}
+{{产出物基线}}
+{{分层规则矩阵}}`,
   },
   {
     actionKey: "package_cover",
@@ -426,7 +474,7 @@ JSON 格式如下（所有字段必填）：
     content: `Create a colorful, engaging educational course cover illustration.
 Course: "{{项目标题}}"
 Direction: {{课程方向}}
-Target audience: {{年龄段标签}}, {{级别标签}}
+Target audience: children, {{年龄段标签}}
 Style: {{图片风格描述}}
 The illustration should match the age group — use age-appropriate visual complexity, color palette, and character design.
 No text on the image.`,
