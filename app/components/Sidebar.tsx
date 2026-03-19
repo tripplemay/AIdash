@@ -249,6 +249,15 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
             )}
           </div>
         )}
+        {/* 使用指南 */}
+        <div>
+          <SidebarNavItem
+            icon={HelpCircle}
+            label="使用指南"
+            href="/guide"
+            active={pathname.startsWith("/guide")}
+          />
+        </div>
       </nav>
 
       {/* 上下文区域 — 根据路由自动渲染 */}
@@ -274,16 +283,6 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
           </div>
         </>
       )}
-
-      {/* 使用指南 */}
-      <div style={{ marginTop: "var(--sp-2)" }}>
-        <SidebarNavItem
-          icon={HelpCircle}
-          label="使用指南"
-          href="/guide"
-          active={pathname.startsWith("/guide")}
-        />
-      </div>
 
       {!isLessonPage && <div className="sidebar__spacer" />}
 

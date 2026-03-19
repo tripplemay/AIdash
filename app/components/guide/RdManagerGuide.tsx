@@ -3,22 +3,27 @@
 import GuideCard from "./GuideCard";
 import GuideFaq from "./GuideFaq";
 
+export const RD_MANAGER_SECTIONS = [
+  { id: "section-browse", title: "课程浏览" },
+  { id: "section-rnd", title: "AI 课程研发" },
+  { id: "section-packages", title: "课程包管理" },
+  { id: "section-config", title: "查看配置" },
+  { id: "section-faq", title: "常见问题" },
+];
+
 export default function RdManagerGuide() {
   return (
     <div className="guide-content">
-      <div className="guide-header">
-        <span className="guide-header__badge">教学主管版</span>
-        <h1 className="guide-header__title">AI Dash 快速入门</h1>
-        <p className="guide-header__desc">掌握课程浏览 + AI 课程研发全流程</p>
-      </div>
-
       <div className="guide-body">
+        <span className="guide-role-badge">教学主管版</span>
+
         {/* Part 1: 课程浏览 */}
-        <div className="guide-section-title">课程浏览</div>
+        <div className="guide-section-title" id="section-browse">课程浏览</div>
         <p className="guide-section-subtitle">查看和使用已发布的课程，与教师相同</p>
 
-        <GuideCard step={1} title="登录 → 找到课程 → 进入授课">
+        <GuideCard step={1} title="注册 / 登录 → 找到课程 → 进入授课">
           <ol className="guide-steps">
+            <li>新用户：使用管理员提供的<strong>邀请码</strong>，在登录页点击「使用邀请码注册」完成注册</li>
             <li>输入账号密码登录系统，进入课程列表</li>
             <li>左侧边栏可按<strong>年龄段</strong>和<strong>难度</strong>筛选课程</li>
             <li>点击「进入详情」查看课程信息和课次列表</li>
@@ -32,13 +37,14 @@ export default function RdManagerGuide() {
             <li>点击左侧边栏「问AI」，新建对话</li>
             <li>选择<strong>通用模式</strong>（问任何问题）或<strong>课程设计模式</strong>（AI 懂课程设计）</li>
             <li>输入消息按 <kbd>Enter</kbd> 发送，AI 实时回复，支持多轮对话</li>
+            <li>AI 会<strong>自动联网搜索</strong>获取最新信息，回答中以 [1]、[2] 标注来源</li>
           </ol>
         </GuideCard>
 
         <hr className="guide-divider" />
 
         {/* Part 2: AI 课程研发 */}
-        <div className="guide-section-title">AI 课程研发</div>
+        <div className="guide-section-title" id="section-rnd">AI 课程研发</div>
         <p className="guide-section-subtitle">从零开始，用 AI 设计完整课程并发布到课程库</p>
 
         <div className="guide-flow">
@@ -101,7 +107,7 @@ export default function RdManagerGuide() {
         <hr className="guide-divider" />
 
         {/* Part 3: 课程包管理 */}
-        <div className="guide-section-title">课程包管理</div>
+        <div className="guide-section-title" id="section-packages">课程包管理</div>
         <p className="guide-section-subtitle">管理已发布的课程包</p>
 
         <GuideCard step={7} title="管理课程包">
@@ -119,7 +125,7 @@ export default function RdManagerGuide() {
         <hr className="guide-divider" />
 
         {/* Part 4: 查看配置 */}
-        <div className="guide-section-title">查看系统配置</div>
+        <div className="guide-section-title" id="section-config">查看系统配置</div>
         <p className="guide-section-subtitle">以下页面您可以查看但不能修改，修改权限属于管理员</p>
 
         <GuideCard step={8} title="可查看的配置页面">
@@ -131,12 +137,20 @@ export default function RdManagerGuide() {
           </ol>
         </GuideCard>
 
+        <GuideCard step={9} title="个人设置">
+          <ol className="guide-steps">
+            <li>点击页面右上角的<strong>头像</strong>，可进入以下设置：</li>
+            <li><strong>个人资料</strong>：修改姓名、邮箱、手机、部门，选择头像（60 个预设卡通头像）</li>
+            <li><strong>修改密码</strong>：输入当前密码 → 输入新密码（至少 6 位）→ 确认</li>
+          </ol>
+        </GuideCard>
+
         <hr className="guide-divider" />
 
         {/* FAQ */}
-        <div className="guide-section-title">我想做什么？</div>
+        <div className="guide-section-title" id="section-faq">常见问题</div>
 
-        <GuideFaq question="我想从零开始设计一个新课程" defaultOpen>
+        <GuideFaq question="我想从零开始设计一个新课程">
           点击左侧「课程研发」→「+ 新建项目」→ 填写课程方向信息 → 点击「生成课程框架」。AI 会生成完整的课程大纲，您可以反复修改直到满意，然后逐课生成详细方案。
         </GuideFaq>
 
@@ -156,6 +170,10 @@ export default function RdManagerGuide() {
           两个地方可以看：<br />
           1. 工作台页面内有 <strong>AI 使用统计</strong>面板，显示当前项目的总费用、调用次数、每课均价<br />
           2. 「管理后台」→「AI 调用记录」可以看到每次 AI 调用的详细费用
+        </GuideFaq>
+
+        <GuideFaq question="AI 回答中的 [1]、[2] 标注是什么">
+          当 AI 判断需要联网搜索时，会自动搜索并在回答中用 [1]、[2] 标注引用来源。回答下方会列出来源链接，点击可查看原文。
         </GuideFaq>
 
         <GuideFaq question="我想用 AI 咨询课程设计的问题">

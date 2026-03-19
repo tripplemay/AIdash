@@ -7,14 +7,9 @@ interface AvatarSelectorProps {
   onChange: (url: string) => void;
 }
 
-const BOY_AVATARS = Array.from({ length: 20 }, (_, i) => {
+const AVATARS = Array.from({ length: 60 }, (_, i) => {
   const num = String(i + 1).padStart(2, "0");
-  return `/avatars/boy-${num}.png`;
-});
-
-const GIRL_AVATARS = Array.from({ length: 40 }, (_, i) => {
-  const num = String(i + 1).padStart(2, "0");
-  return `/avatars/girl-${num}.png`;
+  return `/avatars/avatar-${num}.png`;
 });
 
 export default function AvatarSelector({ value, onChange }: AvatarSelectorProps) {
@@ -40,36 +35,17 @@ export default function AvatarSelector({ value, onChange }: AvatarSelectorProps)
       {/* Expanded Grid */}
       {expanded && (
         <div className="avatar-grid">
-          <div className="avatar-grid__section">
-            <div className="avatar-grid__section-title">男生</div>
-            <div className="avatar-grid__items">
-              {BOY_AVATARS.map(url => (
-                <button
-                  key={url}
-                  type="button"
-                  className={`avatar-grid__item${value === url ? " avatar-grid__item--selected" : ""}`}
-                  onClick={() => { onChange(url); setExpanded(false); }}
-                >
-                  <img src={url} alt="" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="avatar-grid__section">
-            <div className="avatar-grid__section-title">女生</div>
-            <div className="avatar-grid__items">
-              {GIRL_AVATARS.map(url => (
-                <button
-                  key={url}
-                  type="button"
-                  className={`avatar-grid__item${value === url ? " avatar-grid__item--selected" : ""}`}
-                  onClick={() => { onChange(url); setExpanded(false); }}
-                >
-                  <img src={url} alt="" />
-                </button>
-              ))}
-            </div>
+          <div className="avatar-grid__items">
+            {AVATARS.map(url => (
+              <button
+                key={url}
+                type="button"
+                className={`avatar-grid__item${value === url ? " avatar-grid__item--selected" : ""}`}
+                onClick={() => { onChange(url); setExpanded(false); }}
+              >
+                <img src={url} alt="" />
+              </button>
+            ))}
           </div>
         </div>
       )}

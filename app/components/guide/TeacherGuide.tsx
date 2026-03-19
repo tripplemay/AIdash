@@ -3,25 +3,26 @@
 import GuideCard from "./GuideCard";
 import GuideFaq from "./GuideFaq";
 
+export const TEACHER_SECTIONS = [
+  { id: "section-quickstart", title: "快速入门" },
+  { id: "section-faq", title: "常见问题" },
+];
+
 export default function TeacherGuide() {
   return (
     <div className="guide-content">
-      <div className="guide-header">
-        <span className="guide-header__badge">教师版</span>
-        <h1 className="guide-header__title">AI Dash 快速入门</h1>
-        <p className="guide-header__desc">3 分钟掌握核心操作，轻松开始授课</p>
-      </div>
-
       <div className="guide-body">
-        <div className="guide-section-title">快速入门</div>
+        <span className="guide-role-badge">教师版</span>
 
-        <GuideCard step={1} title="登录系统">
+        <div className="guide-section-title" id="section-quickstart">快速入门</div>
+
+        <GuideCard step={1} title="注册 / 登录">
           <ol className="guide-steps">
             <li>打开系统网址，进入登录页</li>
-            <li>输入管理员分配给您的<strong>账号</strong>和<strong>密码</strong></li>
-            <li>点击「登录」，进入课程列表</li>
+            <li>已有账号：输入<strong>账号</strong>和<strong>密码</strong>，点击「登录」</li>
+            <li>新用户：点击「使用邀请码注册」，输入管理员提供的<strong>邀请码</strong>、设置用户名和密码，完成注册后返回登录</li>
           </ol>
-          <div className="guide-tip"><strong>忘记密码？</strong>联系管理员，管理员可以帮您重置。</div>
+          <div className="guide-tip"><strong>忘记密码？</strong>联系管理员，管理员可以在后台帮您重置。</div>
         </GuideCard>
 
         <GuideCard step={2} title="找到适合的课程">
@@ -46,7 +47,7 @@ export default function TeacherGuide() {
             <li>课程页面顶部显示<strong>课次目标</strong>和<strong>核心成果</strong></li>
             <li>左侧有<strong>目录导航</strong>，点击可跳转到任意教学环节</li>
             <li>滚动阅读时，目录会<strong>自动跟踪</strong>您当前所在的位置</li>
-            <li>底部边栏可以<strong>快速切换</strong>到同一课程的其他课次</li>
+            <li>左侧边栏底部可以<strong>快速切换</strong>到同一课程的其他课次</li>
           </ol>
         </GuideCard>
 
@@ -67,22 +68,23 @@ export default function TeacherGuide() {
             </li>
             <li>在输入框打字，按 <kbd>Enter</kbd> 发送（<kbd>Shift</kbd>+<kbd>Enter</kbd> 换行）</li>
             <li>AI 实时回复，支持多轮对话，历史自动保存</li>
+            <li>AI 会<strong>自动判断是否需要联网搜索</strong>，搜索结果以引用标注展示在回答中，底部附来源链接</li>
           </ol>
           <div className="guide-tip"><strong>课程设计模式</strong>下，AI 会参考系统内置的课程设计标准来回答，比通用模式更专业。</div>
         </GuideCard>
 
-        <GuideCard step={7} title="修改密码">
+        <GuideCard step={7} title="个人设置">
           <ol className="guide-steps">
-            <li>点击页面右上角的<strong>头像</strong></li>
-            <li>选择「修改密码」</li>
-            <li>输入当前密码 → 输入新密码（至少 6 位）→ 确认</li>
+            <li>点击页面右上角的<strong>头像</strong>，可进入以下设置：</li>
+            <li><strong>个人资料</strong>：修改姓名、邮箱、手机、部门，选择头像（60 个预设卡通头像）</li>
+            <li><strong>修改密码</strong>：输入当前密码 → 输入新密码（至少 6 位）→ 确认</li>
           </ol>
         </GuideCard>
 
-        <div className="guide-section-title">我想做什么？</div>
+        <div className="guide-section-title" id="section-faq">常见问题</div>
 
-        <GuideFaq question="我想找适合 8 岁孩子的课程" defaultOpen>
-          在左侧边栏点击「课程包列表」展开筛选树，选择对应的年龄段（如&quot;A2｜8-9岁&quot;），列表会自动过滤。还可以进一步选择难度等级。
+        <GuideFaq question="我想找适合 8 岁孩子的课程">
+          在左侧边栏点击「课程包列表」展开筛选树，选择对应的年龄段（如&quot;8-9岁&quot;），列表会自动过滤。还可以进一步选择难度等级。
         </GuideFaq>
 
         <GuideFaq question="我想在课堂上快速使用 AI 对话模板">
@@ -95,6 +97,10 @@ export default function TeacherGuide() {
 
         <GuideFaq question="我想问 AI 一个教学相关的问题">
           点击左侧边栏「问AI」→ 新建对话 → 选择「课程设计模式」。这个模式下 AI 具备课程设计专业知识，能给出更专业的教学建议。如果是非教学问题，选「通用模式」即可。
+        </GuideFaq>
+
+        <GuideFaq question="AI 回答中的引用标注是什么">
+          当 AI 判断需要联网搜索时，会自动搜索并在回答中用 [1]、[2] 标注引用来源。回答下方会列出来源链接，点击可查看原文。
         </GuideFaq>
 
         <GuideFaq question="我想继续之前和 AI 的对话">

@@ -3,12 +3,11 @@
 interface GuideFaqProps {
   question: string;
   children: React.ReactNode;
-  defaultOpen?: boolean;
 }
 
-export default function GuideFaq({ question, children, defaultOpen }: GuideFaqProps) {
+export default function GuideFaq({ question, children }: GuideFaqProps) {
   return (
-    <details className="guide-faq" open={defaultOpen}>
+    <details className="guide-faq">
       <summary className="guide-faq__question">{question}</summary>
       <div className="guide-faq__answer">{children}</div>
     </details>

@@ -116,6 +116,52 @@ describe("PATCH /api/chat/conversations/[id]", () => {
     const res = await PATCH(req, makeParams("c1"));
     expect(res.status).toBe(200);
   });
+
+  it("returns 403 for unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const req = new Request("http://localhost", {
+      method: "PATCH",
+      body: JSON.stringify({ title: "新标题" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PATCH(req, makeParams("c1"));
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 400 for empty title", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    const req = new Request("http://localhost", {
+      method: "PATCH",
+      body: JSON.stringify({ title: "  " }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PATCH(req, makeParams("c1"));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 for missing conversation", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    mockFindUnique.mockResolvedValue(null);
+    const req = new Request("http://localhost", {
+      method: "PATCH",
+      body: JSON.stringify({ title: "新标题" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PATCH(req, makeParams("c1"));
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 403 for other user's conversation", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    mockFindUnique.mockResolvedValue({ id: "c1", userId: "other-user" });
+    const req = new Request("http://localhost", {
+      method: "PATCH",
+      body: JSON.stringify({ title: "新标题" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const res = await PATCH(req, makeParams("c1"));
+    expect(res.status).toBe(403);
+  });
 });
 
 describe("DELETE /api/chat/conversations/[id]", () => {
@@ -125,6 +171,19 @@ describe("DELETE /api/chat/conversations/[id]", () => {
     mockDelete.mockResolvedValue({ id: "c1" });
     const res = await DELETE(new Request("http://localhost"), makeParams("c1"));
     expect(res.status).toBe(200);
+  });
+
+  it("returns 403 for unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const res = await DELETE(new Request("http://localhost"), makeParams("c1"));
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 404 for missing conversation", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    mockFindUnique.mockResolvedValue(null);
+    const res = await DELETE(new Request("http://localhost"), makeParams("c1"));
+    expect(res.status).toBe(404);
   });
 
   it("returns 403 for other user's conversation", async () => {
