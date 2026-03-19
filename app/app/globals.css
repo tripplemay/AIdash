@@ -73,12 +73,10 @@
 /* ━━━ 2. Reset ━━━ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
+body {
   height: 100%;
   overflow: hidden;
-}
 
-body {
   font-family: var(--font-sans);
   color: var(--text);
   background:
@@ -94,54 +92,18 @@ img { display: block; max-width: 100%; }
 
 /* ━━━ 3. 布局 ━━━ */
 .page-wrap {
-  padding: var(--sp-5);
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: fixed;
-  inset: 0;
 }
 
 .page-shell {
-  border-radius: var(--radius-2xl);
   background: linear-gradient(135deg, rgba(244,247,255,0.96), rgba(238,242,255,0.96));
   overflow: hidden;
   position: relative;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-md);
   flex: 1;
   min-height: 0;
-}
-
-.page-shell::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 78% 12%, rgba(161,196,255,0.15), transparent 18%),
-    radial-gradient(circle at 12% 84%, rgba(186,201,255,0.16), transparent 26%),
-    linear-gradient(135deg, rgba(132,180,255,0.05), rgba(174,139,255,0.06));
-  pointer-events: none;
-}
-
-/* 装饰光晕球 */
-.page-shell__orb {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  animation: orb-drift 12s ease-in-out infinite;
-}
-.page-shell__orb--blue {
-  width: 380px; height: 380px;
-  top: -80px; right: -80px;
-  background: radial-gradient(circle, rgba(161,196,255,0.28), transparent 65%);
-}
-.page-shell__orb--purple {
-  width: 300px; height: 300px;
-  bottom: -60px; left: -60px;
-  background: radial-gradient(circle, rgba(186,174,255,0.22), transparent 65%);
-  animation-delay: -4s;
 }
 
 .page-shell__inner {
@@ -1698,11 +1660,7 @@ img { display: block; max-width: 100%; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes orb-drift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%      { transform: translate(6px, -8px) scale(1.04); }
-  66%      { transform: translate(-4px, 4px) scale(0.97); }
-}
+
 
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }
@@ -1781,13 +1739,12 @@ img { display: block; max-width: 100%; }
 
 /* ━━━ 21. 打印 ━━━ */
 @media print {
-  html, body { height: auto !important; overflow: visible !important; }
-  body { background: #fff !important; color: #333 !important; font-size: 12px !important; }
-  .sidebar, .topbar, .lesson-topbar, .page-shell__orb, .no-print, .btn-copy { display: none !important; }
+  body { height: auto !important; overflow: visible !important; background: #fff !important; color: #333 !important; font-size: 12px !important; }
+  .sidebar, .topbar, .lesson-topbar, .no-print, .btn-copy { display: none !important; }
 
   /* 解除所有容器限制 */
-  .page-wrap { padding: 0 !important; position: static !important; overflow: visible !important; height: auto !important; }
-  .page-shell { border-radius: 0 !important; box-shadow: none !important; border: none !important; background: #fff !important; overflow: visible !important; }
+  .page-wrap { overflow: visible !important; height: auto !important; }
+  .page-shell { background: #fff !important; overflow: visible !important; }
   .page-shell__inner { overflow: visible !important; }
   .shell { grid-template-columns: 1fr !important; height: auto !important; min-height: 0 !important; }
   .main { overflow: visible !important; height: auto !important; }
@@ -2396,6 +2353,134 @@ img { display: block; max-width: 100%; }
 .chat-dialog__mode-icon { margin-bottom: var(--sp-3); color: var(--brand); }
 .chat-dialog__mode-title { font-size: 15px; font-weight: 700; margin-bottom: var(--sp-2); }
 .chat-dialog__mode-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* ━━━ Guide Page ━━━ */
+.guide-page {
+  max-width: 840px; margin: 0 auto;
+}
+.guide-page__tabs {
+  display: flex; gap: var(--sp-2); margin-bottom: var(--sp-4);
+}
+.guide-page__tab {
+  padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-md);
+  border: 1px solid var(--line); background: var(--panel-solid);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  color: var(--muted); transition: all 0.15s;
+}
+.guide-page__tab--active {
+  background: var(--brand); color: #fff; border-color: var(--brand);
+}
+.guide-page__tab:hover:not(.guide-page__tab--active) {
+  border-color: var(--brand); color: var(--brand);
+}
+
+.guide-header {
+  background: linear-gradient(135deg, #7e95ff 0%, #84b7ff 50%, #7fd7ff 100%);
+  color: #fff; padding: 36px 24px 32px; text-align: center;
+  border-radius: var(--radius-lg); margin-bottom: var(--sp-5);
+}
+.guide-header__badge {
+  display: inline-block; background: rgba(255,255,255,0.25);
+  border-radius: 999px; padding: 4px 16px; font-size: 14px; margin-bottom: 10px;
+}
+.guide-header__title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.guide-header__desc { font-size: 15px; opacity: 0.9; }
+
+.guide-body { padding-bottom: var(--sp-8); }
+
+.guide-section-title {
+  font-size: 20px; font-weight: 700; color: var(--text);
+  margin: 32px 0 16px; padding-bottom: 8px;
+  border-bottom: 2px solid var(--brand); display: inline-block;
+}
+.guide-section-subtitle {
+  font-size: 14px; color: var(--muted); margin: -8px 0 16px; line-height: 1.6;
+}
+
+.guide-card {
+  background: var(--panel-solid); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); padding: 20px;
+  margin-bottom: 14px; border: 1px solid var(--line);
+}
+.guide-card__title {
+  font-size: 17px; font-weight: 700; color: var(--brand-dark, #5a6fbf);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+}
+.guide-card__icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(126,149,255,0.1); color: var(--brand);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; flex-shrink: 0;
+}
+
+.guide-steps {
+  counter-reset: guide-step; list-style: none; padding: 0;
+}
+.guide-steps li {
+  counter-increment: guide-step; position: relative;
+  padding-left: 36px; margin-bottom: 10px;
+  font-size: 15px; line-height: 1.7;
+}
+.guide-steps li::before {
+  content: counter(guide-step);
+  position: absolute; left: 0; top: 2px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--brand); color: #fff;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.guide-tip {
+  background: rgba(126,149,255,0.08);
+  border-left: 3px solid var(--brand);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px; font-size: 14px;
+  margin-top: 12px; color: var(--muted); line-height: 1.7;
+}
+.guide-tip strong { color: var(--text); }
+
+.guide-flow {
+  display: flex; align-items: center; gap: 4px;
+  flex-wrap: wrap; margin: 14px 0; font-size: 14px;
+}
+.guide-flow__pill {
+  background: rgba(126,149,255,0.08); border: 1px solid var(--line);
+  border-radius: 999px; padding: 4px 12px; white-space: nowrap;
+}
+.guide-flow__arrow { color: var(--brand); font-weight: 700; }
+
+.guide-faq {
+  background: var(--panel-solid); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); border: 1px solid var(--line);
+  margin-bottom: 12px; overflow: hidden;
+}
+.guide-faq__question {
+  padding: 14px 18px; font-size: 15px; font-weight: 600;
+  color: var(--text); cursor: pointer; list-style: none;
+  display: flex; align-items: center; gap: 10px;
+}
+.guide-faq__question::before {
+  content: "Q"; width: 26px; height: 26px; border-radius: 6px;
+  background: var(--brand); color: #fff;
+  font-size: 12px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.guide-faq__question::-webkit-details-marker { display: none; }
+.guide-faq__answer {
+  padding: 0 18px 16px 54px; font-size: 15px;
+  color: var(--muted); line-height: 1.8;
+}
+
+.guide-divider {
+  border: none; border-top: 1px dashed var(--line); margin: 32px 0;
+}
+
+.guide-card kbd, .guide-steps kbd {
+  background: rgba(126,149,255,0.08); border: 1px solid var(--line);
+  border-radius: 4px; padding: 1px 6px; font-size: 13px;
+  font-family: inherit; color: var(--brand);
+}
 
 /* ━━━ Profile Page ━━━ */
 .profile-page {

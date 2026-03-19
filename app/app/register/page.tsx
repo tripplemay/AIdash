@@ -62,7 +62,7 @@ export default function RegisterPage() {
           <p style={{ color: "var(--muted)", marginBottom: "var(--sp-6)", fontSize: 14 }}>
             账号创建成功，请使用新账号登录。
           </p>
-          <Link href="/" className="btn btn--lg btn--block" style={{ borderRadius: "var(--radius-md)", textDecoration: "none", display: "block", textAlign: "center" }}>
+          <Link href="/" className="btn btn--lg btn--block" style={{ borderRadius: "var(--radius-md)", textDecoration: "none" }}>
             返回登录
           </Link>
         </div>

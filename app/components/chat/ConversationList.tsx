@@ -62,9 +62,8 @@ export default function ConversationList({
   return (
     <div className="chat-sidebar">
       <div className="chat-sidebar__header">
-        <span className="chat-sidebar__header-title">问AI</span>
-        <button className="btn btn--sm btn--soft" onClick={onCreate}>
-          新建对话
+        <button className="btn btn--sm btn--soft" onClick={onCreate} style={{ width: "100%" }}>
+          + 新建对话
         </button>
       </div>
       <div className="chat-sidebar__list">

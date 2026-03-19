@@ -23,13 +23,6 @@ export default function AppShell({ userName, userRole, children }: AppShellProps
       <ToastProvider>
       <div className="page-wrap">
         <div className="page-shell">
-          {!isLessonPage && (
-            <>
-              <div className="page-shell__orb page-shell__orb--blue" aria-hidden />
-              <div className="page-shell__orb page-shell__orb--purple" aria-hidden />
-            </>
-          )}
-
           <div className="page-shell__inner shell">
             <Sidebar userName={userName} userRole={userRole} />
 

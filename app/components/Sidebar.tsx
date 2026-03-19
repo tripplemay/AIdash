@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu, Sparkles, Activity, MessageSquare } from "lucide-react";
+import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu, Sparkles, Activity, MessageSquare, HelpCircle } from "lucide-react";
 import type { Role } from "@/lib/roles";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import SidebarNavItem from "./SidebarNavItem";
@@ -158,16 +158,6 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
           )}
         </div>
 
-        {/* 问AI */}
-        <div>
-          <SidebarNavItem
-            icon={MessageSquare}
-            label="问AI"
-            href="/chat"
-            active={pathname.startsWith("/chat")}
-          />
-        </div>
-
         {/* 课程研发 */}
         {canAccessRnd && (
           <div>
@@ -179,6 +169,16 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
             />
           </div>
         )}
+
+        {/* 问AI */}
+        <div>
+          <SidebarNavItem
+            icon={MessageSquare}
+            label="问AI"
+            href="/chat"
+            active={pathname.startsWith("/chat")}
+          />
+        </div>
 
         {/* 管理后台 */}
         {canAccessAdmin && (
@@ -274,6 +274,16 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
           </div>
         </>
       )}
+
+      {/* 使用指南 */}
+      <div style={{ marginTop: "var(--sp-2)" }}>
+        <SidebarNavItem
+          icon={HelpCircle}
+          label="使用指南"
+          href="/guide"
+          active={pathname.startsWith("/guide")}
+        />
+      </div>
 
       {!isLessonPage && <div className="sidebar__spacer" />}
 

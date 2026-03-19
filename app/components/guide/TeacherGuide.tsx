@@ -1,0 +1,126 @@
+"use client";
+
+import GuideCard from "./GuideCard";
+import GuideFaq from "./GuideFaq";
+
+export default function TeacherGuide() {
+  return (
+    <div className="guide-content">
+      <div className="guide-header">
+        <span className="guide-header__badge">教师版</span>
+        <h1 className="guide-header__title">AI Dash 快速入门</h1>
+        <p className="guide-header__desc">3 分钟掌握核心操作，轻松开始授课</p>
+      </div>
+
+      <div className="guide-body">
+        <div className="guide-section-title">快速入门</div>
+
+        <GuideCard step={1} title="登录系统">
+          <ol className="guide-steps">
+            <li>打开系统网址，进入登录页</li>
+            <li>输入管理员分配给您的<strong>账号</strong>和<strong>密码</strong></li>
+            <li>点击「登录」，进入课程列表</li>
+          </ol>
+          <div className="guide-tip"><strong>忘记密码？</strong>联系管理员，管理员可以帮您重置。</div>
+        </GuideCard>
+
+        <GuideCard step={2} title="找到适合的课程">
+          <ol className="guide-steps">
+            <li>登录后自动进入<strong>课程列表</strong>，展示所有可用课程</li>
+            <li>左侧边栏有<strong>筛选功能</strong>：按年龄段（如&quot;8-9岁&quot;）和难度筛选</li>
+            <li>找到目标课程后，点击卡片上的「进入详情」</li>
+          </ol>
+          <div className="guide-tip"><strong>小技巧：</strong>筛选条件会自动记住，下次打开系统不用重新选。</div>
+        </GuideCard>
+
+        <GuideCard step={3} title="了解课程内容">
+          <ol className="guide-steps">
+            <li>详情页展示课程的<strong>完整信息</strong>：适用年龄、难度、简介</li>
+            <li>下方是<strong>课次列表</strong>，每节课标注了时长、人数、AI 回合数</li>
+            <li>点击某节课右侧的「进入本课」，打开课程内容</li>
+          </ol>
+        </GuideCard>
+
+        <GuideCard step={4} title="进入课堂">
+          <ol className="guide-steps">
+            <li>课程页面顶部显示<strong>课次目标</strong>和<strong>核心成果</strong></li>
+            <li>左侧有<strong>目录导航</strong>，点击可跳转到任意教学环节</li>
+            <li>滚动阅读时，目录会<strong>自动跟踪</strong>您当前所在的位置</li>
+            <li>底部边栏可以<strong>快速切换</strong>到同一课程的其他课次</li>
+          </ol>
+        </GuideCard>
+
+        <GuideCard step={5} title="课堂实用工具">
+          <ol className="guide-steps">
+            <li><strong>复制 AI 模板</strong>：课程中的对话模板右上角有复制按钮，一键复制到剪贴板</li>
+            <li><strong>打印课程</strong>：点击顶部「打印本课」按钮，可打印纸质版或保存 PDF</li>
+            <li><strong>阅读进度</strong>：页面最顶部的进度条显示您的阅读进度</li>
+          </ol>
+        </GuideCard>
+
+        <GuideCard step={6} title="问 AI 助手">
+          <ol className="guide-steps">
+            <li>点击左侧边栏「问AI」进入对话页面</li>
+            <li>点击「新建对话」，选择模式：
+              <br /><strong>通用模式</strong> — 问任何问题
+              <br /><strong>课程设计模式</strong> — AI 懂课程设计，适合教学相关咨询
+            </li>
+            <li>在输入框打字，按 <kbd>Enter</kbd> 发送（<kbd>Shift</kbd>+<kbd>Enter</kbd> 换行）</li>
+            <li>AI 实时回复，支持多轮对话，历史自动保存</li>
+          </ol>
+          <div className="guide-tip"><strong>课程设计模式</strong>下，AI 会参考系统内置的课程设计标准来回答，比通用模式更专业。</div>
+        </GuideCard>
+
+        <GuideCard step={7} title="修改密码">
+          <ol className="guide-steps">
+            <li>点击页面右上角的<strong>头像</strong></li>
+            <li>选择「修改密码」</li>
+            <li>输入当前密码 → 输入新密码（至少 6 位）→ 确认</li>
+          </ol>
+        </GuideCard>
+
+        <div className="guide-section-title">我想做什么？</div>
+
+        <GuideFaq question="我想找适合 8 岁孩子的课程" defaultOpen>
+          在左侧边栏点击「课程包列表」展开筛选树，选择对应的年龄段（如&quot;A2｜8-9岁&quot;），列表会自动过滤。还可以进一步选择难度等级。
+        </GuideFaq>
+
+        <GuideFaq question="我想在课堂上快速使用 AI 对话模板">
+          进入课程后，找到标有&quot;AI 对话模板&quot;的内容块，点击右上角的<strong>复制按钮</strong>，模板内容会复制到剪贴板。然后切换到 AI 工具中直接粘贴使用。
+        </GuideFaq>
+
+        <GuideFaq question="我想把课程打印出来备课">
+          进入课程后，点击页面顶部右侧的「打印本课」按钮。系统会自动优化排版：隐藏导航元素、展开所有折叠内容、切换为适合纸张的单栏布局。可以选择打印到纸张或保存为 PDF。
+        </GuideFaq>
+
+        <GuideFaq question="我想问 AI 一个教学相关的问题">
+          点击左侧边栏「问AI」→ 新建对话 → 选择「课程设计模式」。这个模式下 AI 具备课程设计专业知识，能给出更专业的教学建议。如果是非教学问题，选「通用模式」即可。
+        </GuideFaq>
+
+        <GuideFaq question="我想继续之前和 AI 的对话">
+          进入「问AI」页面后，左侧对话列表会显示您的所有历史对话。点击任意一条即可继续对话，之前的聊天记录都在。
+        </GuideFaq>
+
+        <GuideFaq question="我想快速跳到课程的某个环节">
+          进入课程后，左侧有一个<strong>目录导航面板</strong>，列出了所有教学环节。直接点击环节名称就能跳转过去。当前正在看的环节会自动高亮。
+        </GuideFaq>
+
+        <GuideFaq question="我想切换到同一课程的下一节课">
+          不用返回详情页。左侧边栏底部有一个<strong>课次导航</strong>区域，列出了当前课程的所有课次。直接点击就能切换。
+        </GuideFaq>
+
+        <GuideFaq question="我忘记密码了">
+          请联系系统管理员，管理员可以在后台为您重置密码。重置后用新密码登录即可。
+        </GuideFaq>
+
+        <GuideFaq question="我筛选后看不到任何课程了">
+          可能是筛选条件太精确。点击左侧筛选树最顶部的「全部课程」即可清除所有筛选条件，显示全部课程。
+        </GuideFaq>
+
+        <GuideFaq question={'课程显示"未接入"无法点击'}>
+          这表示该课次的内容还没有录入系统。请联系教学主管或管理员了解进度。
+        </GuideFaq>
+      </div>
+    </div>
+  );
+}
