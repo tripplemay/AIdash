@@ -15,11 +15,18 @@ interface Conversation {
   updatedAt: string;
 }
 
+interface Source {
+  title: string;
+  url: string;
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   createdAt?: string;
+  isSearching?: boolean;
+  sources?: Source[];
 }
 
 export default function ChatPage() {
@@ -178,6 +185,32 @@ export default function ChatPage() {
                         updated[updated.length - 1] = {
                           ...last,
                           content: last.content + (event.text ?? ""),
+                          isSearching: false,
+                        };
+                      }
+                      return updated;
+                    });
+                  } else if (event.type === "searching") {
+                    setMessages((prev) => {
+                      const updated = [...prev];
+                      const last = updated[updated.length - 1];
+                      if (last && last.role === "assistant") {
+                        updated[updated.length - 1] = {
+                          ...last,
+                          isSearching: true,
+                        };
+                      }
+                      return updated;
+                    });
+                  } else if (event.type === "sources") {
+                    setMessages((prev) => {
+                      const updated = [...prev];
+                      const last = updated[updated.length - 1];
+                      if (last && last.role === "assistant") {
+                        updated[updated.length - 1] = {
+                          ...last,
+                          sources: event.sources ?? [],
+                          isSearching: false,
                         };
                       }
                       return updated;

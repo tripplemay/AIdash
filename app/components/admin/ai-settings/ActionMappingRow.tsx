@@ -70,29 +70,36 @@ export default function ActionMappingRow({
     isImage ? p.supportImage : p.supportText
   );
 
+  // 跟踪当前应该加载哪个 provider 的模型（防止竞态）
+  const [modelsForProviderId, setModelsForProviderId] = useState(currentProviderId);
+
   function handleProviderChange(newId: string) {
     setProviderId(newId);
     setModelName("");
     setModels([]);
+    setModelsForProviderId(newId);
     setStatus(null);
-    if (!newId) return;
-
-    setLoadingModels(true);
-    fetch(`/api/admin/ai-providers/${newId}/models`)
-      .then(r => r.json())
-      .then(json => setModels(json.data ?? []))
-      .catch(() => setModels([]))
-      .finally(() => setLoadingModels(false));
   }
 
-  // 首次加载已有配置时拉取模型列表
+  // 统一的模型列表加载：监听 modelsForProviderId 变化
   useEffect(() => {
-    if (currentProviderId) {
-      fetch(`/api/admin/ai-providers/${currentProviderId}/models`)
-        .then(r => r.json())
-        .then(json => setModels(json.data ?? []))
-        .catch(() => {});
+    if (!modelsForProviderId) {
+      setModels([]);
+      return;
     }
+    let cancelled = false;
+    setLoadingModels(true);
+    fetch(`/api/admin/ai-providers/${modelsForProviderId}/models`)
+      .then(r => r.json())
+      .then(json => { if (!cancelled) setModels(json.data ?? []); })
+      .catch(() => { if (!cancelled) setModels([]); })
+      .finally(() => { if (!cancelled) setLoadingModels(false); });
+    return () => { cancelled = true; };
+  }, [modelsForProviderId]);
+
+  // 当 props 中的 currentProviderId 变化时，同步更新
+  useEffect(() => {
+    setModelsForProviderId(currentProviderId);
   }, [currentProviderId]);
 
   async function handleSave() {

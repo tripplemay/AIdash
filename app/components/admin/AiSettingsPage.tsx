@@ -51,6 +51,12 @@ const DEFAULT_ACTIONS = [
   { key: "chat", label: "AI 对话", type: "text" },
 ];
 
+interface SystemConfigEntry {
+  key: string;
+  value: string;
+  isConfigured: boolean;
+}
+
 export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }) {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [actions, setActions] = useState<ActionConfig[]>([]);
@@ -61,10 +67,26 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
+  // External service keys
+  const [tavilyKey, setTavilyKey] = useState("");
+  const [tavilyConfigured, setTavilyConfigured] = useState(false);
+  const [tavilyMasked, setTavilyMasked] = useState("");
+  const [tavilySaving, setTavilySaving] = useState(false);
+  const [tavilyTesting, setTavilyTesting] = useState(false);
+  const [tavilyTestResult, setTavilyTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
   useEffect(() => {
     fetch("/api/admin/ai-providers").then(r => r.json()).then(d => setProviders(d.data ?? [])).catch(() => {});
     fetch("/api/admin/ai-actions").then(r => r.json()).then(d => setActions(d.data ?? [])).catch(() => {});
     fetch("/api/admin/refresh-pricing").then(r => r.json()).then(d => setPricingInfo(d.data ?? null)).catch(() => {});
+    fetch("/api/admin/system-config").then(r => r.json()).then(json => {
+      const configs: SystemConfigEntry[] = json.data ?? [];
+      const tavily = configs.find(c => c.key === "tavily_api_key");
+      if (tavily) {
+        setTavilyConfigured(tavily.isConfigured);
+        setTavilyMasked(tavily.value);
+      }
+    }).catch(() => {});
   }, []);
 
   async function handleAddProvider() {
@@ -212,6 +234,112 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
             </div>
           </div>
         )}
+      </div>
+
+      {/* 外部服务密钥 */}
+      <div className="card--glass" style={{ padding: "var(--sp-5)", marginBottom: "var(--sp-5)" }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: "var(--sp-4)" }}>外部服务密钥</h3>
+
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "var(--sp-3)" }}>
+          <div style={{ flex: 1 }}>
+            <label className="field-label">
+              Tavily API Key（联网搜索）
+              {tavilyConfigured && (
+                <span style={{ color: "var(--success)", fontSize: 12, marginLeft: "var(--sp-2)" }}>已配置</span>
+              )}
+              {!tavilyConfigured && (
+                <span style={{ color: "var(--muted)", fontSize: 12, marginLeft: "var(--sp-2)" }}>未配置</span>
+              )}
+            </label>
+            {canEdit ? (
+              <input
+                className="input input--sm"
+                type="password"
+                value={tavilyKey}
+                onChange={e => { setTavilyKey(e.target.value); setTavilyTestResult(null); }}
+                placeholder={tavilyConfigured ? tavilyMasked : "tvly-..."}
+              />
+            ) : (
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>{tavilyConfigured ? tavilyMasked : "未配置"}</div>
+            )}
+            {tavilyTestResult && (
+              <div style={{ fontSize: 12, marginTop: "var(--sp-1)", color: tavilyTestResult.ok ? "var(--success)" : "var(--danger)" }}>
+                {tavilyTestResult.message}
+              </div>
+            )}
+          </div>
+          {canEdit && (
+            <div style={{ display: "flex", gap: "var(--sp-2)", marginTop: 22 }}>
+              <button
+                className="btn btn--sm"
+                disabled={tavilySaving || !tavilyKey.trim()}
+                onClick={async () => {
+                  setTavilySaving(true);
+                  try {
+                    const res = await fetch("/api/admin/system-config", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ key: "tavily_api_key", value: tavilyKey.trim() }),
+                    });
+                    if (res.ok) {
+                      setTavilyConfigured(true);
+                      setTavilyMasked(tavilyKey.slice(0, 6) + "****" + tavilyKey.slice(-4));
+                      setTavilyKey("");
+                      setTavilyTestResult({ ok: true, message: "已保存" });
+                    } else {
+                      const json = await res.json();
+                      setTavilyTestResult({ ok: false, message: json.error ?? "保存失败" });
+                    }
+                  } catch {
+                    setTavilyTestResult({ ok: false, message: "保存失败" });
+                  } finally {
+                    setTavilySaving(false);
+                  }
+                }}
+              >
+                {tavilySaving ? "保存中..." : "保存"}
+              </button>
+              <button
+                className="btn btn--soft btn--sm"
+                disabled={tavilyTesting || (!tavilyKey.trim() && !tavilyConfigured)}
+                onClick={async () => {
+                  setTavilyTesting(true);
+                  setTavilyTestResult(null);
+                  try {
+                    // If user entered a new key, save it first
+                    if (tavilyKey.trim()) {
+                      await fetch("/api/admin/system-config", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ key: "tavily_api_key", value: tavilyKey.trim() }),
+                      });
+                      setTavilyConfigured(true);
+                      setTavilyMasked(tavilyKey.slice(0, 6) + "****" + tavilyKey.slice(-4));
+                      setTavilyKey("");
+                    }
+                    // Test by calling a search
+                    const res = await fetch("/api/admin/system-config/test-tavily", { method: "POST" });
+                    const json = await res.json();
+                    if (res.ok) {
+                      setTavilyTestResult({ ok: true, message: `测试成功，返回 ${json.data?.resultCount ?? 0} 条结果` });
+                    } else {
+                      setTavilyTestResult({ ok: false, message: json.error ?? "测试失败" });
+                    }
+                  } catch {
+                    setTavilyTestResult({ ok: false, message: "测试失败" });
+                  } finally {
+                    setTavilyTesting(false);
+                  }
+                }}
+              >
+                {tavilyTesting ? "测试中..." : "测试"}
+              </button>
+            </div>
+          )}
+        </div>
+        <p className="muted small" style={{ marginTop: "var(--sp-2)" }}>
+          配置后，问AI对话中 AI 将自动判断是否需要联网搜索。获取 Key：<a href="https://tavily.com" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>tavily.com</a>
+        </p>
       </div>
 
       {/* 动作映射配置 */}

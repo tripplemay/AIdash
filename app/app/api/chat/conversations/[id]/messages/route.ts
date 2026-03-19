@@ -9,6 +9,7 @@ import {
   getGeneralChatSystemPrompt,
   getCourseDesignChatSystemPrompt,
 } from "@/lib/ai/chat-prompts";
+import { chatWithToolsStream } from "@/lib/ai/chat-with-tools";
 
 const ALLOWED_ROLES = [ROLES.TEACHER, ROLES.RD_MANAGER, ROLES.ADMIN] as const;
 
@@ -110,45 +111,51 @@ export async function POST(
         let fullContent = "";
         let inputTokens = 0;
         let outputTokens = 0;
+        let sources: Array<{ title: string; url: string }> | undefined;
 
-        if (provider.chatStream) {
-          const generator = provider.chatStream({
-            systemPrompt,
-            userMessage,
-            model,
-            messages: apiMessages,
-          });
+        const toolStream = chatWithToolsStream({
+          provider,
+          model,
+          messages: apiMessages,
+          systemPrompt,
+          userMessage,
+        });
 
-          while (true) {
-            const iterResult = await generator.next();
-            if (iterResult.done) {
-              fullContent = iterResult.value.content;
-              inputTokens = iterResult.value.inputTokens;
-              outputTokens = iterResult.value.outputTokens;
+        for await (const event of toolStream) {
+          switch (event.type) {
+            case "delta":
+              sendEvent({ type: "delta", text: event.text });
               break;
-            }
-            sendEvent({ type: "delta", text: iterResult.value.text });
+            case "searching":
+              sendEvent({ type: "searching", query: event.query });
+              break;
+            case "sources":
+              sendEvent({ type: "sources", sources: event.sources });
+              sources = event.sources;
+              break;
+            case "done":
+              fullContent = event.content;
+              inputTokens = event.inputTokens;
+              outputTokens = event.outputTokens;
+              if (event.sources) sources = event.sources;
+              break;
+            case "error":
+              sendEvent({ type: "error", message: event.message });
+              break;
           }
-        } else {
-          // Non-streaming fallback
-          const result = await provider.chat({
-            systemPrompt,
-            userMessage,
-            model,
-            messages: apiMessages,
-          });
-          fullContent = result.content;
-          inputTokens = result.inputTokens;
-          outputTokens = result.outputTokens;
-          sendEvent({ type: "delta", text: fullContent });
         }
+
+        // Embed sources as hidden comment in content for persistence
+        const contentToSave = sources && sources.length > 0
+          ? `${fullContent}\n\n<!-- sources::${JSON.stringify(sources)} -->`
+          : fullContent;
 
         // Save assistant message
         await prisma.chatMessage.create({
           data: {
             conversationId,
             role: "assistant",
-            content: fullContent,
+            content: contentToSave,
           },
         });
 

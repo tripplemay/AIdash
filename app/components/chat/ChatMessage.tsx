@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+interface Source {
+  title: string;
+  url: string;
+}
 
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
   createdAt?: string;
   isStreaming?: boolean;
+  isSearching?: boolean;
+  sources?: Source[];
 }
 
 function formatTime(dateStr?: string): string {
@@ -19,11 +26,38 @@ function formatTime(dateStr?: string): string {
   return `${h}:${m}`;
 }
 
-export default function ChatMessage({ role, content, createdAt, isStreaming }: ChatMessageProps) {
+/** Strip hidden sources comment from content and extract sources */
+const SOURCES_COMMENT_RE = /\n?\n?<!-- sources::(\[.*\]) -->\s*$/;
+
+function extractSourcesFromContent(content: string): { cleanContent: string; embeddedSources: Source[] } {
+  const match = content.match(SOURCES_COMMENT_RE);
+  if (!match) return { cleanContent: content, embeddedSources: [] };
+
+  try {
+    const parsed = JSON.parse(match[1]);
+    return {
+      cleanContent: content.replace(SOURCES_COMMENT_RE, ""),
+      embeddedSources: Array.isArray(parsed) ? parsed : [],
+    };
+  } catch {
+    return { cleanContent: content, embeddedSources: [] };
+  }
+}
+
+export default function ChatMessage({ role, content, createdAt, isStreaming, isSearching, sources }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
 
+  // Extract embedded sources from persisted content (for messages loaded from DB)
+  const { cleanContent, embeddedSources } = useMemo(
+    () => extractSourcesFromContent(content),
+    [content]
+  );
+
+  // Use prop sources (from live SSE) or embedded sources (from DB)
+  const displaySources = sources && sources.length > 0 ? sources : embeddedSources;
+
   function handleCopy() {
-    navigator.clipboard.writeText(content).then(() => {
+    navigator.clipboard.writeText(cleanContent).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
@@ -39,12 +73,40 @@ export default function ChatMessage({ role, content, createdAt, isStreaming }: C
           {showStreamingDot ? (
             <span className="chat-message__streaming-dot" />
           ) : isAssistant ? (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+            <>
+              {isSearching && (
+                <div className="chat-message__searching">
+                  <span className="chat-message__searching-dot" />
+                  正在搜索网络...
+                </div>
+              )}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleanContent}</ReactMarkdown>
+            </>
           ) : (
             <span style={{ whiteSpace: "pre-wrap" }}>{content}</span>
           )}
         </div>
-        {isAssistant && content && !isStreaming && (
+
+        {/* Source links */}
+        {isAssistant && displaySources.length > 0 && !isStreaming && (
+          <div className="chat-message__sources">
+            <div className="chat-message__sources-title">来源</div>
+            {displaySources.map((src, i) => (
+              <a
+                key={i}
+                className="chat-message__source-item"
+                href={src.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="chat-message__source-num">[{i + 1}]</span>
+                <span className="chat-message__source-text">{src.title || src.url}</span>
+              </a>
+            ))}
+          </div>
+        )}
+
+        {isAssistant && cleanContent && !isStreaming && (
           <button
             className="chat-message__copy"
             onClick={handleCopy}

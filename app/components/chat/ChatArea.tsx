@@ -3,11 +3,18 @@
 import { useRef, useEffect, useState, useCallback, type KeyboardEvent, type ChangeEvent } from "react";
 import ChatMessage from "./ChatMessage";
 
+interface Source {
+  title: string;
+  url: string;
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   createdAt?: string;
+  isSearching?: boolean;
+  sources?: Source[];
 }
 
 interface ChatAreaProps {
@@ -78,6 +85,8 @@ export default function ChatArea({ messages, isStreaming, onSendMessage, convers
             content={msg.content}
             createdAt={msg.createdAt}
             isStreaming={isStreaming && i === messages.length - 1 && msg.role === "assistant"}
+            isSearching={msg.isSearching}
+            sources={msg.sources}
           />
         ))}
         <div ref={messagesEndRef} />

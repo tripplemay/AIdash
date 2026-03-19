@@ -7,6 +7,20 @@ import aiConfigFile from "@/config/ai-models.json";
 
 // ─── Types ───
 
+export interface ToolDefinition {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+  };
+}
+
+export interface ToolCall {
+  id: string;
+  function: { name: string; arguments: string };
+}
+
 export interface ChatParams {
   systemPrompt: string;
   userMessage: string;
@@ -14,7 +28,9 @@ export interface ChatParams {
   temperature?: number;
   maxTokens?: number;
   /** Optional pre-built messages array. When provided, systemPrompt/userMessage are ignored for the API body. */
-  messages?: Array<{ role: string; content: string }>;
+  messages?: Array<{ role: string; content: string | null; tool_calls?: ToolCall[]; tool_call_id?: string }>;
+  /** Optional tool definitions for function calling. */
+  tools?: ToolDefinition[];
 }
 
 export interface ChatResult {
@@ -22,6 +38,8 @@ export interface ChatResult {
   inputTokens: number;
   outputTokens: number;
   model: string;
+  /** Populated when the model returns tool calls instead of content. */
+  toolCalls?: ToolCall[];
 }
 
 export interface ChatStreamChunk {
@@ -180,7 +198,7 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
   };
 
   return {
-    async chat({ systemPrompt, userMessage, model, temperature = 0.7, maxTokens = 8192, messages: customMessages }) {
+    async chat({ systemPrompt, userMessage, model, temperature = 0.7, maxTokens = 8192, messages: customMessages, tools }) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -189,16 +207,21 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
         { role: "user", content: userMessage },
       ];
 
+      const bodyObj: Record<string, unknown> = {
+        model,
+        messages: apiMessages,
+        temperature,
+        max_tokens: maxTokens,
+      };
+      if (tools && tools.length > 0) {
+        bodyObj.tools = tools;
+      }
+
       try {
         const res = await proxyFetch(chatUrl, {
           method: "POST",
           headers: commonHeaders,
-          body: JSON.stringify({
-            model,
-            messages: apiMessages,
-            temperature,
-            max_tokens: maxTokens,
-          }),
+          body: JSON.stringify(bodyObj),
           signal: controller.signal,
           proxyUrl,
         });
@@ -210,19 +233,32 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
 
         const json = await res.json();
         const choice = json.choices?.[0];
+        const message = choice?.message;
+
+        // Parse tool_calls if present
+        const toolCalls: ToolCall[] | undefined = Array.isArray(message?.tool_calls)
+          ? message.tool_calls.map((tc: { id?: string; function?: { name?: string; arguments?: string } }, idx: number) => ({
+              id: tc.id ?? `call_${idx}`,
+              function: {
+                name: tc.function?.name ?? "",
+                arguments: tc.function?.arguments ?? "{}",
+              },
+            }))
+          : undefined;
 
         return {
-          content: choice?.message?.content ?? "",
+          content: message?.content ?? "",
           inputTokens: json.usage?.prompt_tokens ?? 0,
           outputTokens: json.usage?.completion_tokens ?? 0,
           model: json.model ?? model,
+          toolCalls,
         };
       } finally {
         clearTimeout(timer);
       }
     },
 
-    async *chatStream({ systemPrompt, userMessage, model, temperature = 0.7, maxTokens = 8192, messages: customMessages }): AsyncGenerator<ChatStreamChunk, ChatResult> {
+    async *chatStream({ systemPrompt, userMessage, model, temperature = 0.7, maxTokens = 8192, messages: customMessages, tools }): AsyncGenerator<ChatStreamChunk, ChatResult> {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -231,14 +267,19 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
         { role: "user", content: userMessage },
       ];
 
-      const bodyPayload = JSON.stringify({
+      const bodyObj: Record<string, unknown> = {
         model,
         messages: apiMessages,
         temperature,
         max_tokens: maxTokens,
         stream: true,
         stream_options: { include_usage: true },
-      });
+      };
+      if (tools && tools.length > 0) {
+        bodyObj.tools = tools;
+      }
+
+      const bodyPayload = JSON.stringify(bodyObj);
 
       try {
         let sseStream: ReadableStream<Uint8Array> | NodeJS.ReadableStream;
@@ -305,6 +346,9 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
         let inputTokens = 0;
         let outputTokens = 0;
 
+        // Accumulate tool_calls from streamed deltas
+        const toolCallAccum: Map<number, { id: string; name: string; arguments: string }> = new Map();
+
         for await (const event of parseSSEStream(sseStream)) {
           if (event.data === "[DONE]") break;
 
@@ -320,12 +364,33 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
               outputTokens = parsed.usage.completion_tokens ?? outputTokens;
             }
 
+            const delta = parsed.choices?.[0]?.delta;
+            if (!delta) continue;
+
             // Extract delta content
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (typeof delta === "string" && delta.length > 0) {
-              fullContent += delta;
-              totalChars += delta.length;
-              yield { text: delta, totalChars };
+            if (typeof delta.content === "string" && delta.content.length > 0) {
+              fullContent += delta.content;
+              totalChars += delta.content.length;
+              yield { text: delta.content, totalChars };
+            }
+
+            // Accumulate tool_calls from delta chunks
+            if (Array.isArray(delta.tool_calls)) {
+              for (const tc of delta.tool_calls) {
+                const idx = tc.index ?? 0;
+                const existing = toolCallAccum.get(idx);
+                if (!existing) {
+                  toolCallAccum.set(idx, {
+                    id: tc.id ?? "",
+                    name: tc.function?.name ?? "",
+                    arguments: tc.function?.arguments ?? "",
+                  });
+                } else {
+                  if (tc.id) existing.id = tc.id;
+                  if (tc.function?.name) existing.name += tc.function.name;
+                  if (tc.function?.arguments) existing.arguments += tc.function.arguments;
+                }
+              }
             }
           } catch {
             // Skip malformed JSON in SSE data
@@ -337,11 +402,22 @@ function createOpenAICompatProvider(config: ProviderConfig, timeoutMs = 180_000)
           outputTokens = Math.round(totalChars / 2.5);
         }
 
+        // Build toolCalls array if any were accumulated
+        const toolCalls: ToolCall[] | undefined = toolCallAccum.size > 0
+          ? Array.from(toolCallAccum.entries())
+              .sort(([a], [b]) => a - b)
+              .map(([, tc]) => ({
+                id: tc.id || `call_${Date.now()}`,
+                function: { name: tc.name, arguments: tc.arguments },
+              }))
+          : undefined;
+
         return {
           content: fullContent,
           inputTokens,
           outputTokens,
           model: lastModel,
+          toolCalls,
         };
       } finally {
         clearTimeout(timer);

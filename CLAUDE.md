@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-**AI Dash — 教师授课系统 + 课程研发系统**。面向老师、教学主管（rd_manager）和管理员，包含两大模块：
+**AI Dash — 智能课程系统**。面向老师、教学主管（rd_manager）和管理员，包含三大模块：
 1. **教师授课系统**：课程包管理、课次内容渲染（v2 JSON → LessonRenderer）
 2. **课程研发模块**：AI 驱动的课程设计工作台（方向确认 → 详细方案 → 定稿发布）
+3. **问AI模块**：类 ChatGPT 对话界面，支持通用模式和课程设计模式（注入基线知识）
 
 ## 技术栈
 
@@ -55,11 +56,14 @@ app/
     │   ├── page.tsx                      # /course-rnd — 研发进度看板
     │   ├── [projectId]/page.tsx          # /course-rnd/:id — 方向确认
     │   └── [projectId]/workbench/page.tsx # /course-rnd/:id/workbench — 工作台
+    ├── chat/page.tsx                     # /chat — 问AI对话
+    ├── profile/page.tsx                  # /profile — 个人资料
     └── admin/
         ├── layout.tsx                    # admin 角色校验
         ├── packages/page.tsx             # /admin/packages — 课程包管理
-        ├── users/page.tsx                # /admin/users — 用户管理
+        ├── users/page.tsx                # /admin/users — 用户管理（含部门管理、邀请码管理）
         ├── ai-settings/page.tsx          # /admin/ai-settings — AI 服务配置
+        ├── ai-logs/page.tsx              # /admin/ai-logs — AI 调用记录（prompt 审计）
         ├── prompt-config/page.tsx        # /admin/prompt-config — Prompt 配置（基线/模板/预设）
         └── operation-logs/page.tsx       # /admin/operation-logs — 操作日志
 ```
@@ -80,7 +84,9 @@ AppShell (client component, 常驻)
 
 **TopBar 注入模式**：各页面通过 `<SetTopBar breadcrumb="管理后台" title="AI 服务配置" actions={...} />` 注入内容，卸载时自动清除。
 
-**课次页特殊处理**：`isLessonPage` 时隐藏通用 TopBar，由页面自行渲染 `lesson-topbar`。
+**全屏页面处理**：课次页（`isLessonPage`）和对话页（`isChatPage`）走全屏模式——隐藏 `main__content` padding，`main` 设 `overflow: hidden`。课次页还隐藏通用 TopBar。
+
+**滚动隔离**：`.page-wrap` 固定 `height: 100vh`，Sidebar 和内容区各自独立滚动（`overflow-y: auto`），TopBar 始终可见。
 
 ### 角色与权限
 
@@ -88,15 +94,23 @@ AppShell (client component, 常驻)
 
 权限矩阵在 `lib/permissions.ts`，API 统一用 `requireRole()` + `forbiddenResponse()` 守卫（`lib/auth-utils.ts`）。
 
+**用户注册**：通过邀请码注册（仅 admin 可生成邀请码），注册后默认 `rd_manager` 角色。注册页在 `/register`（不在 `(app)` Route Group 内，无需认证）。
+
+**个人资料**：用户可修改姓名、邮箱、手机、部门、头像（60 个预设卡通头像）。入口在右上角头像下拉菜单。
+
 ### 数据模型
 
-**核心表**（4张）：`User` / `CoursePackage` / `Lesson` / `Attachment`
+**核心表**（4张）：`User`（含 email/phone/avatarUrl/departmentId） / `CoursePackage` / `Lesson` / `Attachment`
 
-**课程研发表**（6张）：`CourseRndProject` / `CourseRndDirectionVersion` / `CourseRndPlanVersion` / `CourseRndLessonDraft` / `CourseRndAiCallLog` / `CourseRndPublishRecord`
+**课程研发表**（6张）：`CourseRndProject` / `CourseRndDirectionVersion` / `CourseRndPlanVersion` / `CourseRndLessonDraft` / `CourseRndAiCallLog`（含 promptLog/messageLog 审计字段） / `CourseRndPublishRecord`
 
-**AI 配置表**（2张）：`AiProvider`（服务商，含加密 API Key + 可选代理） / `AiActionConfig`（动作→模型映射 + 价格）
+**AI 配置表**（2张）：`AiProvider`（服务商，含加密 API Key + 可选代理） / `AiActionConfig`（动作→模型映射 + 价格，含 pricePerCall 按次计费）
 
-**基线与 Prompt 表**（5张）：`BaselineDoc`（按维度拆分的基线文档） / `BaselineDocVersion`（基线版本历史） / `PromptTemplate`（6 个动作的 prompt 模板） / `PromptTemplateVersion`（模板版本历史） / `Preset`（课程方向/图片风格/标签预设）
+**基线与 Prompt 表**（5张）：`BaselineDoc`（按维度拆分的基线文档） / `BaselineDocVersion`（基线版本历史） / `PromptTemplate`（9 个动作的 prompt 模板） / `PromptTemplateVersion`（模板版本历史） / `Preset`（课程方向/图片风格/标签预设）
+
+**对话表**（2张）：`ChatConversation`（对话，含 mode: general/course_design） / `ChatMessage`（消息，role: user/assistant）
+
+**组织管理表**（2张）：`Department`（部门） / `InviteCode`（邀请码，含 maxUses/usedCount/expiresAt）
 
 **系统表**（2张）：`OperationLog` / `SystemConfig`（key-value，存汇率等）
 
@@ -109,12 +123,13 @@ AppShell (client component, 常驻)
 ```
 
 关键文件：
-- `lib/ai/provider.ts` — Provider 工厂 + chat/generateImage 方法
-- `lib/ai/pricing-service.ts` — 价格自动获取 + 汇率 + DB-backed 费用计算
+- `lib/ai/provider.ts` — Provider 工厂 + chat/chatStream/generateImage 方法（chatStream 支持多轮 messages 参数）
+- `lib/ai/pricing-service.ts` — 价格自动获取 + 汇率 + DB-backed 费用计算（支持 per-token 和 per-call 两种计费）
 - `lib/ai/build-content-data.ts` — AiLessonOutput → v2 contentData 格式转换
 - `lib/ai/prompts.ts` — 硬编码 prompt（fallback 用），DB 模板优先
-- `lib/ai/template-engine.ts` — Prompt 模板变量引擎（resolveTemplate + getSystemPrompt）
+- `lib/ai/template-engine.ts` — Prompt 模板变量引擎（getSystemPrompt 含基线注入 + resolveLightPrompt 仅变量替换）
 - `lib/ai/baseline-assembler.ts` — 按项目属性拼装多维度基线（60s 缓存）
+- `lib/ai/chat-prompts.ts` — 对话模式系统 prompt（通用 + 课程设计模式含基线注入）
 - `lib/ai/template-variables.ts` — 28 个预定义模板变量元数据
 - `lib/proxy-fetch.ts` — SOCKS5/HTTP 代理支持（用 node:https，非原生 fetch）
 - `lib/crypto.ts` — AES-256-GCM 加密 API Key
@@ -137,13 +152,15 @@ AI 调用时：getSystemPrompt("generate_framework", context)
 
 **基线维度**：通用(1) + 年龄段 A1-A4(4) + 难度 L1-L4(4) + 组织形态 S1-S2(2) + 产出物 P1-P11(11) + 矩阵(1) = 23 条。按项目属性自动拼装，只注入匹配维度。
 
-**Prompt 模板**：6 个动作（generate_framework / revise_framework / regenerate_lesson / revise_lesson / rewrite_field / rewrite_teaching_talk），支持 `{{变量名}}` 插值，管理员可在 /admin/prompt-config 编辑。
+**Prompt 模板**：9 个动作（generate_framework / revise_framework / regenerate_lesson / revise_lesson / rewrite_field / rewrite_teaching_talk / validate_lesson / package_cover / generate_title），支持 `{{变量名}}` 插值，管理员可在 /admin/prompt-config 编辑。
 
 **版本管理**：基线和模板每次编辑自动创建版本记录，支持回滚和逐行 diff 对比。
 
 **零行为变化保障**：DB 无模板时 `getSystemPrompt()` 返回 null，调用方 fallback 到 `prompts.ts` 中的硬编码 prompt。
 
-**种子数据**：`npx tsx prisma/seed-baselines.ts` — 从 `docs/baseline/` 导入 23 条基线 + 从代码提取 6 个默认模板 + 34 个预设。
+**种子数据**：`npx tsx prisma/seed-baselines.ts` — 从 `docs/baseline/` 导入 23 条基线 + 9 个默认模板（含基线变量） + 34 个预设。种子脚本**只创建不覆盖**已有模板，保护管理员的修改。
+
+**Prompt 审计**：每次 AI 调用记录完整的 `promptLog`（system prompt）和 `messageLog`（user message）到 `CourseRndAiCallLog`，可在 `/admin/ai-logs` 查看。
 
 ### CSS 设计系统
 
@@ -161,7 +178,9 @@ AI 调用时：getSystemPrompt("generate_framework", context)
 
 GitHub Actions → rsync 到腾讯云服务器 → `deploy-remote.sh`（npm ci + prisma generate + migrate deploy + build + PM2 restart）
 
-Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 路径有特殊配置（`proxy_buffering off` + `proxy_read_timeout 180s`）用于 SSE 流和图片生成。
+Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 和 `/api/chat/` 路径有特殊配置（`proxy_buffering off` + `proxy_read_timeout 180s`）用于 SSE 流和图片生成。
+
+**运行时数据分离**：AI 生成的图片存储在 `/opt/aidash/uploads/ai-images/`（通过 `AI_IMAGES_DIR` 环境变量），课程包上传在 `/opt/aidash/uploads/course-packages/`——均在部署目录外，rsync `--delete` 不会删除。
 
 ## 冻结约束（不得擅自修改）
 
@@ -180,6 +199,9 @@ Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 路径�
 - **基线按维度拼装，非全量注入**：根据项目属性只注入匹配的基线维度，节省 ~60% token 消耗。
 - **图片修改与文本修改交互统一**：点击预览中的图片/板块标题 → 关联反馈输入框 → 提交修改意见。
 - **数据库 migration 工作流**：本地和生产统一用 `prisma migrate dev/deploy`，不用 `db push`。
+- **图片 prompt 组装统一**：所有图片生成链路遵循 `构图引导 + 年龄提示 + 风格前缀 + 内容描述` 的拼接顺序，构图引导仅用于课次标题图（不用于课程包封面）。
+- **API 响应格式统一**：所有 API 返回 `{ data: payload }` 格式，前端用 `json.data ?? json` 解包。
+- **每次 AI 调用记录完整 prompt**：用于事后审计和问题排查（`promptLog` + `messageLog` 字段）。
 
 ## 工作流约定
 
@@ -190,11 +212,18 @@ Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 路径�
 
 ## 关键参考文档
 
+- 教师授课系统 PRD：`docs/product/teacher-system-prd.md`
 - 接入规范 v2：`docs/product/content-integration-spec-v2.md`
 - 课程研发 PRD：`docs/product/course-rnd-module-prd.md`
+- 问 AI 对话模块 PRD：`docs/product/chat-module-prd.md`
 - 基线与 Prompt 配置 PRD：`docs/product/baseline-prompt-config-prd.md`
+- 管理员模块需求（v1 + v2）：`docs/product/admin-module-requirements*.md`
 - 基线与 Prompt 技术方案：`docs/tech/baseline-prompt-template-implementation-plan.md`
+- 数据库设计（21 个模型）：`docs/tech/database/schema.md`
+- API 路由总览（53 个）：`docs/tech/api/overview.md`
 - 课程设计基线文档（v3 + 分维度）：`docs/baseline/`
 - 视觉设计规范：`docs/design/guidelines/`
 - 项目进度：`docs/PROJECT_STATUS.md`
 - 技术决策：`docs/decisions/ADR-*.md`
+- AIGC 工程化经验：`docs/decisions/ADR-004-aigc-prompt-engineering-lessons.md`
+- 问AI模块技术方案：`docs/tech/chat-module-implementation-plan.md`
