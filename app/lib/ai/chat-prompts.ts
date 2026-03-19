@@ -1,5 +1,15 @@
 import { assembleBaselines } from "./baseline-assembler";
 
+function getCurrentDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+  const weekday = weekdays[now.getDay()];
+  return `${year}年${month}月${day}日，星期${weekday}`;
+}
+
 const GENERAL_SYSTEM_PROMPT = `你是一个智能助手。请用中文回答用户的问题，回答要准确、清晰、有帮助。
 支持使用 Markdown 格式（标题、列表、代码块、表格等）来组织回答。`;
 
@@ -11,7 +21,7 @@ const COURSE_DESIGN_PREAMBLE = `你是一个智能助手，同时也是 AI 辅�
 支持使用 Markdown 格式来组织回答。`;
 
 export function getGeneralChatSystemPrompt(): string {
-  return GENERAL_SYSTEM_PROMPT;
+  return `当前日期：${getCurrentDateString()}\n\n${GENERAL_SYSTEM_PROMPT}`;
 }
 
 export async function getCourseDesignChatSystemPrompt(): Promise<string> {
@@ -29,5 +39,5 @@ export async function getCourseDesignChatSystemPrompt(): Promise<string> {
     .filter(Boolean)
     .join("\n\n");
 
-  return `${COURSE_DESIGN_PREAMBLE}\n\n${baselineContent}`;
+  return `当前日期：${getCurrentDateString()}\n\n${COURSE_DESIGN_PREAMBLE}\n\n${baselineContent}`;
 }

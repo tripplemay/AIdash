@@ -98,6 +98,9 @@ img { display: block; max-width: 100%; }
   height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
 }
 
 .page-shell {
@@ -1783,7 +1786,7 @@ img { display: block; max-width: 100%; }
   .sidebar, .topbar, .lesson-topbar, .page-shell__orb, .no-print, .btn-copy { display: none !important; }
 
   /* 解除所有容器限制 */
-  .page-wrap { padding: 0 !important; }
+  .page-wrap { padding: 0 !important; position: static !important; overflow: visible !important; height: auto !important; }
   .page-shell { border-radius: 0 !important; box-shadow: none !important; border: none !important; background: #fff !important; overflow: visible !important; }
   .page-shell__inner { overflow: visible !important; }
   .shell { grid-template-columns: 1fr !important; height: auto !important; min-height: 0 !important; }
