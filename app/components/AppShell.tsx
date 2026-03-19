@@ -15,6 +15,8 @@ interface AppShellProps {
 export default function AppShell({ userName, userRole, children }: AppShellProps) {
   const pathname = usePathname();
   const isLessonPage = pathname.startsWith("/lesson/");
+  const isChatPage = pathname.startsWith("/chat");
+  const isFullscreenPage = isLessonPage || isChatPage;
 
   return (
     <TopBarProvider>
@@ -34,12 +36,12 @@ export default function AppShell({ userName, userRole, children }: AppShellProps
           >
             <Sidebar userName={userName} userRole={userRole} />
 
-            <main className="main" style={isLessonPage ? { overflow: "hidden" } : undefined}>
+            <main className="main" style={isFullscreenPage ? { overflow: "hidden" } : undefined}>
               {/* 课次页不显示通用 TopBar，由页面自行渲染 lesson-topbar */}
               {!isLessonPage && <TopBar userName={userName} userRole={userRole} />}
 
-              {/* 课次页无 main__content 包裹（需要自定义滚动结构） */}
-              {isLessonPage ? children : (
+              {/* 课次页/对话页无 main__content 包裹（需要自定义布局） */}
+              {isFullscreenPage ? children : (
                 <div className="main__content">{children}</div>
               )}
             </main>

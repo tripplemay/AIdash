@@ -9,19 +9,49 @@ datasource db {
 
 // ─── 用户（老师 / 教学主管 / 管理员） ───
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  name      String
-  role      String   @default("teacher") // "teacher" | "rd_manager" | "admin"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  username     String   @unique
+  password     String
+  name         String
+  role         String   @default("rd_manager") // "teacher" | "rd_manager" | "admin"
+  email        String?
+  phone        String?
+  avatarUrl    String?
+  departmentId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  // 课程研发模块关联
+  department        Department?           @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   courseRndProjects  CourseRndProject[]
   publishRecords     CourseRndPublishRecord[]
   operationLogs      OperationLog[]
   chatConversations  ChatConversation[]
+  inviteCodes        InviteCode[]
+}
+
+// ─── 部门 ───
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+}
+
+// ─── 邀请码 ───
+model InviteCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  maxUses     Int      @default(1)
+  usedCount   Int      @default(0)
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
 }
 
 // ─── 课程包 ───

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 export default function LoginForm() {
   const [username, setUsername] = useState("");
@@ -80,6 +81,12 @@ export default function LoginForm() {
             <button type="button" disabled className="login__social-btn login__social-btn--wechat">
               微信登录
             </button>
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: "var(--sp-3)" }}>
+            <Link href="/register" style={{ color: "var(--brand)", fontSize: 13, fontWeight: 500 }}>
+              没有账号？使用邀请码注册
+            </Link>
           </div>
         </form>
       </div>

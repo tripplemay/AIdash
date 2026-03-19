@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { signOut } from "next-auth/react";
-import { LogOut } from "lucide-react";
+import { LogOut, User, KeyRound } from "lucide-react";
 import { ROLE_LABELS, ROLE_CSS, type Role } from "@/lib/roles";
+import Link from "next/link";
+import PasswordChangeModal from "./profile/PasswordChangeModal";
 
 export default function UserAvatarDropdown({
   userName,
@@ -14,9 +16,21 @@ export default function UserAvatarDropdown({
   userRole: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ top: 0, right: 0 });
+
+  // Fetch avatar on mount
+  useEffect(() => {
+    fetch("/api/user/profile")
+      .then(r => r.json())
+      .then(data => {
+        if (data.avatarUrl) setAvatarUrl(data.avatarUrl);
+      })
+      .catch(() => {});
+  }, []);
 
   const updatePos = useCallback(() => {
     if (btnRef.current) {
@@ -51,7 +65,11 @@ export default function UserAvatarDropdown({
   return (
     <>
       <button ref={btnRef} className="avatar-btn" onClick={() => setOpen(v => !v)}>
-        {userName.charAt(0)}
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={userName} className="avatar-btn__img" />
+        ) : (
+          userName.charAt(0)
+        )}
       </button>
 
       {open && createPortal(
@@ -66,12 +84,31 @@ export default function UserAvatarDropdown({
               {roleLabel}
             </span>
           </div>
+          <Link
+            href="/profile"
+            className="avatar-dropdown__menu-item"
+            onClick={() => setOpen(false)}
+          >
+            <User size={14} />
+            个人资料
+          </Link>
+          <button
+            className="avatar-dropdown__menu-item"
+            onClick={() => { setOpen(false); setShowPasswordModal(true); }}
+          >
+            <KeyRound size={14} />
+            修改密码
+          </button>
           <button className="avatar-dropdown__logout" onClick={() => signOut({ callbackUrl: "/" })}>
             <LogOut size={14} />
             退出登录
           </button>
         </div>,
         document.body
+      )}
+
+      {showPasswordModal && (
+        <PasswordChangeModal onClose={() => setShowPasswordModal(false)} />
       )}
     </>
   );

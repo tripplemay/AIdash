@@ -31,6 +31,28 @@ export default function UserFormModal({ mode, onClose, onSuccess }: Props) {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [downgradeWarning, setDowngradeWarning] = useState("");
+
+  async function handleRoleChange(newRole: string) {
+    const oldRole = editUser?.role;
+    setRole(newRole);
+    setDowngradeWarning("");
+
+    // Check if downgrading from rd_manager/admin to teacher
+    if (editUser && (oldRole === "rd_manager" || oldRole === "admin") && newRole === "teacher") {
+      try {
+        const res = await fetch(`/api/admin/users/${editUser.id}/check-downgrade`);
+        const json = await res.json();
+        if (res.ok && json.projectCount > 0) {
+          setDowngradeWarning(
+            `该用户有 ${json.projectCount} 个进行中的研发项目，降级后这些项目将无法被访问`
+          );
+        }
+      } catch {
+        // Silently fail the check - the server will validate on submit
+      }
+    }
+  }
 
   async function handleSubmit() {
     setError("");
@@ -105,10 +127,29 @@ export default function UserFormModal({ mode, onClose, onSuccess }: Props) {
           {!isReset && (
             <div>
               <label className="field-label">角色 <span className="field-required">*</span></label>
-              <select className="select" value={role} onChange={e => setRole(e.target.value)}>
+              <select
+                className="select"
+                value={role}
+                onChange={e => isCreate ? setRole(e.target.value) : handleRoleChange(e.target.value)}
+              >
                 <option value="teacher">老师</option>
+                <option value="rd_manager">研发员</option>
                 <option value="admin">管理员</option>
               </select>
+              {downgradeWarning && (
+                <div style={{
+                  marginTop: "var(--sp-2)",
+                  padding: "var(--sp-2) var(--sp-3)",
+                  background: "var(--warning-light)",
+                  border: "1px solid var(--warning)",
+                  borderRadius: "var(--radius-sm)",
+                  fontSize: 13,
+                  color: "var(--text)",
+                  lineHeight: 1.5,
+                }}>
+                  {downgradeWarning}
+                </div>
+              )}
             </div>
           )}
 

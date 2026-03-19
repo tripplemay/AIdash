@@ -36,9 +36,9 @@ export default function ChatPage() {
   useEffect(() => {
     fetch("/api/chat/conversations")
       .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setConversations(data);
+      .then((json) => {
+        if (json.data && Array.isArray(json.data)) {
+          setConversations(json.data);
         }
       })
       .catch(() => {
@@ -52,9 +52,9 @@ export default function ChatPage() {
       setMessages([]);
       fetch(`/api/chat/conversations/${id}`)
         .then((r) => r.json())
-        .then((data) => {
-          if (data.messages && Array.isArray(data.messages)) {
-            setMessages(data.messages);
+        .then((json) => {
+          if (json.data?.messages && Array.isArray(json.data.messages)) {
+            setMessages(json.data.messages);
           }
         })
         .catch(() => {
@@ -73,7 +73,8 @@ export default function ChatPage() {
         body: JSON.stringify({ mode }),
       })
         .then((r) => r.json())
-        .then((data) => {
+        .then((json) => {
+          const data = json.data ?? json;
           const newConv: Conversation = {
             id: data.id,
             title: data.title ?? "新对话",

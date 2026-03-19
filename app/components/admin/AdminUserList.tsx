@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import UserFormModal from "./UserFormModal";
+import DepartmentManager from "./DepartmentManager";
+import InviteCodeManager from "./InviteCodeManager";
 import { SetTopBar } from "@/components/TopBarContext";
 
 interface UserRow {
@@ -16,8 +18,9 @@ interface UserRow {
 type ModalMode = { type: "create" } | { type: "edit"; user: UserRow } | { type: "resetPassword"; user: UserRow } | null;
 
 const ROLE_MAP: Record<string, { text: string; cls: string }> = {
-  admin:   { text: "管理员", cls: "badge-role badge-role--admin" },
-  teacher: { text: "老师",   cls: "badge-role badge-role--teacher" },
+  admin:      { text: "管理员", cls: "badge-role badge-role--admin" },
+  rd_manager: { text: "研发员", cls: "badge-role badge-role--rd-manager" },
+  teacher:    { text: "老师",   cls: "badge-role badge-role--teacher" },
 };
 
 export default function AdminUserList({ users }: { users: UserRow[] }) {
@@ -25,6 +28,8 @@ export default function AdminUserList({ users }: { users: UserRow[] }) {
   const [modal, setModal] = useState<ModalMode>(null);
   const [confirm, setConfirm] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const [showDeptManager, setShowDeptManager] = useState(false);
+  const [showInviteManager, setShowInviteManager] = useState(false);
 
   async function deleteUser(id: string) {
     setLoading(id);
@@ -36,12 +41,21 @@ export default function AdminUserList({ users }: { users: UserRow[] }) {
     else router.refresh();
   }
 
+  const topBarActions = (
+    <div style={{ display: "flex", gap: "var(--sp-2)" }}>
+      <button className="btn btn--sm btn--soft" onClick={() => setShowDeptManager(true)}>部门管理</button>
+      <button className="btn btn--sm btn--soft" onClick={() => setShowInviteManager(true)}>邀请码管理</button>
+      <button className="btn btn--sm" onClick={() => setModal({ type: "create" })}>新建用户</button>
+    </div>
+  );
+
   return (
     <>
       <SetTopBar
         breadcrumb="管理后台"
         title="用户管理"
-        actions={<button className="btn btn--sm" onClick={() => setModal({ type: "create" })}>新建用户</button>}
+        actions={topBarActions}
+        actionsKey={`dept-${showDeptManager}-invite-${showInviteManager}`}
       />
 
       <div className="table-wrap">
@@ -97,6 +111,14 @@ export default function AdminUserList({ users }: { users: UserRow[] }) {
             </div>
           </div>
         </div>
+      )}
+
+      {showDeptManager && (
+        <DepartmentManager onClose={() => setShowDeptManager(false)} />
+      )}
+
+      {showInviteManager && (
+        <InviteCodeManager onClose={() => setShowInviteManager(false)} />
       )}
     </>
   );

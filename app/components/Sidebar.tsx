@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu, Sparkles, Activity, MessageSquare } from "lucide-react";
-import { ROLE_LABELS, type Role } from "@/lib/roles";
+import type { Role } from "@/lib/roles";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import SidebarNavItem from "./SidebarNavItem";
 import type { FilterGroup } from "./SidebarFilterTree";
@@ -26,7 +26,6 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
   const searchParams = useSearchParams();
   const canAccessAdmin = hasPermission(userRole, PERMISSIONS.MANAGE_PACKAGES) || hasPermission(userRole, PERMISSIONS.MANAGE_USERS) || hasPermission(userRole, PERMISSIONS.VIEW_AI_SETTINGS) || hasPermission(userRole, PERMISSIONS.VIEW_PROMPT_CONFIG) || hasPermission(userRole, PERMISSIONS.VIEW_AI_LOGS);
   const canAccessRnd = hasPermission(userRole, PERMISSIONS.COURSE_RND);
-  const initial = userName.charAt(0).toUpperCase();
 
   // 路由检测
   const isListPage = pathname === "/list";
@@ -137,16 +136,6 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
       <Link href="/list" className="sidebar__logo">
         <img src="/images/logo-sm.png" alt="AI Dash" className="sidebar__logo-img" />
       </Link>
-
-      <div className="sidebar__user-wrap">
-        <div className="sidebar__user-card">
-          <div className="sidebar__avatar">{initial}</div>
-          <div>
-            <div className="sidebar__user-name">{userName}</div>
-            <div className="sidebar__user-role">{ROLE_LABELS[userRole as Role] ?? "教师"}</div>
-          </div>
-        </div>
-      </div>
 
       <nav className="sidebar__nav">
         {/* 课程包列表 */}
