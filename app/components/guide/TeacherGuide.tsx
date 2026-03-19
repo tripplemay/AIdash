@@ -4,7 +4,9 @@ import GuideCard from "./GuideCard";
 import GuideFaq from "./GuideFaq";
 
 export const TEACHER_SECTIONS = [
-  { id: "section-quickstart", title: "快速入门" },
+  { id: "section-browse", title: "课程浏览" },
+  { id: "section-chat", title: "问AI助手" },
+  { id: "section-settings", title: "个人设置" },
   { id: "section-faq", title: "常见问题" },
 ];
 
@@ -14,7 +16,8 @@ export default function TeacherGuide() {
       <div className="guide-body">
         <span className="guide-role-badge">教师版</span>
 
-        <div className="guide-section-title" id="section-quickstart">快速入门</div>
+        {/* ── 课程浏览 ── */}
+        <div className="guide-section-title" id="section-browse">课程浏览</div>
 
         <GuideCard step={1} title="注册 / 登录">
           <ol className="guide-steps">
@@ -59,7 +62,12 @@ export default function TeacherGuide() {
           </ol>
         </GuideCard>
 
-        <GuideCard step={6} title="问 AI 助手">
+        <hr className="guide-divider" />
+
+        {/* ── 问AI助手 ── */}
+        <div className="guide-section-title" id="section-chat">问AI助手</div>
+
+        <GuideCard step={6} title="使用 AI 对话">
           <ol className="guide-steps">
             <li>点击左侧边栏「问AI」进入对话页面</li>
             <li>点击「新建对话」，选择模式：
@@ -73,7 +81,12 @@ export default function TeacherGuide() {
           <div className="guide-tip"><strong>课程设计模式</strong>下，AI 会参考系统内置的课程设计标准来回答，比通用模式更专业。</div>
         </GuideCard>
 
-        <GuideCard step={7} title="个人设置">
+        <hr className="guide-divider" />
+
+        {/* ── 个人设置 ── */}
+        <div className="guide-section-title" id="section-settings">个人设置</div>
+
+        <GuideCard step={7} title="资料与密码">
           <ol className="guide-steps">
             <li>点击页面右上角的<strong>头像</strong>，可进入以下设置：</li>
             <li><strong>个人资料</strong>：修改姓名、邮箱、手机、部门，选择头像（60 个预设卡通头像）</li>
@@ -81,6 +94,9 @@ export default function TeacherGuide() {
           </ol>
         </GuideCard>
 
+        <hr className="guide-divider" />
+
+        {/* ── 常见问题 ── */}
         <div className="guide-section-title" id="section-faq">常见问题</div>
 
         <GuideFaq question="我想找适合 8 岁孩子的课程">

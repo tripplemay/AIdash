@@ -6,7 +6,9 @@ import GuideFaq from "./GuideFaq";
 export const RD_MANAGER_SECTIONS = [
   { id: "section-browse", title: "课程浏览" },
   { id: "section-rnd", title: "AI 课程研发" },
+  { id: "section-chat", title: "问AI助手" },
   { id: "section-packages", title: "课程包管理" },
+  { id: "section-settings", title: "个人设置" },
   { id: "section-config", title: "查看配置" },
   { id: "section-faq", title: "常见问题" },
 ];
@@ -17,7 +19,7 @@ export default function RdManagerGuide() {
       <div className="guide-body">
         <span className="guide-role-badge">教学主管版</span>
 
-        {/* Part 1: 课程浏览 */}
+        {/* ── 课程浏览 ── */}
         <div className="guide-section-title" id="section-browse">课程浏览</div>
         <p className="guide-section-subtitle">查看和使用已发布的课程，与教师相同</p>
 
@@ -32,18 +34,9 @@ export default function RdManagerGuide() {
           <div className="guide-tip"><strong>实用工具：</strong>课程中的 AI 对话模板可以一键复制；顶部有「打印本课」按钮。</div>
         </GuideCard>
 
-        <GuideCard step={2} title="问 AI 助手">
-          <ol className="guide-steps">
-            <li>点击左侧边栏「问AI」，新建对话</li>
-            <li>选择<strong>通用模式</strong>（问任何问题）或<strong>课程设计模式</strong>（AI 懂课程设计）</li>
-            <li>输入消息按 <kbd>Enter</kbd> 发送，AI 实时回复，支持多轮对话</li>
-            <li>AI 会<strong>自动联网搜索</strong>获取最新信息，回答中以 [1]、[2] 标注来源</li>
-          </ol>
-        </GuideCard>
-
         <hr className="guide-divider" />
 
-        {/* Part 2: AI 课程研发 */}
+        {/* ── AI 课程研发 ── */}
         <div className="guide-section-title" id="section-rnd">AI 课程研发</div>
         <p className="guide-section-subtitle">从零开始，用 AI 设计完整课程并发布到课程库</p>
 
@@ -56,7 +49,7 @@ export default function RdManagerGuide() {
           ))}
         </div>
 
-        <GuideCard step={3} title="新建项目 + 填写课程方向">
+        <GuideCard step={2} title="新建项目 + 填写课程方向">
           <ol className="guide-steps">
             <li>点击左侧边栏「课程研发」，进入研发看板</li>
             <li>点击「+ 新建项目」</li>
@@ -71,7 +64,7 @@ export default function RdManagerGuide() {
           <div className="guide-tip"><strong>信息越详细，AI 生成质量越高。</strong>特别是&quot;课程方向&quot;和&quot;核心诉求&quot;，直接影响框架质量。</div>
         </GuideCard>
 
-        <GuideCard step={4} title="AI 生成框架 + 修改">
+        <GuideCard step={3} title="AI 生成框架 + 修改">
           <ol className="guide-steps">
             <li>点击「生成课程框架」，AI 实时生成课程大纲和封面图</li>
             <li>右侧面板展示生成结果：课程总结 + 每课标题和概述</li>
@@ -82,7 +75,7 @@ export default function RdManagerGuide() {
           <div className="guide-tip"><strong>AI 是&quot;改&quot;不是&quot;重写&quot;：</strong>每次修改只动您指出的部分，其余内容保持不变。</div>
         </GuideCard>
 
-        <GuideCard step={5} title="工作台：逐课生成和修订">
+        <GuideCard step={4} title="工作台：逐课生成和修订">
           <ol className="guide-steps">
             <li>确认框架后进入工作台，显示所有课次卡片（初始为空）</li>
             <li>点击某个课次的「生成」按钮，AI 生成详细方案（含 7 个板块）</li>
@@ -93,7 +86,7 @@ export default function RdManagerGuide() {
           <div className="guide-tip"><strong>分页加载：</strong>课次多时默认显示前几课，点击底部「加载更多」查看后续课次。</div>
         </GuideCard>
 
-        <GuideCard step={6} title="审核 → 定稿 → 发布">
+        <GuideCard step={5} title="审核 → 定稿 → 发布">
           <ol className="guide-steps">
             <li>所有课次方案就绪后，点击顶部「审核并定稿」</li>
             <li>AI 对每节课做 <strong>10 项质量检查</strong>（目标清晰度、AI 价值、时间分配等），逐项显示结果</li>
@@ -106,7 +99,22 @@ export default function RdManagerGuide() {
 
         <hr className="guide-divider" />
 
-        {/* Part 3: 课程包管理 */}
+        {/* ── 问AI助手 ── */}
+        <div className="guide-section-title" id="section-chat">问AI助手</div>
+
+        <GuideCard step={6} title="使用 AI 对话">
+          <ol className="guide-steps">
+            <li>点击左侧边栏「问AI」，新建对话</li>
+            <li>选择<strong>通用模式</strong>（问任何问题）或<strong>课程设计模式</strong>（AI 懂课程设计）</li>
+            <li>输入消息按 <kbd>Enter</kbd> 发送，AI 实时回复，支持多轮对话</li>
+            <li>AI 会<strong>自动联网搜索</strong>获取最新信息，回答中以 [1]、[2] 标注来源</li>
+          </ol>
+          <div className="guide-tip"><strong>课程设计模式</strong>下，AI 了解课程设计标准，能提供更专业的建议。比如可以问&quot;6 岁孩子适合什么样的 AI 互动环节？&quot;</div>
+        </GuideCard>
+
+        <hr className="guide-divider" />
+
+        {/* ── 课程包管理 ── */}
         <div className="guide-section-title" id="section-packages">课程包管理</div>
         <p className="guide-section-subtitle">管理已发布的课程包</p>
 
@@ -124,20 +132,10 @@ export default function RdManagerGuide() {
 
         <hr className="guide-divider" />
 
-        {/* Part 4: 查看配置 */}
-        <div className="guide-section-title" id="section-config">查看系统配置</div>
-        <p className="guide-section-subtitle">以下页面您可以查看但不能修改，修改权限属于管理员</p>
+        {/* ── 个人设置 ── */}
+        <div className="guide-section-title" id="section-settings">个人设置</div>
 
-        <GuideCard step={8} title="可查看的配置页面">
-          <ol className="guide-steps">
-            <li><strong>AI 服务配置</strong>：查看当前使用的 AI 模型和用量统计</li>
-            <li><strong>AI 生成规则</strong>（Prompt 配置）：查看课程设计标准、AI 生成指令模板、预设选项</li>
-            <li><strong>AI 调用记录</strong>：查看您自己项目的 AI 使用记录和费用</li>
-            <li><strong>操作日志</strong>：查看您自己的操作记录</li>
-          </ol>
-        </GuideCard>
-
-        <GuideCard step={9} title="个人设置">
+        <GuideCard step={8} title="资料与密码">
           <ol className="guide-steps">
             <li>点击页面右上角的<strong>头像</strong>，可进入以下设置：</li>
             <li><strong>个人资料</strong>：修改姓名、邮箱、手机、部门，选择头像（60 个预设卡通头像）</li>
@@ -147,7 +145,22 @@ export default function RdManagerGuide() {
 
         <hr className="guide-divider" />
 
-        {/* FAQ */}
+        {/* ── 查看配置 ── */}
+        <div className="guide-section-title" id="section-config">查看系统配置</div>
+        <p className="guide-section-subtitle">以下页面您可以查看但不能修改，修改权限属于管理员</p>
+
+        <GuideCard step={9} title="可查看的配置页面">
+          <ol className="guide-steps">
+            <li><strong>AI 服务配置</strong>：查看当前使用的 AI 模型和用量统计</li>
+            <li><strong>AI 生成规则</strong>（Prompt 配置）：查看课程设计标准、AI 生成指令模板、预设选项</li>
+            <li><strong>AI 调用记录</strong>：查看您自己项目的 AI 使用记录和费用</li>
+            <li><strong>操作日志</strong>：查看您自己的操作记录</li>
+          </ol>
+        </GuideCard>
+
+        <hr className="guide-divider" />
+
+        {/* ── 常见问题 ── */}
         <div className="guide-section-title" id="section-faq">常见问题</div>
 
         <GuideFaq question="我想从零开始设计一个新课程">

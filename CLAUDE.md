@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **AI Dash — 智能课程系统**。面向老师、教学主管（rd_manager）和管理员，包含三大模块：
 1. **教师授课系统**：课程包管理、课次内容渲染（v2 JSON → LessonRenderer）
 2. **课程研发模块**：AI 驱动的课程设计工作台（方向确认 → 详细方案 → 定稿发布）
-3. **问AI模块**：类 ChatGPT 对话界面，支持通用模式和课程设计模式（注入基线知识）
+3. **问AI模块**：类 ChatGPT 对话界面，支持通用模式和课程设计模式（注入基线知识），支持联网搜索（Tavily）
+4. **使用指南**：按角色显示的操作指南（教师版/主管版），内嵌 TOC 导航
 
 ## 技术栈
 
@@ -46,7 +47,8 @@ npx prisma studio              # GUI 数据库管理
 ```
 app/
 ├── page.tsx                              # 登录页
-├── globals.css                           # 纯 CSS 设计系统（~2000行，BEM-lite）
+├── register/page.tsx                    # 邀请码注册页（不在 Route Group 内）
+├── globals.css                           # 纯 CSS 设计系统（BEM-lite）
 └── (app)/                                # Route Group — 认证保护
     ├── layout.tsx                        # 认证检查 + AppShell（Sidebar + TopBar 常驻）
     ├── list/page.tsx                     # /list — 课程包列表
@@ -56,7 +58,8 @@ app/
     │   ├── page.tsx                      # /course-rnd — 研发进度看板
     │   ├── [projectId]/page.tsx          # /course-rnd/:id — 方向确认
     │   └── [projectId]/workbench/page.tsx # /course-rnd/:id/workbench — 工作台
-    ├── chat/page.tsx                     # /chat — 问AI对话
+    ├── chat/page.tsx                     # /chat — 问AI对话（联网搜索 + 引用标注）
+    ├── guide/page.tsx                    # /guide — 使用指南（按角色显示）
     ├── profile/page.tsx                  # /profile — 个人资料
     └── admin/
         ├── layout.tsx                    # admin 角色校验
@@ -86,7 +89,7 @@ AppShell (client component, 常驻)
 
 **全屏页面处理**：课次页（`isLessonPage`）和对话页（`isChatPage`）走全屏模式——隐藏 `main__content` padding，`main` 设 `overflow: hidden`。课次页还隐藏通用 TopBar。
 
-**滚动隔离**：`.page-wrap` 固定 `height: 100vh`，Sidebar 和内容区各自独立滚动（`overflow-y: auto`），TopBar 始终可见。
+**滚动隔离**：`.page-wrap { height: 100vh; overflow: hidden }` + `body { overflow: hidden }` 锁定视口。Sidebar 和 `main__content` 各自独立滚动（`overflow-y: auto`），TopBar 始终可见。无圆角容器——应用铺满全屏，避免 `overflow: hidden` 裁剪问题。
 
 ### 角色与权限
 
@@ -123,13 +126,16 @@ AppShell (client component, 常驻)
 ```
 
 关键文件：
-- `lib/ai/provider.ts` — Provider 工厂 + chat/chatStream/generateImage 方法（chatStream 支持多轮 messages 参数）
+- `lib/ai/provider.ts` — Provider 工厂 + chat/chatStream/generateImage 方法（支持多轮 messages + function calling tools 参数）
 - `lib/ai/pricing-service.ts` — 价格自动获取 + 汇率 + DB-backed 费用计算（支持 per-token 和 per-call 两种计费）
 - `lib/ai/build-content-data.ts` — AiLessonOutput → v2 contentData 格式转换
 - `lib/ai/prompts.ts` — 硬编码 prompt（fallback 用），DB 模板优先
 - `lib/ai/template-engine.ts` — Prompt 模板变量引擎（getSystemPrompt 含基线注入 + resolveLightPrompt 仅变量替换）
 - `lib/ai/baseline-assembler.ts` — 按项目属性拼装多维度基线（60s 缓存）
-- `lib/ai/chat-prompts.ts` — 对话模式系统 prompt（通用 + 课程设计模式含基线注入）
+- `lib/ai/chat-prompts.ts` — 对话模式系统 prompt（通用 + 课程设计模式含基线注入，自动注入当前日期）
+- `lib/ai/chat-with-tools.ts` — 联网搜索编排器（LLM 调用→Tavily 搜索→二次 LLM 调用，支持 function calling + prompt fallback）
+- `lib/ai/tavily.ts` — Tavily API 客户端（API Key 从 SystemConfig 加密读取）
+- `lib/ai/web-search-tools.ts` — 搜索工具定义 + 结果格式化 + 引用指令
 - `lib/ai/template-variables.ts` — 28 个预定义模板变量元数据
 - `lib/proxy-fetch.ts` — SOCKS5/HTTP 代理支持（用 node:https，非原生 fetch）
 - `lib/crypto.ts` — AES-256-GCM 加密 API Key
@@ -137,6 +143,8 @@ AppShell (client component, 常驻)
 **图片生成**：`generateImage` 优先 chat 接口（Gemini/GPT-5-image），回退 `/images/generations`（DALL-E）。GPT-5-image 模型图片在 `message.images` 字段。
 
 **代理**：按提供商配置 `proxyUrl` 字段（如 `socks5://127.0.0.1:1080`），通过 Xray 出站。代理请求用 `node:https` + `socks-proxy-agent`（原生 fetch 不支持 agent）。
+
+**联网搜索**：问AI对话中 LLM 通过 function calling 自主判断是否需要搜索。流程：LLM 第一次调用（带 tools）→ 检测 `web_search` tool_call → Tavily API 搜索 → LLM 第二次调用（注入搜索结果，无 tools 防循环）→ 流式输出含 `[1][2]` 引用的回答。不支持 function calling 的模型通过 prompt fallback（`[SEARCH: query]` 格式）兜底。Tavily API Key 存储在 `SystemConfig` 表中（加密），管理员在 `/admin/ai-settings` 的「外部服务密钥」区域配置。来源通过 `<!-- sources::[...] -->` HTML 注释嵌入消息内容持久化，前端提取后渲染来源链接列表。
 
 ### 基线与 Prompt 模板架构
 
@@ -202,6 +210,9 @@ Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 和 `/ap
 - **图片 prompt 组装统一**：所有图片生成链路遵循 `构图引导 + 年龄提示 + 风格前缀 + 内容描述` 的拼接顺序，构图引导仅用于课次标题图（不用于课程包封面）。
 - **API 响应格式统一**：所有 API 返回 `{ data: payload }` 格式，前端用 `json.data ?? json` 解包。
 - **每次 AI 调用记录完整 prompt**：用于事后审计和问题排查（`promptLog` + `messageLog` 字段）。
+- **对话 system prompt 注入当前日期**：避免 LLM 幻觉日期，格式如"2026年3月19日，星期四"。
+- **联网搜索来源嵌入消息内容**：`<!-- sources::[...] -->` HTML 注释方式，零 schema 变更，前端解析后渲染。
+- **使用指南内容同步维护**：新增/调整功能时必须同步更新 `TeacherGuide.tsx` 和 `RdManagerGuide.tsx`，内容顺序与侧边栏菜单一致。
 
 ## 工作流约定
 
@@ -227,3 +238,4 @@ Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 和 `/ap
 - 技术决策：`docs/decisions/ADR-*.md`
 - AIGC 工程化经验：`docs/decisions/ADR-004-aigc-prompt-engineering-lessons.md`
 - 问AI模块技术方案：`docs/tech/chat-module-implementation-plan.md`
+- 火山方舟 API 集成：`docs/decisions/ADR-005-volcengine-ark-api-integration.md`
