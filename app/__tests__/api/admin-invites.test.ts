@@ -104,6 +104,16 @@ describe("PATCH /api/admin/invites/[id]", () => {
     const res = await PATCH(makePatch({ isActive: "yes" }), { params: paramsInv1 });
     expect(res.status).toBe(400);
   });
+
+  it("returns 404 for nonexistent invite (P2025)", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    const error = Object.assign(new Error("Record not found"), { code: "P2025" });
+    mockUpdate.mockRejectedValue(error);
+    const res = await PATCH(makePatch({ isActive: true }), { params: paramsInv1 });
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json.error).toBe("邀请码不存在");
+  });
 });
 
 describe("DELETE /api/admin/invites/[id]", () => {
@@ -120,5 +130,15 @@ describe("DELETE /api/admin/invites/[id]", () => {
     mockAuth.mockResolvedValue(teacherSession);
     const res = await DELETE(makeDelete(), { params: paramsInv1 });
     expect(res.status).toBe(403);
+  });
+
+  it("returns 404 for nonexistent invite (P2025)", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    const error = Object.assign(new Error("Record not found"), { code: "P2025" });
+    mockDelete.mockRejectedValue(error);
+    const res = await DELETE(makeDelete(), { params: paramsInv1 });
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json.error).toBe("邀请码不存在");
   });
 });

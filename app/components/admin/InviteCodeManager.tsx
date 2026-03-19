@@ -30,8 +30,9 @@ export default function InviteCodeManager({ onClose }: InviteCodeManagerProps) {
 
   async function fetchCodes() {
     try {
-      const res = await fetch("/api/admin/invite-codes");
-      const data = await res.json();
+      const res = await fetch("/api/admin/invites");
+      const json = await res.json();
+      const data = json.data ?? json;
       setCodes(Array.isArray(data) ? data : []);
     } catch {
       showToast("加载邀请码失败", "error");
@@ -47,7 +48,7 @@ export default function InviteCodeManager({ onClose }: InviteCodeManagerProps) {
   async function handleGenerate() {
     setGenerating(true);
     try {
-      const res = await fetch("/api/admin/invite-codes", {
+      const res = await fetch("/api/admin/invites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ maxUses, expiresInDays }),
@@ -69,7 +70,7 @@ export default function InviteCodeManager({ onClose }: InviteCodeManagerProps) {
 
   async function handleToggle(id: string, isActive: boolean) {
     try {
-      const res = await fetch(`/api/admin/invite-codes/${id}`, {
+      const res = await fetch(`/api/admin/invites/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !isActive }),
@@ -88,7 +89,7 @@ export default function InviteCodeManager({ onClose }: InviteCodeManagerProps) {
   async function handleDelete(id: string) {
     if (!confirm("确认删除此邀请码？")) return;
     try {
-      const res = await fetch(`/api/admin/invite-codes/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/invites/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const json = await res.json();
         showToast(json.error ?? "删除失败", "error");

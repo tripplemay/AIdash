@@ -98,6 +98,34 @@ describe("PATCH /api/admin/departments/[id]", () => {
     const res = await PATCH(makePatch({ name: "x" }), { params: paramsD1 });
     expect(res.status).toBe(403);
   });
+
+  it("returns 400 for duplicate name (P2002)", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    const error = Object.assign(new Error("Unique constraint"), { code: "P2002" });
+    mockUpdate.mockRejectedValue(error);
+    const res = await PATCH(makePatch({ name: "已存在" }), { params: paramsD1 });
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("部门名称已存在");
+  });
+
+  it("returns 404 for nonexistent department (P2025)", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    const error = Object.assign(new Error("Record not found"), { code: "P2025" });
+    mockUpdate.mockRejectedValue(error);
+    const res = await PATCH(makePatch({ name: "新名称" }), { params: paramsD1 });
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json.error).toBe("部门不存在");
+  });
+
+  it("returns 400 for empty name", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    const res = await PATCH(makePatch({ name: "  " }), { params: paramsD1 });
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("部门名称不能为空");
+  });
 });
 
 describe("DELETE /api/admin/departments/[id]", () => {
@@ -114,5 +142,15 @@ describe("DELETE /api/admin/departments/[id]", () => {
     mockAuth.mockResolvedValue(teacherSession);
     const res = await DELETE(makeDelete(), { params: paramsD1 });
     expect(res.status).toBe(403);
+  });
+
+  it("returns 404 for nonexistent department (P2025)", async () => {
+    mockAuth.mockResolvedValue(adminSession);
+    const error = Object.assign(new Error("Record not found"), { code: "P2025" });
+    mockDelete.mockRejectedValue(error);
+    const res = await DELETE(makeDelete(), { params: paramsD1 });
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json.error).toBe("部门不存在");
   });
 });

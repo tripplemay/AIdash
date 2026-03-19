@@ -26,7 +26,8 @@ export default function UserAvatarDropdown({
   useEffect(() => {
     fetch("/api/user/profile")
       .then(r => r.json())
-      .then(data => {
+      .then(json => {
+        const data = json.data ?? json;
         if (data.avatarUrl) setAvatarUrl(data.avatarUrl);
       })
       .catch(() => {});

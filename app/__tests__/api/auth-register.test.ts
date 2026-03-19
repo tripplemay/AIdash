@@ -90,7 +90,14 @@ describe("POST /api/auth/register", () => {
       role: "rd_manager",
       createdAt: new Date(),
     };
-    mockTransaction.mockResolvedValue([createdUser, {}]);
+    // $transaction receives an async callback function
+    mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+      const tx = {
+        inviteCode: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+        user: { create: jest.fn().mockResolvedValue(createdUser) },
+      };
+      return fn(tx);
+    });
     const res = await POST(makePost(validBody));
     expect(res.status).toBe(201);
     const json = await res.json();

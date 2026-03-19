@@ -42,8 +42,10 @@ export default function ProfilePage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/user/profile").then(r => r.json()),
-      fetch("/api/admin/departments").then(r => r.json()).catch(() => []),
-    ]).then(([profileData, deptData]) => {
+      fetch("/api/admin/departments").then(r => r.json()).catch(() => ({ data: [] })),
+    ]).then(([profileJson, deptJson]) => {
+      const profileData = profileJson.data ?? profileJson;
+      const deptData = deptJson.data ?? deptJson;
       setProfile(profileData);
       setName(profileData.name ?? "");
       setEmail(profileData.email ?? "");

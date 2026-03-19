@@ -91,7 +91,9 @@ img { display: block; max-width: 100%; }
 /* ━━━ 3. 布局 ━━━ */
 .page-wrap {
   padding: var(--sp-5);
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-shell {
@@ -101,6 +103,8 @@ img { display: block; max-width: 100%; }
   position: relative;
   border: 1px solid var(--line);
   box-shadow: var(--shadow-md);
+  flex: 1;
+  min-height: 0;
 }
 
 .page-shell::before {
@@ -136,13 +140,13 @@ img { display: block; max-width: 100%; }
 .page-shell__inner {
   position: relative;
   z-index: 1;
+  height: 100%;
 }
 
 .shell {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
-  height: calc(100vh - var(--sp-5) * 2); /* 视口高度减去 page-wrap 上下 padding */
-  min-height: 600px;
+  height: 100%;
   overflow: hidden;
 }
 

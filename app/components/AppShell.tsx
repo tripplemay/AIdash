@@ -30,10 +30,7 @@ export default function AppShell({ userName, userRole, children }: AppShellProps
             </>
           )}
 
-          <div
-            className="page-shell__inner shell"
-            style={isLessonPage ? { height: "calc(100vh - 40px)", minHeight: 0 } : undefined}
-          >
+          <div className="page-shell__inner shell">
             <Sidebar userName={userName} userRole={userRole} />
 
             <main className="main" style={isFullscreenPage ? { overflow: "hidden" } : undefined}>

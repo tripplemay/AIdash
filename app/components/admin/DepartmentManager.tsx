@@ -26,7 +26,8 @@ export default function DepartmentManager({ onClose }: DepartmentManagerProps) {
   async function fetchDepartments() {
     try {
       const res = await fetch("/api/admin/departments");
-      const data = await res.json();
+      const json = await res.json();
+      const data = json.data ?? json;
       setDepartments(Array.isArray(data) ? data : []);
     } catch {
       showToast("加载部门列表失败", "error");

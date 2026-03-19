@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "姓名不能为空" }, { status: 400 });
   }
 
-  // 验证邀请码
+  // 预校验邀请码（快速失败，非原子性）
   const invite = await prisma.inviteCode.findUnique({
     where: { code: inviteCode },
   });
@@ -56,30 +56,52 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "用户名已存在" }, { status: 400 });
   }
 
-  // 创建用户 + 递增邀请码使用次数（事务）
+  // 事务内原子性操作：先占用邀请码（条件更新防止竞态），再创建用户
   const hashed = await bcrypt.hash(password, 12);
 
-  const [user] = await prisma.$transaction([
-    prisma.user.create({
-      data: {
-        username: username.trim(),
-        password: hashed,
-        name: name.trim(),
-        role: "rd_manager",
-      },
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
-    }),
-    prisma.inviteCode.update({
-      where: { id: invite.id },
-      data: { usedCount: { increment: 1 } },
-    }),
-  ]);
+  try {
+    const user = await prisma.$transaction(async (tx) => {
+      // 原子性占用邀请码：只有 usedCount < maxUses 时才 increment
+      const updated = await tx.inviteCode.updateMany({
+        where: {
+          id: invite.id,
+          isActive: true,
+          usedCount: { lt: invite.maxUses },
+          expiresAt: { gt: new Date() },
+        },
+        data: { usedCount: { increment: 1 } },
+      });
 
-  return NextResponse.json({ data: user }, { status: 201 });
+      if (updated.count === 0) {
+        throw new Error("INVITE_EXHAUSTED");
+      }
+
+      return tx.user.create({
+        data: {
+          username: username.trim(),
+          password: hashed,
+          name: name.trim(),
+          role: "rd_manager",
+        },
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+    });
+
+    return NextResponse.json({ data: user }, { status: 201 });
+  } catch (e) {
+    if (e instanceof Error && e.message === "INVITE_EXHAUSTED") {
+      return NextResponse.json({ error: "邀请码使用次数已满" }, { status: 400 });
+    }
+    // Prisma P2002: username duplicate (race with another registration)
+    if (typeof e === "object" && e !== null && "code" in e && (e as { code: string }).code === "P2002") {
+      return NextResponse.json({ error: "用户名已存在" }, { status: 400 });
+    }
+    throw e;
+  }
 }

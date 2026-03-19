@@ -26,7 +26,7 @@ export async function POST(
   const { id: conversationId } = await params;
 
   const body = await request.json().catch(() => ({}));
-  const userMessage: string = body.message ?? "";
+  const userMessage: string = body.content ?? body.message ?? "";
 
   if (!userMessage.trim()) {
     return new Response(
