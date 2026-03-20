@@ -1,6 +1,6 @@
 "use client";
 
-import type { Block, BoxBlock, Hero, LessonContent, Section } from "@/types/lesson-content";
+import type { AccordionBlock as AccordionBlockType, Block, BoxBlock, Hero, LessonContent, Section, ToolPlanSummary, ToolUsage } from "@/types/lesson-content";
 import CopyButton from "./CopyButton";
 import LessonToc from "./LessonToc";
 import { useActiveSection } from "./useActiveSection";
@@ -74,7 +74,7 @@ function QaPairBlockR({ block }: { block: { question: string; answer: string } }
   );
 }
 
-function BlocksR({ blocks }: { blocks: Block[] }) {
+function BlocksR({ blocks, toolPlan }: { blocks: Block[]; toolPlan?: ToolPlanSummary | null }) {
   if (!blocks || !Array.isArray(blocks)) return null;
   return (
     <>
@@ -86,7 +86,7 @@ function BlocksR({ blocks }: { blocks: Block[] }) {
           case "template":  return <TemplateBlockR key={i} block={block} />;
           case "box":       return <BoxBlockR      key={i} block={block} />;
           case "grid":      return <GridBlockR     key={i} block={block} />;
-          case "accordion": return <AccordionBlockR key={i} block={block} />;
+          case "accordion": return <AccordionBlockR key={i} block={block as AccordionBlockType} toolPlan={toolPlan} />;
           case "qa_pair":   return <QaPairBlockR   key={i} block={block} />;
           default:          return null;
         }
@@ -114,7 +114,51 @@ function GridBlockR({ block }: { block: { cols: 2 | 3; items: BoxBlock[] } }) {
   );
 }
 
-function AccordionBlockR({ block }: { block: { title: string; time: string; blocks: Block[] } }) {
+/* ── Tool usage block (inside accordion) ── */
+function ToolUsageBlockR({ toolUsage, toolPlan }: { toolUsage: ToolUsage; toolPlan?: ToolPlanSummary | null }) {
+  // 从顶层 toolPlan 查找同类型的备选工具
+  const planItem = toolPlan?.tools.find(t => t.toolType === toolUsage.toolType);
+  const alternatives = planItem?.alternatives.filter(a => a !== toolUsage.toolName) ?? [];
+
+  return (
+    <div className="lesson-tool-usage">
+      <div className="lesson-tool-usage__title">本环节工具使用</div>
+      <div className="lesson-tool-usage__grid">
+        <div className="lesson-tool-usage__row">
+          <span className="lesson-tool-usage__label">工具类型</span>
+          <span className="lesson-tool-usage__value">{toolUsage.toolType}</span>
+        </div>
+        <div className="lesson-tool-usage__row">
+          <span className="lesson-tool-usage__label">推荐工具</span>
+          <span className="lesson-tool-usage__value">
+            <strong>{toolUsage.toolName}</strong>
+            {alternatives.length > 0 && (
+              <span className="lesson-tool-usage__alt">（同类可选：{alternatives.join(" / ")}）</span>
+            )}
+          </span>
+        </div>
+        <div className="lesson-tool-usage__row">
+          <span className="lesson-tool-usage__label">进入方式</span>
+          <span className="lesson-tool-usage__value">{toolUsage.entryMethod}</span>
+        </div>
+        <div className="lesson-tool-usage__row">
+          <span className="lesson-tool-usage__label">操作</span>
+          <span className="lesson-tool-usage__value">{toolUsage.operator}</span>
+        </div>
+        <div className="lesson-tool-usage__row">
+          <span className="lesson-tool-usage__label">学生参与</span>
+          <span className="lesson-tool-usage__value">{toolUsage.studentAction}</span>
+        </div>
+        <div className="lesson-tool-usage__row">
+          <span className="lesson-tool-usage__label">替代方案</span>
+          <span className="lesson-tool-usage__value">{toolUsage.fallback}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AccordionBlockR({ block, toolPlan }: { block: AccordionBlockType; toolPlan?: ToolPlanSummary | null }) {
   return (
     <details open className="lesson-block--accordion">
       <summary className="lesson-block--accordion__summary">
@@ -123,20 +167,69 @@ function AccordionBlockR({ block }: { block: { title: string; time: string; bloc
       </summary>
       <div className="lesson-block--accordion__body">
         <BlocksR blocks={block.blocks} />
+        {block.toolUsage && <ToolUsageBlockR toolUsage={block.toolUsage} toolPlan={toolPlan} />}
       </div>
     </details>
   );
 }
 
+/* ── Tool plan overview (below hero) ── */
+function ToolPlanOverview({ toolPlan }: { toolPlan: ToolPlanSummary }) {
+  if (!toolPlan.tools || toolPlan.tools.length === 0) return null;
+
+  const cols = Math.min(toolPlan.tools.length, 3) as 2 | 3;
+
+  return (
+    <div className="lesson-tool-plan">
+      <div className="lesson-tool-plan__header">AI 工具与操作总览</div>
+      <div className="lesson-tool-plan__body">
+        <div className={`lesson-block--grid lesson-block--grid--${cols}`}>
+          {toolPlan.tools.map((tool, i) => (
+            <div key={i} className="lesson-block--box lesson-tool-plan__card">
+              <div className="lesson-tool-plan__type">{tool.toolType}</div>
+              <div className="lesson-tool-plan__recommended">
+                <span className="lesson-tool-plan__star">★</span> 推荐：<strong>{tool.recommended}</strong>
+              </div>
+              {tool.alternatives.length > 0 && (
+                <div className="lesson-tool-plan__alternatives">
+                  ○ 备选：{tool.alternatives.join(" / ")}
+                </div>
+              )}
+              <div className="lesson-tool-plan__purpose">用途：{tool.purpose}</div>
+              {tool.usedInFlows.length > 0 && (
+                <div className="lesson-tool-plan__flows">环节：{tool.usedInFlows.join("、")}</div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="lesson-tool-plan__meta">
+          <div className="lesson-tool-plan__meta-row">
+            <span className="lesson-tool-plan__meta-label">操作方式</span>
+            <span>{toolPlan.operator}</span>
+          </div>
+          <div className="lesson-tool-plan__meta-row">
+            <span className="lesson-tool-plan__meta-label">学生参与</span>
+            <span>{toolPlan.studentMode}</span>
+          </div>
+          <div className="lesson-tool-plan__meta-row">
+            <span className="lesson-tool-plan__meta-label">工具不可用时</span>
+            <span>{toolPlan.fallback}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Section panel ── */
-function SectionPanel({ section, index }: { section: Section; index: number }) {
+function SectionPanel({ section, index, toolPlan }: { section: Section; index: number; toolPlan?: ToolPlanSummary | null }) {
   return (
     <section id={section.id} className="lesson-section">
       <div className="lesson-section__header">
         {index + 1}. {section.title}
       </div>
       <div className="lesson-section__body">
-        <BlocksR blocks={section.blocks} />
+        <BlocksR blocks={section.blocks} toolPlan={toolPlan} />
       </div>
     </section>
   );
@@ -187,9 +280,10 @@ export default function LessonRenderer({ content, preview = false }: { content: 
     return (
       <div style={{ padding: "var(--sp-4)" }}>
         <HeroSection hero={content.hero} />
+        {content.toolPlan && <ToolPlanOverview toolPlan={content.toolPlan} />}
         <div style={{ marginTop: "var(--sp-4)" }}>
           {content.sections.map((section, i) => (
-            <SectionPanel key={section.id} section={section} index={i} />
+            <SectionPanel key={section.id} section={section} index={i} toolPlan={content.toolPlan} />
           ))}
         </div>
       </div>
@@ -199,6 +293,7 @@ export default function LessonRenderer({ content, preview = false }: { content: 
   return (
     <div className="lesson-content">
       <HeroSection hero={content.hero} />
+      {content.toolPlan && <ToolPlanOverview toolPlan={content.toolPlan} />}
 
       <div className="lesson-layout">
         {/* Sticky TOC */}
@@ -209,7 +304,7 @@ export default function LessonRenderer({ content, preview = false }: { content: 
         {/* Section panels */}
         <div>
           {content.sections.map((section, i) => (
-            <SectionPanel key={section.id} section={section} index={i} />
+            <SectionPanel key={section.id} section={section} index={i} toolPlan={content.toolPlan} />
           ))}
         </div>
       </div>

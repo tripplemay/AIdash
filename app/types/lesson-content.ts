@@ -21,11 +21,21 @@ export interface GridBlock {
   items: BoxBlock[];
 }
 
+export interface ToolUsage {
+  toolType: string;
+  toolName: string;
+  entryMethod: string;
+  operator: string;
+  studentAction: string;
+  fallback: string;
+}
+
 export interface AccordionBlock {
   type: "accordion";
   title: string;
   time: string;
   blocks: Block[];
+  toolUsage?: ToolUsage | null;
 }
 
 export type Block =
@@ -47,7 +57,23 @@ export interface Hero {
   imageUrl?: string;
 }
 
+export interface ToolPlanItem {
+  toolType: string;
+  recommended: string;
+  alternatives: string[];
+  purpose: string;
+  usedInFlows: string[];
+}
+
+export interface ToolPlanSummary {
+  tools: ToolPlanItem[];
+  operator: string;
+  studentMode: string;
+  fallback: string;
+}
+
 export interface LessonContent {
   hero: Hero;
+  toolPlan?: ToolPlanSummary | null;
   sections: Section[];
 }

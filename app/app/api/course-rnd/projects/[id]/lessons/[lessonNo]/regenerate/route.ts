@@ -58,6 +58,20 @@ JSON 格式如下（所有字段必填）：
   "teacher_prep": ["教师准备事项1", "事项2"],
   "equipment": ["设备要求1", "要求2"],
   "reminder": "给教师的一句核心提醒",
+  "tool_plan": {
+    "tools": [
+      {
+        "tool_type": "工具类型（如 对话式 AI、AI 绘画、AI 音乐等，按能力类型分类，不按品牌）",
+        "recommended": "推荐工具名称（如 ChatGPT、Midjourney）",
+        "alternatives": ["备选工具1（如 Kimi）", "备选工具2（如 文心一言）"],
+        "purpose": "本课中该类工具的用途说明",
+        "used_in_flows": ["使用该类工具的环节标题（须与 flow 中的 title 一致）"]
+      }
+    ],
+    "operator": "整课默认操作者说明（如 教师统一操作，学生观看大屏）",
+    "student_mode": "学生参与模式概述（如 学生口述需求，教师输入 AI）",
+    "fallback": "所有工具不可用时的整体降级方案"
+  },
   "flow": [
     {
       "title": "环节名称",
@@ -66,7 +80,15 @@ JSON 格式如下（所有字段必填）：
       "actions": "教师要做什么（一段话）",
       "teacher_says": ["教师可以说的话1", "话2"],
       "ai_template": { "label": "AI 模板名称", "content": "学生输入给 AI 的模板文本" },
-      "checkpoint": "本环节结束时要看到什么"
+      "checkpoint": "本环节结束时要看到什么",
+      "tool_usage": {
+        "tool_type": "工具类型（须与 tool_plan.tools 中的 tool_type 对应）",
+        "tool_name": "本环节推荐使用的具体工具名称",
+        "entry_method": "如何进入工具开始使用（如 教师打开已登录页面并投屏、学生扫码进入、教师代输学生口述内容）",
+        "operator": "本环节谁操作（可覆盖 tool_plan 顶层默认值）",
+        "student_action": "学生具体参与方式",
+        "fallback": "本环节工具不可用时的替代方案"
+      }
     }
   ],
   "issues": [
@@ -88,6 +110,10 @@ JSON 格式如下（所有字段必填）：
 - flow 必须包含 4-6 个环节，覆盖整堂课时间
 - 不是每个环节都有 ai_template，没有的设为 null
 - checkpoint 没有的设为 null
+- 不是每个 flow 环节都有 tool_usage，没有 AI 工具操作的环节（如课程导入、成果展示）设为 null
+- tool_plan 中每种 tool_type 只出现一次，同类工具归为一个条目
+- tool_plan.tools 中每个工具类型至少列 1 个推荐 + 1 个备选（考虑国内外可用性差异）
+- tool_usage.tool_type 必须与 tool_plan.tools 中的 tool_type 对应
 - issues 至少 4 个
 - 内容要具体实用，教师拿到就能直接上课`;
 

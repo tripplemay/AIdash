@@ -26,6 +26,20 @@ export interface AiLessonOutput {
   equipment: string[];
   reminder: string;
 
+  // tool plan (课次级 AI 工具总览)
+  tool_plan?: {
+    tools: Array<{
+      tool_type: string;
+      recommended: string;
+      alternatives: string[];
+      purpose: string;
+      used_in_flows: string[];
+    }>;
+    operator: string;
+    student_mode: string;
+    fallback: string;
+  } | null;
+
   // flow section
   flow: Array<{
     title: string;
@@ -35,6 +49,14 @@ export interface AiLessonOutput {
     teacher_says: string[];
     ai_template?: { label: string; content: string } | null;
     checkpoint?: string | null;
+    tool_usage?: {
+      tool_type: string;
+      tool_name: string;
+      entry_method: string;
+      operator: string;
+      student_action: string;
+      fallback: string;
+    } | null;
   }>;
 
   // issues section
@@ -64,6 +86,20 @@ export interface AiLessonOutput {
  * 格式 100% 由代码控制，不依赖 AI
  */
 export function buildContentData(input: AiLessonOutput) {
+  // 组装 toolPlan（课次级 AI 工具总览）
+  const toolPlan = input.tool_plan ? {
+    tools: input.tool_plan.tools.map((t) => ({
+      toolType: t.tool_type,
+      recommended: t.recommended,
+      alternatives: t.alternatives,
+      purpose: t.purpose,
+      usedInFlows: t.used_in_flows,
+    })),
+    operator: input.tool_plan.operator,
+    studentMode: input.tool_plan.student_mode,
+    fallback: input.tool_plan.fallback,
+  } : null;
+
   return {
     hero: {
       tags: input.tags,
@@ -73,6 +109,7 @@ export function buildContentData(input: AiLessonOutput) {
       outcome: input.outcome,
       ...(input.hero_image_url && { imageUrl: input.hero_image_url }),
     },
+    ...(toolPlan && { toolPlan }),
     sections: [
       // 1. core
       {
@@ -212,6 +249,16 @@ export function buildContentData(input: AiLessonOutput) {
               ? [{ type: "text", content: `**这一段结束时要看到：** ${step.checkpoint}` }]
               : []),
           ],
+          ...(step.tool_usage && {
+            toolUsage: {
+              toolType: step.tool_usage.tool_type,
+              toolName: step.tool_usage.tool_name,
+              entryMethod: step.tool_usage.entry_method,
+              operator: step.tool_usage.operator,
+              studentAction: step.tool_usage.student_action,
+              fallback: step.tool_usage.fallback,
+            },
+          }),
         })),
       },
 

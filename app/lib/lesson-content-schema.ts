@@ -30,12 +30,22 @@ const gridBlock: z.ZodType<unknown> = z.lazy(() =>
   })
 );
 
+const toolUsageSchema = z.object({
+  toolType: z.string(),
+  toolName: z.string(),
+  entryMethod: z.string(),
+  operator: z.string(),
+  studentAction: z.string(),
+  fallback: z.string(),
+});
+
 const accordionBlock: z.ZodType<unknown> = z.lazy(() =>
   z.object({
     type: z.literal("accordion"),
     title: z.string(),
     time: z.string(),
     blocks: z.array(blockSchema),
+    toolUsage: toolUsageSchema.nullable().optional(),
   })
 );
 
@@ -70,10 +80,28 @@ const heroSchema = z.object({
   outcome: z.string(),
 });
 
+// ─── ToolPlan schema ───
+
+const toolPlanItemSchema = z.object({
+  toolType: z.string(),
+  recommended: z.string(),
+  alternatives: z.array(z.string()),
+  purpose: z.string(),
+  usedInFlows: z.array(z.string()),
+});
+
+const toolPlanSchema = z.object({
+  tools: z.array(toolPlanItemSchema),
+  operator: z.string(),
+  studentMode: z.string(),
+  fallback: z.string(),
+});
+
 // ─── LessonContent schema ───
 
 export const lessonContentSchema = z.object({
   hero: heroSchema,
+  toolPlan: toolPlanSchema.nullable().optional(),
   sections: z.array(sectionSchema).min(1),
 });
 
