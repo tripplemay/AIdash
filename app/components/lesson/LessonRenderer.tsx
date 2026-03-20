@@ -117,8 +117,8 @@ function GridBlockR({ block }: { block: { cols: 2 | 3; items: BoxBlock[] } }) {
 /* ── Tool usage block (inside accordion) ── */
 function ToolUsageBlockR({ toolUsage, toolPlan }: { toolUsage: ToolUsage; toolPlan?: ToolPlanSummary | null }) {
   // 从顶层 toolPlan 查找同类型的备选工具
-  const planItem = toolPlan?.tools.find(t => t.toolType === toolUsage.toolType);
-  const alternatives = planItem?.alternatives.filter(a => a !== toolUsage.toolName) ?? [];
+  const planItem = toolPlan?.tools?.find(t => t.toolType === toolUsage.toolType);
+  const alternatives = (Array.isArray(planItem?.alternatives) ? planItem.alternatives : []).filter(a => a !== toolUsage.toolName);
 
   return (
     <div className="lesson-tool-usage">
@@ -190,13 +190,13 @@ function ToolPlanOverview({ toolPlan }: { toolPlan: ToolPlanSummary }) {
               <div className="lesson-tool-plan__recommended">
                 <span className="lesson-tool-plan__star">★</span> 推荐：<strong>{tool.recommended}</strong>
               </div>
-              {tool.alternatives.length > 0 && (
+              {Array.isArray(tool.alternatives) && tool.alternatives.length > 0 && (
                 <div className="lesson-tool-plan__alternatives">
                   ○ 备选：{tool.alternatives.join(" / ")}
                 </div>
               )}
               <div className="lesson-tool-plan__purpose">用途：{tool.purpose}</div>
-              {tool.usedInFlows.length > 0 && (
+              {Array.isArray(tool.usedInFlows) && tool.usedInFlows.length > 0 && (
                 <div className="lesson-tool-plan__flows">环节：{tool.usedInFlows.join("、")}</div>
               )}
             </div>
