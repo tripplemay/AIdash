@@ -262,6 +262,10 @@ export async function POST(
         let modelName = model;
         const processedLines = new Set<string>();
 
+        // 收集审核结果用于持久化
+        const collectedItems: Array<{ index: number; criterion: string; status: string; detail: string }> = [];
+        let collectedOverall: { overallPass: boolean; summary: string } | null = null;
+
         function processCompletedLines() {
           const lines = fullContent.split("\n");
           // 最后一行可能不完整，不处理
@@ -274,6 +278,7 @@ export async function POST(
             if (!parsed) continue;
 
             if (parsed.type === "item") {
+              collectedItems.push({ index: parsed.index, criterion: parsed.criterion, status: parsed.status, detail: parsed.detail });
               sendEvent("item", {
                 index: parsed.index,
                 criterion: parsed.criterion,
@@ -281,6 +286,7 @@ export async function POST(
                 detail: parsed.detail,
               });
             } else if (parsed.type === "overall") {
+              collectedOverall = { overallPass: parsed.overallPass, summary: parsed.summary };
               sendEvent("overall", {
                 overallPass: parsed.overallPass,
                 summary: parsed.summary,
@@ -335,6 +341,7 @@ export async function POST(
           const parsed = parseValidationLine(line);
           if (!parsed) continue;
           if (parsed.type === "item") {
+            collectedItems.push({ index: parsed.index, criterion: parsed.criterion, status: parsed.status, detail: parsed.detail });
             sendEvent("item", {
               index: parsed.index,
               criterion: parsed.criterion,
@@ -342,6 +349,7 @@ export async function POST(
               detail: parsed.detail,
             });
           } else if (parsed.type === "overall") {
+            collectedOverall = { overallPass: parsed.overallPass, summary: parsed.summary };
             sendEvent("overall", {
               overallPass: parsed.overallPass,
               summary: parsed.summary,
@@ -350,7 +358,7 @@ export async function POST(
         }
 
         // Fallback: 如果一个 item 都没解析出来，尝试 JSON 解析（兼容旧格式 DB 模板）
-        if (processedLines.size === 0 || ![...processedLines].some(l => parseValidationLine(l)?.type === "item")) {
+        if (collectedItems.length === 0) {
           try {
             let raw = fullContent.replace(/```json\s*/g, "").replace(/```\s*/g, "");
             const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -359,19 +367,19 @@ export async function POST(
               if (Array.isArray(report.items)) {
                 for (let i = 0; i < report.items.length; i++) {
                   const item = report.items[i];
-                  sendEvent("item", {
+                  const collected = {
                     index: i + 1,
                     criterion: item.criterion ?? VALIDATION_CRITERIA[i] ?? `检查项 ${i + 1}`,
                     status: item.status ?? "warning",
                     detail: item.detail ?? "",
-                  });
+                  };
+                  collectedItems.push(collected);
+                  sendEvent("item", collected);
                 }
               }
               if (typeof report.overallPass === "boolean") {
-                sendEvent("overall", {
-                  overallPass: report.overallPass,
-                  summary: report.summary ?? "",
-                });
+                collectedOverall = { overallPass: report.overallPass, summary: report.summary ?? "" };
+                sendEvent("overall", collectedOverall);
               }
             }
           } catch {
@@ -379,7 +387,7 @@ export async function POST(
           }
         }
 
-        // Log AI call
+        // Log AI call (含审核结果持久化)
         const cost = await calculateCallCostFromDb("validate_lesson", inputTokens, outputTokens);
         await prisma.courseRndAiCallLog.create({
           data: {
@@ -391,6 +399,9 @@ export async function POST(
             outputTokens,
             estimatedCost: cost,
             userId: userId ?? null,
+            metadataJson: collectedItems.length > 0
+              ? JSON.stringify({ items: collectedItems, overall: collectedOverall })
+              : null,
             promptLog: systemPrompt,
             messageLog: userMessage,
             promptTemplateId: templateResult?.templateId ?? null,

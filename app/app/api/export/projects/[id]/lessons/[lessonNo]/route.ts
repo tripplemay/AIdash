@@ -41,6 +41,7 @@ export async function GET(
       title: true,
       overview: true,
       draftJson: true,
+      contentData: true,
       lastFeedback: true,
       updatedAt: true,
     },
@@ -57,12 +58,20 @@ export async function GET(
     } catch { /* ignore */ }
   }
 
+  let parsedContentData = null;
+  if (draft.contentData) {
+    try {
+      parsedContentData = JSON.parse(draft.contentData as string);
+    } catch { /* ignore */ }
+  }
+
   return NextResponse.json({
     data: {
       lessonNo: draft.lessonNo,
       title: draft.title,
       overview: draft.overview,
       draftJson: parsedDraftJson,
+      contentData: parsedContentData,
       lastFeedback: draft.lastFeedback,
       updatedAt: draft.updatedAt,
     },

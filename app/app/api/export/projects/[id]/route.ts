@@ -84,21 +84,24 @@ export async function GET(
   // Generation config snapshot
   const generationConfigSnapshot = await buildGenerationConfigSnapshot(project);
 
-  // Validation result (latest)
+  // Validation (latest) — input (messageLog) + result (metadataJson) 分开返回
+  let validationInput = null;
   let validationResult = null;
+  let validatedAt: Date | null = null;
   const validationLog = await prisma.courseRndAiCallLog.findFirst({
     where: { projectId: id, actionType: "validate_lesson" },
     orderBy: { createdAt: "desc" },
-    select: { messageLog: true, createdAt: true },
+    select: { messageLog: true, metadataJson: true, createdAt: true },
   });
-  if (validationLog?.messageLog) {
-    try {
-      validationResult = {
-        ...JSON.parse(validationLog.messageLog),
-        validatedAt: validationLog.createdAt,
-      };
-    } catch {
-      // ignore parse error
+  if (validationLog) {
+    validatedAt = validationLog.createdAt;
+    if (validationLog.messageLog) {
+      validationInput = validationLog.messageLog;
+    }
+    if (validationLog.metadataJson) {
+      try {
+        validationResult = JSON.parse(validationLog.metadataJson);
+      } catch { /* ignore */ }
     }
   }
 
@@ -127,7 +130,9 @@ export async function GET(
       generationConfigSnapshot,
       directionVersion,
       lessonDrafts,
+      validationInput,
       validationResult,
+      validatedAt,
       publishRecords: project.publishRecords.map((r) => ({
         publishedAt: r.createdAt,
         packageTitle: r.packageTitle,
