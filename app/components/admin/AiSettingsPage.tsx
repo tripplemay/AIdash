@@ -368,10 +368,11 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
               {canEdit ? (
                 <input
                   className="input input--sm"
-                  type="password"
+                  type="text"
                   value={exportToken}
                   onChange={e => { setExportToken(e.target.value); setExportResult(null); }}
                   placeholder={exportConfigured ? exportMasked : "输入或生成一个 64 位随机 Token"}
+                  style={{ fontFamily: "monospace", fontSize: 12 }}
                 />
               ) : (
                 <div style={{ fontSize: 13, color: "var(--muted)" }}>{exportConfigured ? exportMasked : "未配置"}</div>
@@ -395,6 +396,17 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
                   }}
                 >
                   生成
+                </button>
+                <button
+                  className="btn btn--soft btn--sm"
+                  disabled={!exportToken.trim()}
+                  onClick={() => {
+                    navigator.clipboard.writeText(exportToken).then(() => {
+                      setExportResult({ ok: true, message: "已复制到剪贴板" });
+                    });
+                  }}
+                >
+                  复制
                 </button>
                 <button
                   className="btn btn--sm"
