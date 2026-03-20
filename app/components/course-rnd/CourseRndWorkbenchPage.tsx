@@ -102,7 +102,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
 
   // 逐课生成 contentData（SSE 流式，支持多课并行）
   async function handleRegenerateLesson(lessonNo: number) {
-    setGeneratingLessons(prev => new Map(prev).set(lessonNo, { step: 0, total: 7, label: "开始生成...", tokenCount: 0 }));
+    setGeneratingLessons(prev => new Map(prev).set(lessonNo, { step: 0, total: 8, label: "开始生成...", tokenCount: 0 }));
     setError("");
 
     try {

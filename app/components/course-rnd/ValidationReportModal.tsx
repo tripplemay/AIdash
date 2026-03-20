@@ -1,6 +1,6 @@
 "use client";
 
-/** 10 个固定检查项 */
+/** 12 个固定检查项 */
 export const VALIDATION_CRITERIA = [
   "课次目标清晰度",
   "AI 环节实际价值",
@@ -12,6 +12,8 @@ export const VALIDATION_CRITERIA = [
   "作品感",
   "课次独立性",
   "禁止跑偏检查",
+  "AI 工具落地可执行性",
+  "工具降级与备选方案",
 ];
 
 export type ItemStatus = "pending" | "checking" | "pass" | "warning" | "fail";

@@ -177,7 +177,7 @@ describe("POST /api/course-rnd/projects/[id]/lessons/[lessonNo]/regenerate", () 
     const text = await res.text();
     expect(text).toContain("event: done");
     expect(text).toContain("event: progress");
-    expect(text).toContain('"step":7');
+    expect(text).toContain('"step":8');
   });
 
   it("sends error event when AI output is invalid JSON (both attempts fail)", async () => {

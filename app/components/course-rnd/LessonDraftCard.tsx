@@ -27,6 +27,7 @@ const SECTION_LABELS = [
   "本课核心信息",
   "AI 环节价值说明",
   "课前备课提示单",
+  "AI 工具方案",
   "课堂执行清单",
   "学生卡点应对表",
   "本课附件与模板",
@@ -234,7 +235,7 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
             })}
 
             {/* 7步完成后的额外阶段（如封面图生成） */}
-            {progress.step > 7 && (
+            {progress.step > SECTION_LABELS.length && (
               <div className="ai-progress__step ai-progress__step--current">
                 <span style={{ width: 20, display: "flex", justifyContent: "center" }}>
                   <span className="ai-progress__spinner" />

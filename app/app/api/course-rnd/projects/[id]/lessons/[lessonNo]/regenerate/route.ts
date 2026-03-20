@@ -15,19 +15,23 @@ const SECTION_STEPS = [
   { id: "core", label: "本课核心信息" },
   { id: "ai_value", label: "AI 环节价值说明" },
   { id: "prep", label: "课前备课提示单" },
+  { id: "tool_plan", label: "AI 工具方案" },
   { id: "flow", label: "课堂执行清单" },
   { id: "issues", label: "学生卡点应对表" },
   { id: "materials", label: "本课附件与模板" },
   { id: "review", label: "课后复盘记录区" },
 ];
 
+const TOTAL_STEPS = SECTION_STEPS.length; // 8
+
 /** 根据已接收的 JSON 文本检测当前正在生成哪个板块 */
 function detectSectionStep(content: string): number {
   // 按 JSON 字段出现顺序检测（后出现的优先级高，带冒号避免文本内容误匹配）
-  if (content.includes('"review_questions":') || content.includes('"parent_message":')) return 7;
-  if (content.includes('"outcome_template":') || content.includes('"demo_case":')) return 6;
-  if (content.includes('"issues":')) return 5;
-  if (content.includes('"flow":')) return 4;
+  if (content.includes('"review_questions":') || content.includes('"parent_message":')) return 8;
+  if (content.includes('"outcome_template":') || content.includes('"demo_case":')) return 7;
+  if (content.includes('"issues":')) return 6;
+  if (content.includes('"flow":')) return 5;
+  if (content.includes('"tool_plan":')) return 4;
   if (content.includes('"teacher_prep":') || content.includes('"equipment":')) return 3;
   if (content.includes('"ai_value_quote":') || content.includes('"ai_rounds":')) return 2;
   if (content.includes('"positioning":') || content.includes('"title":')) return 1;
@@ -181,7 +185,7 @@ export async function POST(
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
       }
 
-      sendEvent("progress", { step: 0, total: 7, label: "正在连接 AI 服务...", tokenCount: 0 });
+      sendEvent("progress", { step: 0, total: TOTAL_STEPS, label: "正在连接 AI 服务...", tokenCount: 0 });
 
       try {
         // 优先使用数据库 prompt 模板，fallback 到硬编码
@@ -246,7 +250,7 @@ export async function POST(
                 lastSentChars = streamedContent.length;
                 sendEvent("progress", {
                   step,
-                  total: 7,
+                  total: TOTAL_STEPS,
                   label: `正在生成「${SECTION_STEPS[step]?.label ?? ""}」...`,
                   tokenCount: Math.round(chunk.totalChars / 2.5),
                   textDelta,
@@ -258,11 +262,11 @@ export async function POST(
             // Non-streaming fallback: fake progress timer
             let currentStep = 0;
             const progressTimer = setInterval(() => {
-              if (currentStep < 7) {
+              if (currentStep < TOTAL_STEPS) {
                 currentStep++;
                 sendEvent("progress", {
                   step: currentStep,
-                  total: 7,
+                  total: TOTAL_STEPS,
                   label: `正在生成「${SECTION_STEPS[currentStep]?.label ?? ""}」...`,
                   tokenCount: currentStep * 300,
                 });
@@ -292,7 +296,7 @@ export async function POST(
           } catch {
             if (attempt === 0) {
               console.warn("AI 输出解析失败，自动重试...", result.content.slice(0, 200));
-              sendEvent("progress", { step: 0, total: 7, label: "解析失败，正在重试...", tokenCount: 0 });
+              sendEvent("progress", { step: 0, total: TOTAL_STEPS, label: "解析失败，正在重试...", tokenCount: 0 });
             } else {
               console.error("AI 输出解析失败（重试后仍失败），原始内容前500字符：", result.content.slice(0, 500));
               sendEvent("error", { message: "AI 输出解析失败，请重试" });
@@ -309,10 +313,10 @@ export async function POST(
         }
 
         // 7 步文本生成完成
-        sendEvent("progress", { step: 7, total: 7, label: "文本生成完成", tokenCount: lastResult?.outputTokens ?? 0 });
+        sendEvent("progress", { step: TOTAL_STEPS, total: TOTAL_STEPS, label: "文本生成完成", tokenCount: lastResult?.outputTokens ?? 0 });
 
         // 生成 Hero 封面图（仅此一张，其他图片待 v2 规范扩展 image block 后再加）
-        sendEvent("progress", { step: 8, total: 8, label: "正在生成封面图...", tokenCount: 0 });
+        sendEvent("progress", { step: TOTAL_STEPS + 1, total: TOTAL_STEPS + 1, label: "正在生成封面图...", tokenCount: 0 });
         const imageConfig = await getProviderAndModel("lesson_cover").catch(() => null);
         if (imageConfig?.provider?.generateImage && aiOutput.hero_image_prompt) {
           try {

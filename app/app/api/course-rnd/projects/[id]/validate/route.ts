@@ -10,7 +10,7 @@ import { getBaselinePrompt, validateLessonPrompt } from "@/lib/ai/prompts";
 import { resolveTemplate, type TemplateContext } from "@/lib/ai/template-engine";
 import { loadFrameworkContext } from "@/lib/ai/lesson-context";
 
-/** 10 个固定检查项名称 */
+/** 12 个固定检查项名称 */
 const VALIDATION_CRITERIA = [
   "课次目标清晰度",
   "AI 环节实际价值",
@@ -22,6 +22,8 @@ const VALIDATION_CRITERIA = [
   "作品感",
   "课次独立性",
   "禁止跑偏检查",
+  "AI 工具落地可执行性",
+  "工具降级与备选方案",
 ];
 
 interface DraftJson {
@@ -29,8 +31,33 @@ interface DraftJson {
   subtitle?: string;
   goal?: string;
   outcome?: string;
-  flow?: Array<{ title?: string; time?: string }>;
+  flow?: Array<{
+    title?: string;
+    time?: string;
+    tool_usage?: {
+      tool_type?: string;
+      tool_name?: string;
+      entry_method?: string;
+      operator?: string;
+      student_action?: string;
+      fallback?: string;
+    } | null;
+  }>;
   issues?: Array<unknown>;
+  tool_plan?: {
+    tools?: Array<{
+      tool_type?: string;
+      recommended?: string;
+      alternatives?: string[];
+      purpose?: string;
+      used_in_flows?: string[];
+    }>;
+    operator?: string;
+    student_mode?: string;
+    fallback?: string;
+  } | null;
+  ai_rounds?: Array<{ name?: string; value?: string }>;
+  equipment?: string[];
 }
 
 /** Extract concise fields from draftJson to control token usage */
@@ -44,12 +71,29 @@ function summarizeDraft(raw: string): string {
     if (parsed.outcome) parts.push(`成果：${parsed.outcome}`);
     if (Array.isArray(parsed.flow)) {
       const flowSummary = parsed.flow
-        .map(f => `${f.title ?? "未命名"}(${f.time ?? "?"})`)
+        .map(f => {
+          const toolInfo = f.tool_usage ? ` [工具:${f.tool_usage.tool_name ?? f.tool_usage.tool_type ?? "?"},操作:${f.tool_usage.operator ?? "?"}]` : "";
+          return `${f.title ?? "未命名"}(${f.time ?? "?"})${toolInfo}`;
+        })
         .join("、");
       parts.push(`流程：${flowSummary}`);
     }
     if (Array.isArray(parsed.issues)) {
       parts.push(`卡点数：${parsed.issues.length}`);
+    }
+    if (parsed.tool_plan && Array.isArray(parsed.tool_plan.tools) && parsed.tool_plan.tools.length > 0) {
+      const toolsSummary = parsed.tool_plan.tools.map(t => {
+        const alts = Array.isArray(t.alternatives) && t.alternatives.length > 0 ? `,备选:${t.alternatives.join("/")}` : "";
+        return `${t.tool_type ?? "?"}(推荐:${t.recommended ?? "?"}${alts})`;
+      }).join("、");
+      parts.push(`工具总览：${toolsSummary}`);
+      if (parsed.tool_plan.operator) parts.push(`默认操作：${parsed.tool_plan.operator}`);
+      if (parsed.tool_plan.fallback) parts.push(`整课降级：${parsed.tool_plan.fallback}`);
+    } else {
+      parts.push("工具总览：无 tool_plan");
+    }
+    if (Array.isArray(parsed.equipment) && parsed.equipment.length > 0) {
+      parts.push(`设备：${parsed.equipment.join("、")}`);
     }
     return parts.join("\n");
   } catch {
@@ -93,7 +137,7 @@ function parseValidationLine(line: string): {
   const detail = trimmed.slice(secondPipe + 1).trim();
 
   const index = parseInt(indexStr, 10);
-  if (isNaN(index) || index < 1 || index > 10) return null;
+  if (isNaN(index) || index < 1 || index > VALIDATION_CRITERIA.length) return null;
   if (!["pass", "warning", "fail"].includes(status)) return null;
 
   return {
