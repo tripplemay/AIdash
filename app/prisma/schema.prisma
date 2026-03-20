@@ -203,9 +203,11 @@ model CourseRndAiCallLog {
   cacheHit      Boolean  @default(false)
   userId        String?
   metadataJson  String?  @db.LongText
-  promptLog     String?  @db.LongText // 完整 system prompt（用于 prompt 审计）
-  messageLog    String?  @db.LongText // 完整 user message（用于 prompt 审计）
-  createdAt     DateTime @default(now())
+  promptLog                String?  @db.LongText // 完整 system prompt（用于 prompt 审计）
+  messageLog               String?  @db.LongText // 完整 user message（用于 prompt 审计）
+  promptTemplateId         String?  // 使用的 Prompt 模板 ID
+  promptTemplateVersionNo  Int?     // 使用时的模板版本号
+  createdAt                DateTime @default(now())
 }
 
 // ─── 课程发布记录 ───

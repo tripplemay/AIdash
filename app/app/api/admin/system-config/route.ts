@@ -7,10 +7,10 @@ import { ROLES } from "@/lib/roles";
 import { encryptApiKey, decryptApiKey, maskApiKey } from "@/lib/crypto";
 
 /** Keys that store encrypted values (API keys, secrets) */
-const ENCRYPTED_KEYS = new Set(["tavily_api_key"]);
+const ENCRYPTED_KEYS = new Set(["tavily_api_key", "export_api_token"]);
 
 /** Allowed config keys (whitelist) */
-const ALLOWED_KEYS = new Set(["tavily_api_key", "usd_to_cny"]);
+const ALLOWED_KEYS = new Set(["tavily_api_key", "export_api_token", "usd_to_cny"]);
 
 /** GET /api/admin/system-config — list allowed config entries */
 export async function GET() {

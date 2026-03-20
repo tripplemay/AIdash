@@ -1,0 +1,89 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "AI Dash Export API",
+    "version": "1.0.0",
+    "description": "Read-only API for ChatGPT GPTs to access course R&D project data, AI call logs, baselines, and prompt templates."
+  },
+  "servers": [
+    { "url": "https://ai.dashedu.net" }
+  ],
+  "security": [
+    { "BearerAuth": [] }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "paths": {
+    "/api/export/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "summary": "List all course R&D projects",
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string" }, "description": "Filter by status: draft, framework_confirmed, finalized, published" },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Page number" },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 20, "maximum": 100 }, "description": "Items per page" }
+        ],
+        "responses": {
+          "200": { "description": "Paginated project list" },
+          "401": { "description": "Invalid or missing export token" }
+        }
+      }
+    },
+    "/api/export/projects/{id}": {
+      "get": {
+        "operationId": "getProjectDetail",
+        "summary": "Get full project detail with generation config snapshot, framework, lesson drafts, and validation results",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Project ID" }
+        ],
+        "responses": {
+          "200": { "description": "Full project detail including generationConfigSnapshot with dimensions, baselineVersions, promptTemplateVersions, and actionConfigs" },
+          "401": { "description": "Invalid or missing export token" },
+          "404": { "description": "Project not found" }
+        }
+      }
+    },
+    "/api/export/projects/{id}/prompts": {
+      "get": {
+        "operationId": "getProjectPrompts",
+        "summary": "Get the complete AI call chain for a project, including full system prompts, user messages, and prompt template identifiers",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Project ID" },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Page number" },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 200 }, "description": "Items per page" }
+        ],
+        "responses": {
+          "200": { "description": "Paginated AI call logs with sequence numbers, action labels, lesson numbers, promptTemplateId, promptTemplateActionKey, and promptTemplateVersionNo" },
+          "401": { "description": "Invalid or missing export token" },
+          "404": { "description": "Project not found" }
+        }
+      }
+    },
+    "/api/export/baselines": {
+      "get": {
+        "operationId": "getBaselines",
+        "summary": "Get all baseline documents (23 docs across 6 dimensions: general, age A1-A4, level L1-L4, org_form S1-S2, deliverable P1-P11, matrix) with current version numbers",
+        "responses": {
+          "200": { "description": "All baseline documents with type, key, label, content, currentVersionNo" },
+          "401": { "description": "Invalid or missing export token" }
+        }
+      }
+    },
+    "/api/export/prompt-templates": {
+      "get": {
+        "operationId": "getPromptTemplates",
+        "summary": "Get all prompt templates (9 action templates) with current version numbers and extracted variable lists",
+        "responses": {
+          "200": { "description": "All prompt templates with actionKey, content, currentVersionNo, and variables array (name, group, description for each {{variable}} used)" },
+          "401": { "description": "Invalid or missing export token" }
+        }
+      }
+    }
+  }
+}

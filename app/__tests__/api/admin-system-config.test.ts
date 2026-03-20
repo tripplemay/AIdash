@@ -50,7 +50,7 @@ describe("GET /api/admin/system-config", () => {
     const res = await GET();
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.data).toHaveLength(2);
+    expect(json.data).toHaveLength(3); // 2 from DB + 1 missing key added
 
     const tavily = json.data.find((d: { key: string }) => d.key === "tavily_api_key");
     expect(tavily.isConfigured).toBe(true);
@@ -65,7 +65,7 @@ describe("GET /api/admin/system-config", () => {
 
     const res = await GET();
     const json = await res.json();
-    expect(json.data).toHaveLength(2); // tavily_api_key + usd_to_cny
+    expect(json.data).toHaveLength(3); // tavily_api_key + export_api_token + usd_to_cny
     expect(json.data.every((d: { isConfigured: boolean }) => !d.isConfigured)).toBe(true);
   });
 
