@@ -7,7 +7,7 @@ import { COURSE_RND_ROLES } from "@/lib/permissions";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { generateFrameworkPrompt, getBaselinePrompt } from "@/lib/ai/prompts";
-import { getSystemPrompt, type TemplateContext } from "@/lib/ai/template-engine";
+import { resolveTemplate, type TemplateContext } from "@/lib/ai/template-engine";
 
 // POST /api/course-rnd/projects/[id]/generate-framework
 export async function POST(
@@ -87,8 +87,8 @@ export async function POST(
     coreNeeds: inputData.coreNeeds,
     constraints: inputData.constraints,
   };
-  const dbPrompt = await getSystemPrompt("generate_framework", templateCtx);
-  const systemPrompt = dbPrompt ?? (getBaselinePrompt() + generateFrameworkPrompt());
+  const templateResult = await resolveTemplate("generate_framework", templateCtx);
+  const systemPrompt = templateResult?.prompt ?? (getBaselinePrompt() + generateFrameworkPrompt());
 
   const result = await provider.chat({
     systemPrompt,
@@ -170,6 +170,8 @@ export async function POST(
       userId: userId ?? null,
       promptLog: systemPrompt,
       messageLog: userMessage,
+      promptTemplateId: templateResult?.templateId ?? null,
+      promptTemplateVersionNo: templateResult?.templateVersionNo ?? null,
     },
   });
 

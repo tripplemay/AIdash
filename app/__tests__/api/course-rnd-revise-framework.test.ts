@@ -23,13 +23,13 @@ jest.mock("@/lib/ai/prompts", () => ({
   reviseFrameworkPrompt: jest.fn(() => "revise-prompt"),
   getBaselinePrompt: jest.fn(() => "baseline-prompt"),
 }));
-jest.mock("@/lib/ai/template-engine", () => ({ getSystemPrompt: jest.fn() }));
+jest.mock("@/lib/ai/template-engine", () => ({ resolveTemplate: jest.fn() }));
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
-import { getSystemPrompt } from "@/lib/ai/template-engine";
+import { resolveTemplate } from "@/lib/ai/template-engine";
 
 const mockAuth = auth as jest.Mock;
 const mockProjectFindUnique = prisma.courseRndProject.findUnique as jest.Mock;
@@ -40,7 +40,7 @@ const mockVersionCreate = prisma.courseRndDirectionVersion.create as jest.Mock;
 const mockLogCreate = prisma.courseRndAiCallLog.create as jest.Mock;
 const mockGetProviderAndModel = getProviderAndModel as jest.Mock;
 const mockCalculateCost = calculateCallCostFromDb as jest.Mock;
-const mockGetSystemPrompt = getSystemPrompt as jest.Mock;
+const mockResolveTemplate = resolveTemplate as jest.Mock;
 
 const rdSession = { user: { id: "rd-1", role: "rd_manager" }, expires: "" };
 const teacherSession = { user: { id: "t-1", role: "teacher" }, expires: "" };
@@ -135,7 +135,7 @@ describe("POST /api/course-rnd/projects/[id]/revise-framework", () => {
       frameworkJson: JSON.stringify([{ lessonNo: 1, title: "L1", overview: "O1" }]),
       summary: "Old summary",
     });
-    mockGetSystemPrompt.mockResolvedValue(null);
+    mockResolveTemplate.mockResolvedValue(null);
 
     const mockChat = jest.fn().mockResolvedValue({
       content: JSON.stringify({
@@ -176,7 +176,7 @@ describe("POST /api/course-rnd/projects/[id]/revise-framework", () => {
       frameworkJson: JSON.stringify([{ lessonNo: 1, title: "L1", overview: "O1" }]),
       summary: "Summary",
     });
-    mockGetSystemPrompt.mockResolvedValue(null);
+    mockResolveTemplate.mockResolvedValue(null);
 
     const mockChat = jest.fn().mockResolvedValue({
       content: "Not valid JSON",

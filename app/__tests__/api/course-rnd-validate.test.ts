@@ -19,7 +19,7 @@ jest.mock("@/lib/ai/prompts", () => ({
   validateLessonPrompt: jest.fn(() => "validate prompt"),
 }));
 jest.mock("@/lib/ai/template-engine", () => ({
-  getSystemPrompt: jest.fn(() => null),
+  resolveTemplate: jest.fn(() => null),
 }));
 jest.mock("@/lib/ai/lesson-context", () => ({
   loadFrameworkContext: jest.fn(() => ({ summary: "course summary", framework: null })),

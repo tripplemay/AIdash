@@ -8,7 +8,7 @@ import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-data";
 import { getBaselinePrompt } from "@/lib/ai/prompts";
-import { getSystemPrompt, type TemplateContext } from "@/lib/ai/template-engine";
+import { resolveTemplate, type TemplateContext } from "@/lib/ai/template-engine";
 import { saveAiImage } from "@/lib/ai/image-store";
 import { loadFrameworkContext, buildLessonListWithOverview, buildGeneratedLessonsSummary } from "@/lib/ai/lesson-context";
 
@@ -204,8 +204,8 @@ ${draft.draftJson}
     feedback,
     targetSection,
   };
-  const dbPrompt = await getSystemPrompt("revise_lesson", templateCtx);
-  const systemPrompt = dbPrompt ?? (getBaselinePrompt() + SYSTEM_PROMPT);
+  const templateResult = await resolveTemplate("revise_lesson", templateCtx);
+  const systemPrompt = templateResult?.prompt ?? (getBaselinePrompt() + SYSTEM_PROMPT);
 
   const result = await provider.chat({
     systemPrompt,
@@ -257,6 +257,8 @@ ${draft.draftJson}
       userId: userId ?? null,
       promptLog: systemPrompt,
       messageLog: userMessage,
+      promptTemplateId: templateResult?.templateId ?? null,
+      promptTemplateVersionNo: templateResult?.templateVersionNo ?? null,
     },
   });
 

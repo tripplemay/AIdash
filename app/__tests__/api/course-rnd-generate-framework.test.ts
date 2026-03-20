@@ -22,13 +22,13 @@ jest.mock("@/lib/ai/prompts", () => ({
   generateFrameworkPrompt: jest.fn(() => "generate-prompt"),
   getBaselinePrompt: jest.fn(() => "baseline-prompt"),
 }));
-jest.mock("@/lib/ai/template-engine", () => ({ getSystemPrompt: jest.fn() }));
+jest.mock("@/lib/ai/template-engine", () => ({ resolveTemplate: jest.fn() }));
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
-import { getSystemPrompt } from "@/lib/ai/template-engine";
+import { resolveTemplate } from "@/lib/ai/template-engine";
 
 const mockAuth = auth as jest.Mock;
 const mockFindUnique = prisma.courseRndProject.findUnique as jest.Mock;
@@ -38,7 +38,7 @@ const mockVersionCreate = prisma.courseRndDirectionVersion.create as jest.Mock;
 const mockLogCreate = prisma.courseRndAiCallLog.create as jest.Mock;
 const mockGetProviderAndModel = getProviderAndModel as jest.Mock;
 const mockCalculateCost = calculateCallCostFromDb as jest.Mock;
-const mockGetSystemPrompt = getSystemPrompt as jest.Mock;
+const mockResolveTemplate = resolveTemplate as jest.Mock;
 
 const rdSession = { user: { id: "rd-1", role: "rd_manager" }, expires: "" };
 const teacherSession = { user: { id: "t-1", role: "teacher" }, expires: "" };
@@ -110,7 +110,7 @@ describe("POST /api/course-rnd/projects/[id]/generate-framework", () => {
   it("calls provider.chat and creates direction version on success", async () => {
     mockAuth.mockResolvedValue(rdSession);
     mockFindUnique.mockResolvedValue(sampleProject);
-    mockGetSystemPrompt.mockResolvedValue(null);
+    mockResolveTemplate.mockResolvedValue(null);
 
     const mockChat = jest.fn().mockResolvedValue({
       content: JSON.stringify({
@@ -153,7 +153,7 @@ describe("POST /api/course-rnd/projects/[id]/generate-framework", () => {
   it("returns 502 when AI output cannot be parsed", async () => {
     mockAuth.mockResolvedValue(rdSession);
     mockFindUnique.mockResolvedValue(sampleProject);
-    mockGetSystemPrompt.mockResolvedValue(null);
+    mockResolveTemplate.mockResolvedValue(null);
 
     const mockChat = jest.fn().mockResolvedValue({
       content: "This is not JSON at all",
@@ -179,7 +179,7 @@ describe("POST /api/course-rnd/projects/[id]/generate-framework", () => {
   it("uses DB prompt template when available", async () => {
     mockAuth.mockResolvedValue(rdSession);
     mockFindUnique.mockResolvedValue(sampleProject);
-    mockGetSystemPrompt.mockResolvedValue("custom-db-prompt");
+    mockResolveTemplate.mockResolvedValue({ prompt: "custom-db-prompt", templateId: "tpl_1", templateVersionNo: 5 });
 
     const mockChat = jest.fn().mockResolvedValue({
       content: JSON.stringify({

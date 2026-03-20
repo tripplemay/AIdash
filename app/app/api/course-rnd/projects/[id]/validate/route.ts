@@ -7,7 +7,7 @@ import { COURSE_RND_ROLES } from "@/lib/permissions";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { getBaselinePrompt, validateLessonPrompt } from "@/lib/ai/prompts";
-import { getSystemPrompt, type TemplateContext } from "@/lib/ai/template-engine";
+import { resolveTemplate, type TemplateContext } from "@/lib/ai/template-engine";
 import { loadFrameworkContext } from "@/lib/ai/lesson-context";
 
 /** 10 个固定检查项名称 */
@@ -181,8 +181,8 @@ export async function POST(
     constraints: project.constraints,
     courseSummary,
   };
-  const dbPrompt = await getSystemPrompt("validate_lesson", templateCtx);
-  const systemPrompt = dbPrompt ?? (getBaselinePrompt() + validateLessonPrompt());
+  const templateResult = await resolveTemplate("validate_lesson", templateCtx);
+  const systemPrompt = templateResult?.prompt ?? (getBaselinePrompt() + validateLessonPrompt());
 
   // Build concise user message
   const projectInfo = [
@@ -349,6 +349,8 @@ export async function POST(
             userId: userId ?? null,
             promptLog: systemPrompt,
             messageLog: userMessage,
+            promptTemplateId: templateResult?.templateId ?? null,
+            promptTemplateVersionNo: templateResult?.templateVersionNo ?? null,
           },
         });
 

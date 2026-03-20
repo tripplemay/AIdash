@@ -23,7 +23,7 @@ jest.mock("@/lib/ai/pricing-service", () => ({ calculateCallCostFromDb: jest.fn(
 jest.mock("@/lib/ai/prompts", () => ({
   getBaselinePrompt: jest.fn(() => "baseline-prompt"),
 }));
-jest.mock("@/lib/ai/template-engine", () => ({ getSystemPrompt: jest.fn() }));
+jest.mock("@/lib/ai/template-engine", () => ({ resolveTemplate: jest.fn() }));
 jest.mock("@/lib/ai/image-store", () => ({ saveAiImage: jest.fn() }));
 jest.mock("@/lib/ai/build-content-data", () => ({
   buildContentData: jest.fn(() => ({ blocks: [] })),
@@ -38,7 +38,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
-import { getSystemPrompt } from "@/lib/ai/template-engine";
+import { resolveTemplate } from "@/lib/ai/template-engine";
 import { saveAiImage } from "@/lib/ai/image-store";
 
 const mockAuth = auth as jest.Mock;
@@ -48,7 +48,7 @@ const mockDraftUpdate = prisma.courseRndLessonDraft.update as jest.Mock;
 const mockLogCreate = prisma.courseRndAiCallLog.create as jest.Mock;
 const mockGetProviderAndModel = getProviderAndModel as jest.Mock;
 const mockCalculateCost = calculateCallCostFromDb as jest.Mock;
-const mockGetSystemPrompt = getSystemPrompt as jest.Mock;
+const mockResolveTemplate = resolveTemplate as jest.Mock;
 const mockSaveAiImage = saveAiImage as jest.Mock;
 
 const rdSession = { user: { id: "rd-1", role: "rd_manager" }, expires: "" };
@@ -188,7 +188,7 @@ describe("POST /api/course-rnd/projects/[id]/lessons/[lessonNo]/revise", () => {
     mockAuth.mockResolvedValue(rdSession);
     mockProjectFindUnique.mockResolvedValue(sampleProject);
     mockDraftFindFirst.mockResolvedValue(sampleDraft);
-    mockGetSystemPrompt.mockResolvedValue(null);
+    mockResolveTemplate.mockResolvedValue(null);
 
     const mockChat = jest.fn().mockResolvedValue({
       content: JSON.stringify({ title: "Updated Lesson 1" }),
@@ -223,7 +223,7 @@ describe("POST /api/course-rnd/projects/[id]/lessons/[lessonNo]/revise", () => {
     mockAuth.mockResolvedValue(rdSession);
     mockProjectFindUnique.mockResolvedValue(sampleProject);
     mockDraftFindFirst.mockResolvedValue(sampleDraft);
-    mockGetSystemPrompt.mockResolvedValue(null);
+    mockResolveTemplate.mockResolvedValue(null);
 
     const mockChat = jest.fn().mockResolvedValue({
       content: "I cannot process this request",

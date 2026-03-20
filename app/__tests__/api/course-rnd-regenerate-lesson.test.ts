@@ -22,7 +22,7 @@ jest.mock("@/lib/ai/prompts", () => ({
   getBaselinePrompt: jest.fn(() => "baseline-prompt "),
 }));
 jest.mock("@/lib/ai/template-engine", () => ({
-  getSystemPrompt: jest.fn(() => null),
+  resolveTemplate: jest.fn(() => null),
 }));
 jest.mock("@/lib/ai/image-store", () => ({
   saveAiImage: jest.fn(() => "/images/saved.webp"),

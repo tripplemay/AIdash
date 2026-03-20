@@ -122,6 +122,13 @@ function interpolate(
 
 // ── Public API ──
 
+/** Template resolution result with metadata for audit logging */
+export interface TemplateResult {
+  prompt: string;
+  templateId: string;
+  templateVersionNo: number;
+}
+
 /**
  * Resolve a prompt template from DB, filling in all {{变量名}} placeholders.
  * Returns null if no template is configured for this actionKey.
@@ -129,10 +136,18 @@ function interpolate(
 export async function resolveTemplate(
   actionKey: string,
   context: TemplateContext,
-): Promise<string | null> {
+): Promise<TemplateResult | null> {
   const template = await prisma.promptTemplate.findUnique({
     where: { actionKey },
-    select: { content: true },
+    select: {
+      id: true,
+      content: true,
+      versions: {
+        select: { versionNo: true },
+        orderBy: { versionNo: "desc" as const },
+        take: 1,
+      },
+    },
   });
 
   if (!template) return null;
@@ -148,17 +163,23 @@ export async function resolveTemplate(
   ]);
 
   const variables = buildVariableMap(context, baselines, labels);
-  return interpolate(template.content, variables);
+  return {
+    prompt: interpolate(template.content, variables),
+    templateId: template.id,
+    templateVersionNo: template.versions[0]?.versionNo ?? 1,
+  };
 }
 
 /**
- * Convenience wrapper: returns resolved prompt or null (caller falls back to hardcoded).
+ * Convenience wrapper: returns resolved prompt string or null (caller falls back to hardcoded).
+ * Use resolveTemplate() instead if you need template metadata for audit logging.
  */
 export async function getSystemPrompt(
   actionKey: string,
   context: TemplateContext,
 ): Promise<string | null> {
-  return resolveTemplate(actionKey, context);
+  const result = await resolveTemplate(actionKey, context);
+  return result?.prompt ?? null;
 }
 
 /**

@@ -7,7 +7,7 @@ import { COURSE_RND_ROLES } from "@/lib/permissions";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { reviseFrameworkPrompt, getBaselinePrompt } from "@/lib/ai/prompts";
-import { getSystemPrompt, type TemplateContext } from "@/lib/ai/template-engine";
+import { resolveTemplate, type TemplateContext } from "@/lib/ai/template-engine";
 
 // POST /api/course-rnd/projects/[id]/revise-framework
 export async function POST(
@@ -85,8 +85,8 @@ export async function POST(
     imageStylePrompt: project.imageStylePrompt,
     feedback,
   };
-  const dbPrompt = await getSystemPrompt("revise_framework", templateCtx);
-  const systemPrompt = dbPrompt ?? (getBaselinePrompt() + reviseFrameworkPrompt());
+  const templateResult = await resolveTemplate("revise_framework", templateCtx);
+  const systemPrompt = templateResult?.prompt ?? (getBaselinePrompt() + reviseFrameworkPrompt());
 
   const userMessage = `课程信息：
 课程标题：${project.title}
@@ -172,6 +172,8 @@ ${currentVersion.frameworkJson}
       userId: userId ?? null,
       promptLog: systemPrompt,
       messageLog: userMessage,
+      promptTemplateId: templateResult?.templateId ?? null,
+      promptTemplateVersionNo: templateResult?.templateVersionNo ?? null,
     },
   });
 
