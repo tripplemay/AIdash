@@ -85,9 +85,9 @@ const heroSchema = z.object({
 const toolPlanItemSchema = z.object({
   toolType: z.string(),
   recommended: z.string(),
-  alternatives: z.array(z.string()),
+  alternatives: z.array(z.string()).optional().default([]),
   purpose: z.string(),
-  usedInFlows: z.array(z.string()),
+  usedInFlows: z.array(z.string()).optional().default([]),
 });
 
 const toolPlanSchema = z.object({

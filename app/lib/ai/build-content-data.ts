@@ -91,9 +91,9 @@ export function buildContentData(input: AiLessonOutput) {
     tools: input.tool_plan.tools.map((t) => ({
       toolType: t.tool_type,
       recommended: t.recommended,
-      alternatives: t.alternatives,
+      alternatives: t.alternatives ?? [],
       purpose: t.purpose,
-      usedInFlows: t.used_in_flows,
+      usedInFlows: t.used_in_flows ?? [],
     })),
     operator: input.tool_plan.operator,
     studentMode: input.tool_plan.student_mode,
