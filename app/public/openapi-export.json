@@ -96,8 +96,20 @@
           }
         }
       },
-      "LessonDraft": {
+      "LessonSummary": {
         "type": "object",
+        "description": "Compact lesson info returned in project detail. Use getProjectLessonDetail for full draftJson.",
+        "properties": {
+          "lessonNo": { "type": "integer" },
+          "title": { "type": "string" },
+          "overview": { "type": "string", "nullable": true },
+          "lastFeedback": { "type": "string", "nullable": true },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "LessonDetail": {
+        "type": "object",
+        "description": "Full lesson detail with 7-section draftJson",
         "properties": {
           "lessonNo": { "type": "integer" },
           "title": { "type": "string" },
@@ -105,6 +117,12 @@
           "draftJson": { "type": "object", "nullable": true, "description": "7-section lesson plan: coreInfo, aiValueExplanation, prepChecklist, classroomFlow, studentCardPoints, attachmentTemplates, postClassReview" },
           "lastFeedback": { "type": "string", "nullable": true },
           "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "LessonDetailResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/LessonDetail" }
         }
       },
       "ProjectDetailResponse": {
@@ -123,7 +141,7 @@
                   "frameworkJson": { "type": "object" }
                 }
               },
-              "lessonDrafts": { "type": "array", "items": { "$ref": "#/components/schemas/LessonDraft" } },
+              "lessonDrafts": { "type": "array", "items": { "$ref": "#/components/schemas/LessonSummary" }, "description": "Compact lesson list without draftJson. Use getProjectLessonDetail for full content." },
               "validationResult": { "type": "object", "nullable": true },
               "publishRecords": {
                 "type": "array",
@@ -248,7 +266,7 @@
     "/api/export/projects/{id}": {
       "get": {
         "operationId": "getProjectDetail",
-        "summary": "Get full project detail including generationConfigSnapshot (dimensions, baselineVersions, promptTemplateVersions, actionConfigs), course framework, all lesson drafts (7 sections each), validation results, and publish records",
+        "summary": "Get project overview with generationConfigSnapshot, framework, lesson summaries (without draftJson), validation results, and publish records. Use getProjectLessonDetail for individual lesson full content.",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Project ID" }
         ],
@@ -271,6 +289,42 @@
           },
           "404": {
             "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/export/projects/{id}/lessons/{lessonNo}": {
+      "get": {
+        "operationId": "getProjectLessonDetail",
+        "summary": "Get full detail for a single lesson including the complete 7-section draftJson (coreInfo, aiValueExplanation, prepChecklist, classroomFlow, studentCardPoints, attachmentTemplates, postClassReview)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Project ID" },
+          { "name": "lessonNo", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "Lesson number (1-based)" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full lesson detail with draftJson",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LessonDetailResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing export token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or lesson not found",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorResponse" }

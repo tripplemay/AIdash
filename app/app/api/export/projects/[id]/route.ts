@@ -67,8 +67,6 @@ export async function GET(
         lessonNo: true,
         title: true,
         overview: true,
-        draftJson: true,
-        contentData: true,
         lastFeedback: true,
         updatedAt: true,
       },
@@ -78,7 +76,6 @@ export async function GET(
       lessonNo: d.lessonNo,
       title: d.title,
       overview: d.overview,
-      draftJson: d.draftJson ? JSON.parse(d.draftJson as string) : null,
       lastFeedback: d.lastFeedback,
       updatedAt: d.updatedAt,
     }));
