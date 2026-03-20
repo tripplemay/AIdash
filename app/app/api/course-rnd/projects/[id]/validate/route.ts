@@ -126,26 +126,48 @@ function parseValidationLine(line: string): {
     };
   }
 
-  // 序号|status|detail — 用 indexOf 精确分割前两个 |
-  const firstPipe = trimmed.indexOf("|");
-  if (firstPipe === -1) return null;
-  const secondPipe = trimmed.indexOf("|", firstPipe + 1);
-  if (secondPipe === -1) return null;
+  // 支持两种格式：
+  // 新格式：序号|检查项名称|status|detail（优先）
+  // 旧格式：序号|status|detail（兼容）
+  const pipes: number[] = [];
+  let searchFrom = 0;
+  while (pipes.length < 3) {
+    const idx = trimmed.indexOf("|", searchFrom);
+    if (idx === -1) break;
+    pipes.push(idx);
+    searchFrom = idx + 1;
+  }
+  if (pipes.length < 2) return null;
 
-  const indexStr = trimmed.slice(0, firstPipe).trim();
-  const status = trimmed.slice(firstPipe + 1, secondPipe).trim().toLowerCase();
-  const detail = trimmed.slice(secondPipe + 1).trim();
-
+  const indexStr = trimmed.slice(0, pipes[0]).trim();
   const index = parseInt(indexStr, 10);
   if (isNaN(index) || index < 1 || index > VALIDATION_CRITERIA.length) return null;
+
+  const segment2 = trimmed.slice(pipes[0] + 1, pipes[1]).trim();
+
+  // 判断第二段是 status（旧格式）还是检查项名称（新格式）
+  if (["pass", "warning", "fail"].includes(segment2.toLowerCase())) {
+    // 旧格式：序号|status|detail
+    return {
+      type: "item",
+      index,
+      criterion: VALIDATION_CRITERIA[index - 1] ?? `检查项 ${index}`,
+      status: segment2.toLowerCase(),
+      detail: trimmed.slice(pipes[1] + 1).trim(),
+    };
+  }
+
+  // 新格式：序号|检查项名称|status|detail
+  if (pipes.length < 3) return null;
+  const status = trimmed.slice(pipes[1] + 1, pipes[2]).trim().toLowerCase();
   if (!["pass", "warning", "fail"].includes(status)) return null;
 
   return {
     type: "item",
     index,
-    criterion: VALIDATION_CRITERIA[index - 1] ?? `检查项 ${index}`,
+    criterion: segment2 || (VALIDATION_CRITERIA[index - 1] ?? `检查项 ${index}`),
     status,
-    detail,
+    detail: trimmed.slice(pipes[2] + 1).trim(),
   };
 }
 

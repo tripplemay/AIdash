@@ -289,7 +289,7 @@ export default function CourseRndWorkbenchPage({ project, currentPlan, lessonDra
               const idx = parsed.index - 1; // 0-based
               setValidationItems(prev => prev.map((item, i) => {
                 if (i === idx) {
-                  return { ...item, status: parsed.status, detail: parsed.detail };
+                  return { ...item, criterion: parsed.criterion || item.criterion, status: parsed.status, detail: parsed.detail };
                 }
                 // 将下一个 pending 项设为 checking
                 if (i === idx + 1 && item.status === "pending") {
