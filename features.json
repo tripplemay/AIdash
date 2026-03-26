@@ -1,0 +1,228 @@
+{
+  "features": [
+    {
+      "id": "F001",
+      "title": "用户认证与权限",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "用户可通过账号密码登录，三角色（teacher/rd_manager/admin）权限控制，API 统一守卫",
+      "notes": "NextAuth v5, auth.ts, lib/permissions.ts, lib/auth-utils.ts"
+    },
+    {
+      "id": "F002",
+      "title": "邀请码注册",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "管理员生成邀请码，新用户通过邀请码注册，默认 rd_manager 角色",
+      "notes": "/register 页面，InviteCode 模型"
+    },
+    {
+      "id": "F003",
+      "title": "课程包列表与筛选",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "SSR 渲染课程包卡片列表，支持搜索和年龄段/难度筛选树",
+      "notes": "/list, /api/packages, filter-tree API"
+    },
+    {
+      "id": "F004",
+      "title": "课程包详情",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "按 slug 查看课程包元信息和课次列表，可进入单课",
+      "notes": "/detail/[slug]"
+    },
+    {
+      "id": "F005",
+      "title": "单课渲染（LessonRenderer v2）",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "v2 JSON 格式通过 LessonRenderer 服务端渲染，含目录导航、附件下载、阅读进度条",
+      "notes": "/lesson/[slug]/[lessonId], ADR-003"
+    },
+    {
+      "id": "F006",
+      "title": "课程包上传管理",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "管理员上传 ZIP 课程包，自动解压 + upsert 数据库，含路径穿越防护",
+      "notes": "/admin/packages, POST /api/admin/upload"
+    },
+    {
+      "id": "F007",
+      "title": "用户管理",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "管理员可增删改查用户，含密码重置、角色变更、禁删自身",
+      "notes": "/admin/users"
+    },
+    {
+      "id": "F008",
+      "title": "部门管理",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "管理员管理部门，用户可关联部门",
+      "notes": "/admin/users 内嵌, Department 模型"
+    },
+    {
+      "id": "F009",
+      "title": "个人资料管理",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "用户可修改姓名、邮箱、手机、部门、头像（60 个预设卡通头像）",
+      "notes": "/profile"
+    },
+    {
+      "id": "F010",
+      "title": "AI 服务配置",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "管理员配置 AI 服务商（含加密 Key + 代理），动作→模型映射，价格自动获取",
+      "notes": "/admin/ai-settings, AiProvider/AiActionConfig 模型"
+    },
+    {
+      "id": "F011",
+      "title": "课程研发 — 方向确认",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "创建研发项目，AI 生成课程框架（SSE 流式），支持修订（增量合并）",
+      "notes": "/course-rnd/[projectId]"
+    },
+    {
+      "id": "F012",
+      "title": "课程研发 — 工作台",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "逐课生成（SSE 流式 + 实时进度）、批量修订、AI 审核（10 项基线校验）",
+      "notes": "/course-rnd/[projectId]/workbench"
+    },
+    {
+      "id": "F013",
+      "title": "课程研发 — 图片生成",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "课程包封面 + 课次 hero 图 AI 生成，支持 Gemini/DALL-E/GPT-5-image，单张重新生成",
+      "notes": "lib/ai/provider.ts generateImage, 构图引导预设"
+    },
+    {
+      "id": "F014",
+      "title": "课程研发 — 定稿与发布",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "定稿（含课次完整性检查）→ 一键发布到课程库（自动填充元信息 + slug 生成）",
+      "notes": "finalize/publish API"
+    },
+    {
+      "id": "F015",
+      "title": "课程研发 — 工具执行路径",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "课次新增 tool_plan + flow.tool_usage 字段，审核检查工具落地",
+      "notes": "最近几次提交完成"
+    },
+    {
+      "id": "F016",
+      "title": "基线与 Prompt 模板系统",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "23 条基线按维度拼装，9 个动作 Prompt 模板（DB 优先 + 硬编码兜底），28 个变量，版本管理 + diff + 回滚",
+      "notes": "/admin/prompt-config, lib/ai/template-engine.ts, lib/ai/baseline-assembler.ts"
+    },
+    {
+      "id": "F017",
+      "title": "预设管理",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "34 个预设（课程方向/图片风格/标签），左右布局 + 拖拽排序",
+      "notes": "/admin/prompt-config 预设 tab"
+    },
+    {
+      "id": "F018",
+      "title": "问AI对话模块",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "多轮对话 + SSE 流式，通用/课程设计模式切换，联网搜索（Tavily + function calling），Markdown 渲染 + 引用",
+      "notes": "/chat, lib/ai/chat-with-tools.ts"
+    },
+    {
+      "id": "F019",
+      "title": "AI 调用审计日志",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "每次 AI 调用记录完整 prompt + message，管理员可在 /admin/ai-logs 查看",
+      "notes": "CourseRndAiCallLog, promptLog/messageLog 字段"
+    },
+    {
+      "id": "F020",
+      "title": "操作日志",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "记录用户操作（上传/发布/上下线/删除/编辑等），按用户/模块/动作筛选",
+      "notes": "/admin/operation-logs, OperationLog 模型"
+    },
+    {
+      "id": "F021",
+      "title": "费用追踪",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "每次 AI 调用记录 token 数 + 预估费用（CNY），工作台内嵌费用面板，全角色可查用量统计",
+      "notes": "lib/ai/pricing-service.ts, AiActionConfig.pricePerCall"
+    },
+    {
+      "id": "F022",
+      "title": "Export API（GPTs 集成）",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "Token 认证的只读接口供 ChatGPT GPTs 调用，课程产出物导出",
+      "notes": "/api/export/*, Export Token 配置入口"
+    },
+    {
+      "id": "F023",
+      "title": "使用指南",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "按角色显示操作指南（教师版/主管版），内嵌 TOC 导航",
+      "notes": "/guide, TeacherGuide.tsx/RdManagerGuide.tsx"
+    },
+    {
+      "id": "F024",
+      "title": "纯 CSS 设计系统",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "globals.css 纯 CSS 变量 + BEM-lite，浅蓝紫雾光科技感，无 Tailwind",
+      "notes": "app/globals.css"
+    },
+    {
+      "id": "F025",
+      "title": "SOCKS5/HTTP 代理支持",
+      "priority": "medium",
+      "status": "completed",
+      "acceptance": "按提供商配置 proxyUrl，通过 Xray 出站，支持 SOCKS5 和 HTTP 代理",
+      "notes": "lib/proxy-fetch.ts, socks-proxy-agent"
+    },
+    {
+      "id": "F026",
+      "title": "CI/CD 部署",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "GitHub Actions → rsync → deploy-remote.sh（npm ci + prisma + build + PM2 restart）",
+      "notes": ".github/workflows/, deploy-remote.sh"
+    },
+    {
+      "id": "F027",
+      "title": "Prompt 模板版本追踪",
+      "priority": "low",
+      "status": "completed",
+      "acceptance": "AI 调用链路挂接 Prompt 模板版本信息（templateId + versionNo）",
+      "notes": "CourseRndAiCallLog.promptTemplateId/promptTemplateVersionNo"
+    },
+    {
+      "id": "F028",
+      "title": "测试覆盖率 94%",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "74 个测试文件，覆盖 API 路由和核心 lib 模块",
+      "notes": "app/__tests__/"
+    }
+  ]
+}
