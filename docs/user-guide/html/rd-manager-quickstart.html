@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Dash 教学主管快速入门</title>
+<style>
+  :root {
+    --primary: #7e95ff;
+    --primary-light: #eef3ff;
+    --primary-dark: #5a6fbf;
+    --text: #3a4d7a;
+    --text-muted: #5f6f96;
+    --bg: #f4f7ff;
+    --card-bg: #ffffff;
+    --border: #d8e2f4;
+    --shadow: 0 2px 12px rgba(126, 149, 255, 0.10);
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "SF Pro Display", "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .header {
+    background: linear-gradient(135deg, #7e95ff 0%, #84b7ff 50%, #7fd7ff 100%);
+    color: #fff;
+    padding: 48px 24px 40px;
+    text-align: center;
+  }
+  .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+  .header p { font-size: 17px; opacity: 0.9; }
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    border-radius: 999px;
+    padding: 5px 18px;
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  .container { max-width: 800px; margin: 0 auto; padding: 32px 20px 64px; }
+  .section-title {
+    font-size: 24px; font-weight: 700; color: var(--text);
+    margin: 44px 0 24px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary); display: inline-block;
+  }
+  .section-subtitle {
+    font-size: 15px; color: var(--text-muted);
+    margin: -14px 0 22px; line-height: 1.6;
+  }
+  .card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 24px 20px;
+    margin-bottom: 18px; border: 1px solid var(--border);
+  }
+  .card h3 {
+    font-size: 19px; font-weight: 700; color: var(--primary-dark);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
+  }
+  .card h3 .icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--primary-light); color: var(--primary);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li {
+    counter-increment: step; position: relative;
+    padding-left: 40px; margin-bottom: 14px;
+    font-size: 16px; line-height: 1.7;
+  }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tip {
+    background: var(--primary-light); border-left: 3px solid var(--primary);
+    border-radius: 0 8px 8px 0; padding: 12px 16px;
+    font-size: 15px; margin-top: 14px;
+    color: var(--text-muted); line-height: 1.7;
+  }
+  .tip strong { color: var(--text); }
+  .flow {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin: 16px 0; font-size: 15px;
+  }
+  .flow .step-pill {
+    background: var(--primary-light); border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 14px; white-space: nowrap;
+  }
+  .flow .arrow { color: var(--primary); font-weight: 700; }
+  .divider { border: none; border-top: 1px dashed var(--border); margin: 40px 0; }
+  .faq-item {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    margin-bottom: 14px; overflow: hidden;
+  }
+  .faq-item summary {
+    padding: 18px 20px; font-size: 17px; font-weight: 600;
+    color: var(--text); cursor: pointer; list-style: none;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .faq-item summary::before {
+    content: "Q"; width: 28px; height: 28px; border-radius: 6px;
+    background: var(--primary); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item .faq-answer {
+    padding: 0 20px 18px 60px; font-size: 16px;
+    color: var(--text-muted); line-height: 1.8;
+  }
+  kbd {
+    background: var(--primary-light); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 8px;
+    font-size: 14px; font-family: inherit; color: var(--primary-dark);
+  }
+  @media print {
+    body { background: #fff; }
+    .header {
+      background: linear-gradient(135deg, #7e95ff 0%, #84b7ff 50%, #7fd7ff 100%) !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      padding: 36px 24px 32px;
+    }
+    .container { padding: 24px 32px; }
+    .card, .faq-item { break-inside: avoid; box-shadow: none; border: 1px solid #d8e2f4; page-break-inside: avoid; }
+    .section-title { page-break-after: avoid; margin-top: 28px; }
+    .divider { page-break-after: always; border: none; margin: 0; }
+    @page { margin: 10mm 10mm; }
+    .faq-item summary { pointer-events: none; }
+    .steps li::before, .card h3 .icon, .faq-item summary::before, .tip, .flow .step-pill, kbd {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .steps li::before { background: var(--primary) !important; }
+    .card h3 .icon { background: var(--primary-light) !important; }
+    .faq-item summary::before { background: var(--primary) !important; }
+    .tip { background: var(--primary-light) !important; }
+    .flow .step-pill { background: var(--primary-light) !important; }
+    kbd { background: var(--primary-light) !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">教学主管版</div>
+  <h1>AI Dash 快速入门</h1>
+  <p>掌握课程浏览 + AI 课程研发全流程</p>
+</div>
+
+<div class="container">
+
+  <!-- ══════════ 注册/登录 ══════════ -->
+  <div class="section-title">注册与登录</div>
+
+  <div class="card">
+    <h3><span class="icon">1</span> 注册 / 登录</h3>
+    <ol class="steps">
+      <li><strong>首次使用</strong>：向管理员索取邀请码，点击登录页底部「使用邀请码注册」注册账号</li>
+      <li><strong>已有账号</strong>：输入账号密码登录系统</li>
+      <li>登录成功后进入课程列表</li>
+    </ol>
+    <div class="tip"><strong>忘记密码？</strong>联系管理员，管理员可以帮您重置。</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ 课程浏览 ══════════ -->
+  <div class="section-title">课程浏览</div>
+  <p class="section-subtitle">查看和使用已发布的课程</p>
+
+  <div class="card">
+    <h3><span class="icon">2</span> 找到课程 → 进入授课</h3>
+    <ol class="steps">
+      <li>左侧边栏可按<strong>年龄段</strong>和<strong>难度</strong>筛选课程</li>
+      <li>点击「进入详情」查看课程信息和课次列表</li>
+      <li>点击「进入本课」打开课程内容，左侧有目录导航</li>
+    </ol>
+    <div class="tip"><strong>实用工具：</strong>课程中的 AI 对话模板可以一键复制；顶部有「打印本课」按钮。</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ AI 课程研发 ══════════ -->
+  <div class="section-title">AI 课程研发</div>
+  <p class="section-subtitle">从零开始，用 AI 设计完整课程并发布到课程库</p>
+
+  <div class="flow">
+    <span class="step-pill">新建项目</span>
+    <span class="arrow">→</span>
+    <span class="step-pill">填写方向</span>
+    <span class="arrow">→</span>
+    <span class="step-pill">AI 生成框架</span>
+    <span class="arrow">→</span>
+    <span class="step-pill">修改框架</span>
+    <span class="arrow">→</span>
+    <span class="step-pill">确认框架</span>
+    <span class="arrow">→</span>
+    <span class="step-pill">逐课生成</span>
+    <span class="arrow">→</span>
+    <span class="step-pill">逐课修订</span>
+    <span class="arrow">→</span>
+    <span class="step-pill">审核定稿</span>
+    <span class="arrow">→</span>
+    <span class="step-pill">发布</span>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">3</span> 新建项目 + 填写课程方向</h3>
+    <ol class="steps">
+      <li>点击左侧边栏「课程研发」，进入研发看板</li>
+      <li>点击「+ 新建项目」</li>
+      <li>填写课程信息：
+        <br>- <strong>年龄段和难度</strong>（必选）
+        <br>- <strong>课程方向</strong>：选择预设或自己描述
+        <br>- <strong>项目标题</strong>：手动输入或点「AI 生成」自动起名
+        <br>- 课次数量、产出物类型、图片风格等
+      </li>
+      <li>「核心诉求」和「补充约束」可以点击标签快速选择</li>
+    </ol>
+    <div class="tip"><strong>信息越详细，AI 生成质量越高。</strong>特别是"课程方向"和"核心诉求"，直接影响框架质量。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">4</span> AI 生成框架 + 修改</h3>
+    <ol class="steps">
+      <li>点击「生成课程框架」，AI 实时生成课程大纲和封面图</li>
+      <li>右侧面板展示生成结果：课程总结 + 每课标题和概述</li>
+      <li>不满意？在输入框写<strong>修改意见</strong>提交，AI 只调整您指出的部分</li>
+      <li>可反复修改，直到满意。封面图也可单独重新生成</li>
+    </ol>
+    <div class="tip"><strong>AI 是"改"不是"重写"：</strong>每次修改只动您指出的部分，其余内容保持不变。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">5</span> 工作台：逐课生成和修订</h3>
+    <ol class="steps">
+      <li>确认框架后进入工作台，显示所有课次卡片（初始为空）</li>
+      <li>点击某个课次的「生成」按钮，AI 生成详细方案（含 7 个板块）</li>
+      <li>方案包含：核心信息、AI 环节说明、备课提示、课堂流程、学生应对策略、附件模板、课后复盘</li>
+      <li>要修改？<strong>点击预览中的板块标题或图片</strong>，底部弹出输入栏，写修改意见提交</li>
+      <li>也可以整体重新生成某个课次</li>
+    </ol>
+    <div class="tip"><strong>分页加载：</strong>课次多时默认显示前几课，点击底部「加载更多」查看后续课次。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">6</span> 审核 → 定稿 → 发布</h3>
+    <ol class="steps">
+      <li>所有课次方案就绪后，点击顶部「审核并定稿」</li>
+      <li>AI 对每节课做 <strong>10 项质量检查</strong>（目标清晰度、AI 价值、时间分配等），逐项显示结果</li>
+      <li>审核通过后自动定稿，方案锁定不可修改</li>
+      <li>页面底部出现<strong>发布面板</strong>：确认标题 → 点击「发布」</li>
+      <li>发布成功后，课程立即出现在教师端的课程列表中</li>
+    </ol>
+    <div class="tip"><strong>需要改？</strong>点击「撤回定稿」可解锁方案继续修改。已发布的内容不受影响，修改后需重新定稿并发布。</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ 问 AI 助手 ══════════ -->
+  <div class="section-title">问 AI 助手</div>
+  <p class="section-subtitle">随时向 AI 提问，获取教学建议和专业解答</p>
+
+  <div class="card">
+    <h3><span class="icon">7</span> AI 对话</h3>
+    <ol class="steps">
+      <li>点击左侧边栏「问AI」，新建对话</li>
+      <li>选择<strong>通用模式</strong>（问任何问题）或<strong>课程设计模式</strong>（AI 懂课程设计）</li>
+      <li>输入消息按 <kbd>Enter</kbd> 发送，AI 实时回复，支持多轮对话</li>
+      <li>AI 回复右下角有「复制」按钮可复制内容</li>
+    </ol>
+    <div class="tip"><strong>联网搜索：</strong>AI 会自动联网搜索获取最新信息，回答中以 [1]、[2] 标注来源。</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ 课程包管理 ══════════ -->
+  <div class="section-title">课程包管理</div>
+  <p class="section-subtitle">管理已发布的课程包</p>
+
+  <div class="card">
+    <h3><span class="icon">8</span> 管理课程包</h3>
+    <ol class="steps">
+      <li>点击左侧「管理后台」→「课程包管理」</li>
+      <li>表格展示所有课程包，可执行以下操作：
+        <br>- <strong>编辑</strong>：修改标题、年龄段、难度
+        <br>- <strong>下线</strong>：教师端暂时不可见
+        <br>- <strong>上线</strong>：恢复教师可见
+        <br>- <strong>删除</strong>：永久删除（不可撤销）
+      </li>
+    </ol>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ 查看系统配置 ══════════ -->
+  <div class="section-title">查看系统配置</div>
+  <p class="section-subtitle">以下页面您可以查看但不能修改，修改权限属于管理员</p>
+
+  <div class="card">
+    <h3><span class="icon">9</span> 可查看的配置页面</h3>
+    <ol class="steps">
+      <li><strong>AI 服务配置</strong>：查看当前使用的 AI 模型和用量统计</li>
+      <li><strong>AI 生成规则</strong>（Prompt 配置）：查看课程设计标准、AI 生成指令模板、预设选项</li>
+      <li><strong>AI 调用记录</strong>：查看您自己项目的 AI 使用记录和费用</li>
+      <li><strong>操作日志</strong>：查看您自己的操作记录</li>
+    </ol>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ 个人资料 ══════════ -->
+  <div class="section-title">个人资料</div>
+
+  <div class="card">
+    <h3><span class="icon">10</span> 修改个人信息</h3>
+    <ol class="steps">
+      <li>点击右上角<strong>头像</strong> → 选择「个人资料」</li>
+      <li>可修改姓名、邮箱、手机、部门，还可以从 <strong>60 个卡通头像</strong>中选择</li>
+      <li>修改密码：点击「修改密码」按钮</li>
+    </ol>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ FAQ ══════════ -->
+  <div class="section-title">我想做什么？</div>
+
+  <details class="faq-item" open>
+    <summary>我想从零开始设计一个新课程</summary>
+    <div class="faq-answer">
+      点击左侧「课程研发」→「+ 新建项目」→ 填写课程方向信息 → 点击「生成课程框架」。AI 会生成完整的课程大纲，您可以反复修改直到满意，然后逐课生成详细方案。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>AI 生成的课程框架不太对，我想调整</summary>
+    <div class="faq-answer">
+      在框架结果面板的输入框中，用自然语言描述您想改什么。比如"第 3 课的主题改为 XX"或"把课次数量从 10 减到 8"。AI 只会调整您指出的部分，其余保持不变。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>某节课的方案质量不好，我想改进</summary>
+    <div class="faq-answer">
+      在工作台中，点击该课次预览中的<strong>板块标题或图片</strong>，底部弹出修改意见输入栏。描述具体要改什么，AI 会针对性调整。也可以点击「重新生成」彻底重做。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>课程定稿后发现问题，能改吗</summary>
+    <div class="faq-answer">
+      可以。点击「撤回定稿」解锁方案继续修改。修改完重新「审核并定稿」。已发布的内容不受影响，修改后需要重新发布。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我想用 AI 咨询课程设计的问题</summary>
+    <div class="faq-answer">
+      点击左侧「问AI」→ 新建对话 → 选择「课程设计模式」。AI 了解课程设计标准，还会自动联网搜索最新资料，回答中以引用标注展示来源。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我想注册一个新账号</summary>
+    <div class="faq-answer">
+      向管理员索取<strong>邀请码</strong>，在登录页点击「使用邀请码注册」链接，填写邀请码、用户名、姓名和密码即可。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我想修改头像和个人信息</summary>
+    <div class="faq-answer">
+      点击右上角头像 → 选择「个人资料」。可以修改姓名、邮箱、手机、部门，还可以从 60 个卡通头像中选择。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>AI 生成时提示"服务未配置"</summary>
+    <div class="faq-answer">
+      管理员还没有配置对应的 AI 模型。请联系管理员，在「AI 服务配置」中为相应动作配置模型。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我忘记密码了</summary>
+    <div class="faq-answer">
+      请联系系统管理员，管理员可以在后台为您重置密码。
+    </div>
+  </details>
+
+</div>
+
+<script>
+document.querySelectorAll('details.faq-item').forEach(d => d.setAttribute('open', ''));
+</script>
+</body>
+</html>

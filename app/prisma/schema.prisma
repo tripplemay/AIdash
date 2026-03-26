@@ -21,12 +21,12 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  department        Department?           @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  courseRndProjects  CourseRndProject[]
-  publishRecords     CourseRndPublishRecord[]
-  operationLogs      OperationLog[]
-  chatConversations  ChatConversation[]
-  inviteCodes        InviteCode[]
+  department        Department?              @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  courseRndProjects CourseRndProject[]
+  publishRecords    CourseRndPublishRecord[]
+  operationLogs     OperationLog[]
+  chatConversations ChatConversation[]
+  inviteCodes       InviteCode[]
 }
 
 // ─── 部门 ───
@@ -56,18 +56,18 @@ model InviteCode {
 
 // ─── 课程包 ───
 model CoursePackage {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  ageRange    String
-  level       String
-  summary     String?
-  coverImage  String?
-  status      String   @default("draft") // "draft" | "published" | "offline"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  title      String
+  ageRange   String
+  level      String
+  summary    String?
+  coverImage String?
+  status     String   @default("draft") // "draft" | "published" | "offline"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  lessons     Lesson[]
+  lessons Lesson[]
 }
 
 // ─── 课次 ───
@@ -81,7 +81,7 @@ model Lesson {
   aiRoundsCount   Int?
   outputSummary   String?
   entryFile       String   @default("index.html")
-  contentPath     String?  // v1: 单课 HTML 路径
+  contentPath     String? // v1: 单课 HTML 路径
   contentData     String?  @db.LongText // v2: JSON { hero, sections }
   status          String   @default("draft")
   createdAt       DateTime @default(now())
@@ -96,13 +96,13 @@ model Lesson {
 
 // ─── 附件 ───
 model Attachment {
-  id        String @id @default(cuid())
-  type      String // "teacher_screen" | "student_ai_input_template" | "student_output_template" | "teacher_demo_case"
-  title     String
-  path      String
+  id    String @id @default(cuid())
+  type  String // "teacher_screen" | "student_ai_input_template" | "student_output_template" | "teacher_demo_case"
+  title String
+  path  String
 
-  lessonId  String
-  lesson    Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 }
 
 // ─── 课程研发项目 ───
@@ -111,7 +111,7 @@ model CourseRndProject {
   title                     String
   status                    String   @default("direction") // "direction" | "workbench" | "finalized" | "paused" | "archived"
   targetAudience            String?
-  courseDirection            String?
+  courseDirection           String?
   ageRange                  String?
   level                     String?
   lessonCount               Int?
@@ -119,10 +119,10 @@ model CourseRndProject {
   roughFramework            String?  @db.LongText
   coreNeeds                 String?  @db.LongText
   constraints               String?  @db.LongText
-  orgForm                   String?  // "S1" | "S2"
-  deliverableType           String?  // "P1" ~ "P11"
-  deliverableName           String?  // 具体产出物名称
-  imageStyle                String?  // 图片风格预设 key
+  orgForm                   String? // "S1" | "S2"
+  deliverableType           String? // "P1" ~ "P11"
+  deliverableName           String? // 具体产出物名称
+  imageStyle                String? // 图片风格预设 key
   imageStylePrompt          String?  @db.Text // 用户可编辑的图片风格描述
   currentDirectionVersionId String?
   currentPlanVersionId      String?
@@ -131,7 +131,7 @@ model CourseRndProject {
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
-  createdBy         User                      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy         User                        @relation(fields: [createdById], references: [id], onDelete: Cascade)
   directionVersions CourseRndDirectionVersion[]
   planVersions      CourseRndPlanVersion[]
   publishRecords    CourseRndPublishRecord[]
@@ -139,17 +139,17 @@ model CourseRndProject {
 
 // ─── 课程方向版本 ───
 model CourseRndDirectionVersion {
-  id              String   @id @default(cuid())
-  projectId       String
-  versionNo       Int
-  summary         String?  @db.LongText
-  frameworkJson    String?  @db.LongText // JSON: [{lessonNo, title, overview}]
-  isSelected      Boolean  @default(false)
-  promptSnapshot  String?  @db.LongText
-  modelName       String?
-  inputTokens     Int?
-  outputTokens    Int?
-  createdAt       DateTime @default(now())
+  id             String   @id @default(cuid())
+  projectId      String
+  versionNo      Int
+  summary        String?  @db.LongText
+  frameworkJson  String?  @db.LongText // JSON: [{lessonNo, title, overview}]
+  isSelected     Boolean  @default(false)
+  promptSnapshot String?  @db.LongText
+  modelName      String?
+  inputTokens    Int?
+  outputTokens   Int?
+  createdAt      DateTime @default(now())
 
   project CourseRndProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
@@ -192,22 +192,22 @@ model CourseRndLessonDraft {
 
 // ─── AI 调用日志 ───
 model CourseRndAiCallLog {
-  id            String   @id @default(cuid())
-  projectId     String?
-  pageKey       String   // "direction" | "workbench" | "chat"
-  actionType    String   // generate_framework, regenerate_lesson, revise_lesson, etc.
-  modelName     String
-  inputTokens   Int      @default(0)
-  outputTokens  Int      @default(0)
-  estimatedCost Float    @default(0) // CNY
-  cacheHit      Boolean  @default(false)
-  userId        String?
-  metadataJson  String?  @db.LongText
-  promptLog                String?  @db.LongText // 完整 system prompt（用于 prompt 审计）
-  messageLog               String?  @db.LongText // 完整 user message（用于 prompt 审计）
-  promptTemplateId         String?  // 使用的 Prompt 模板 ID
-  promptTemplateVersionNo  Int?     // 使用时的模板版本号
-  createdAt                DateTime @default(now())
+  id                      String   @id @default(cuid())
+  projectId               String?
+  pageKey                 String // "direction" | "workbench" | "chat"
+  actionType              String // generate_framework, regenerate_lesson, revise_lesson, etc.
+  modelName               String
+  inputTokens             Int      @default(0)
+  outputTokens            Int      @default(0)
+  estimatedCost           Float    @default(0) // CNY
+  cacheHit                Boolean  @default(false)
+  userId                  String?
+  metadataJson            String?  @db.LongText
+  promptLog               String?  @db.LongText // 完整 system prompt（用于 prompt 审计）
+  messageLog              String?  @db.LongText // 完整 user message（用于 prompt 审计）
+  promptTemplateId        String? // 使用的 Prompt 模板 ID
+  promptTemplateVersionNo Int? // 使用时的模板版本号
+  createdAt               DateTime @default(now())
 }
 
 // ─── 课程发布记录 ───
@@ -228,8 +228,8 @@ model CourseRndPublishRecord {
 model OperationLog {
   id         String   @id @default(cuid())
   userId     String
-  module     String   // "package" | "user"
-  action     String   // "upload" | "publish" | "online" | "offline" | "delete" | "create" | "edit" | "reset_password"
+  module     String // "package" | "user"
+  action     String // "upload" | "publish" | "online" | "offline" | "delete" | "create" | "edit" | "reset_password"
   targetId   String?
   targetName String?
   detail     String?
@@ -248,7 +248,7 @@ model AiProvider {
   supportText  Boolean  @default(true)
   supportImage Boolean  @default(false)
   isActive     Boolean  @default(true)
-  proxyUrl     String?  // 代理地址，如 socks5://127.0.0.1:1080，为空表示直连
+  proxyUrl     String? // 代理地址，如 socks5://127.0.0.1:1080，为空表示直连
   createdAt    DateTime @default(now())
 
   actionConfigs AiActionConfig[]
@@ -259,13 +259,13 @@ model AiActionConfig {
   id               String    @id @default(cuid())
   actionKey        String    @unique // "generate_framework", "regenerate_lesson", etc.
   actionLabel      String
-  actionType       String    // "text" | "image"
+  actionType       String // "text" | "image"
   providerId       String
   modelName        String
-  inputPricePerM   Float?    // 输入价格 USD/百万token（文本模型）
-  outputPricePerM  Float?    // 输出价格 USD/百万token（文本模型）
-  pricePerCall     Float?    // 单次调用价格 USD（图片模型）
-  pricingSource    String?   // "auto" | "manual"
+  inputPricePerM   Float? // 输入价格 USD/百万token（文本模型）
+  outputPricePerM  Float? // 输出价格 USD/百万token（文本模型）
+  pricePerCall     Float? // 单次调用价格 USD（图片模型）
+  pricingSource    String? // "auto" | "manual"
   pricingUpdatedAt DateTime?
 
   provider AiProvider @relation(fields: [providerId], references: [id])
@@ -281,9 +281,9 @@ model SystemConfig {
 // ─── 基线文档（按维度拆分） ───
 model BaselineDoc {
   id               String   @id @default(cuid())
-  type             String   // "general" | "age" | "level" | "org_form" | "deliverable" | "matrix"
-  key              String   // "general" | "A1" ~ "A4" | "L1" ~ "L4" | "S1" ~ "S2" | "P1" ~ "P11" | "matrix"
-  label            String   // 显示名, e.g. "A2｜8-9岁 低龄基础段"
+  type             String // "general" | "age" | "level" | "org_form" | "deliverable" | "matrix"
+  key              String // "general" | "A1" ~ "A4" | "L1" ~ "L4" | "S1" ~ "S2" | "P1" ~ "P11" | "matrix"
+  label            String // 显示名, e.g. "A2｜8-9岁 低龄基础段"
   content          String   @db.LongText
   sortOrder        Int      @default(0)
   currentVersionId String?
@@ -325,13 +325,13 @@ model PromptTemplate {
 
 // ─── Prompt 模板版本历史 ───
 model PromptTemplateVersion {
-  id           String   @id @default(cuid())
-  templateId   String
-  versionNo    Int
-  content      String   @db.LongText
-  editedById   String?
-  editSummary  String?
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  templateId  String
+  versionNo   Int
+  content     String   @db.LongText
+  editedById  String?
+  editSummary String?
+  createdAt   DateTime @default(now())
 
   template PromptTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
@@ -341,7 +341,7 @@ model PromptTemplateVersion {
 // ─── 预设值（课程方向、图片风格、标签等） ───
 model Preset {
   id        String   @id @default(cuid())
-  category  String   // "course_direction" | "image_style" | "core_needs_tag" | "constraints_tag"
+  category  String // "course_direction" | "image_style" | "core_needs_tag" | "constraints_tag"
   name      String
   value     String   @db.Text
   sortOrder Int      @default(0)
@@ -368,7 +368,7 @@ model ChatConversation {
 model ChatMessage {
   id             String   @id @default(cuid())
   conversationId String
-  role           String   // "user" | "assistant"
+  role           String // "user" | "assistant"
   content        String   @db.LongText
   createdAt      DateTime @default(now())
 

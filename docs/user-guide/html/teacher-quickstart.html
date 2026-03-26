@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Dash 教师快速入门</title>
+<style>
+  :root {
+    --primary: #7e95ff;
+    --primary-light: #eef3ff;
+    --primary-dark: #5a6fbf;
+    --text: #3a4d7a;
+    --text-muted: #5f6f96;
+    --bg: #f4f7ff;
+    --card-bg: #ffffff;
+    --border: #d8e2f4;
+    --shadow: 0 2px 12px rgba(126, 149, 255, 0.10);
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "SF Pro Display", "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .header {
+    background: linear-gradient(135deg, #7e95ff 0%, #84b7ff 50%, #7fd7ff 100%);
+    color: #fff;
+    padding: 48px 24px 40px;
+    text-align: center;
+  }
+  .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+  .header p { font-size: 17px; opacity: 0.9; }
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    border-radius: 999px;
+    padding: 5px 18px;
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  .container { max-width: 800px; margin: 0 auto; padding: 32px 20px 64px; }
+  .section-title {
+    font-size: 24px; font-weight: 700; color: var(--text);
+    margin: 44px 0 24px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary); display: inline-block;
+  }
+  .section-subtitle {
+    font-size: 15px; color: var(--text-muted);
+    margin: -14px 0 22px; line-height: 1.6;
+  }
+  .card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 24px 20px;
+    margin-bottom: 18px; border: 1px solid var(--border);
+  }
+  .card h3 {
+    font-size: 19px; font-weight: 700; color: var(--primary-dark);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
+  }
+  .card h3 .icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--primary-light); color: var(--primary);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li {
+    counter-increment: step; position: relative;
+    padding-left: 40px; margin-bottom: 14px;
+    font-size: 16px; line-height: 1.7;
+  }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tip {
+    background: var(--primary-light); border-left: 3px solid var(--primary);
+    border-radius: 0 8px 8px 0; padding: 12px 16px;
+    font-size: 15px; margin-top: 14px;
+    color: var(--text-muted); line-height: 1.7;
+  }
+  .tip strong { color: var(--text); }
+  .divider { border: none; border-top: 1px dashed var(--border); margin: 40px 0; }
+  .faq-item {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    margin-bottom: 14px; overflow: hidden;
+  }
+  .faq-item summary {
+    padding: 18px 20px; font-size: 17px; font-weight: 600;
+    color: var(--text); cursor: pointer; list-style: none;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .faq-item summary::before {
+    content: "Q"; width: 28px; height: 28px; border-radius: 6px;
+    background: var(--primary); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item .faq-answer {
+    padding: 0 20px 18px 60px; font-size: 16px;
+    color: var(--text-muted); line-height: 1.8;
+  }
+  kbd {
+    background: var(--primary-light); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 8px;
+    font-size: 14px; font-family: inherit; color: var(--primary-dark);
+  }
+  @media print {
+    body { background: #fff; }
+    .header {
+      background: linear-gradient(135deg, #7e95ff 0%, #84b7ff 50%, #7fd7ff 100%) !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      padding: 36px 24px 32px;
+    }
+    .container { padding: 24px 32px; }
+    .card, .faq-item { break-inside: avoid; box-shadow: none; border: 1px solid #d8e2f4; page-break-inside: avoid; }
+    .section-title { page-break-after: avoid; margin-top: 28px; }
+    .divider { page-break-after: always; border: none; margin: 0; }
+    @page { margin: 10mm 10mm; }
+    .faq-item summary { pointer-events: none; }
+    .steps li::before, .card h3 .icon, .faq-item summary::before, .tip, kbd {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .steps li::before { background: var(--primary) !important; }
+    .card h3 .icon { background: var(--primary-light) !important; }
+    .faq-item summary::before { background: var(--primary) !important; }
+    .tip { background: var(--primary-light) !important; }
+    kbd { background: var(--primary-light) !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">教师版</div>
+  <h1>AI Dash 快速入门</h1>
+  <p>3 分钟掌握核心操作，轻松开始授课</p>
+</div>
+
+<div class="container">
+
+  <!-- ══════════ 注册/登录 ══════════ -->
+  <div class="section-title">注册与登录</div>
+
+  <div class="card">
+    <h3><span class="icon">1</span> 注册 / 登录</h3>
+    <ol class="steps">
+      <li><strong>首次使用</strong>：向管理员索取邀请码，点击登录页底部「使用邀请码注册」，填写邀请码、用户名、姓名和密码即可注册</li>
+      <li><strong>已有账号</strong>：输入账号和密码，点击「登录」</li>
+      <li>登录成功后自动进入课程列表</li>
+    </ol>
+    <div class="tip"><strong>忘记密码？</strong>联系管理员，管理员可以帮您重置。</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ 课程浏览 ══════════ -->
+  <div class="section-title">课程浏览</div>
+  <p class="section-subtitle">浏览课程包、查看课程详情、进入课堂授课</p>
+
+  <div class="card">
+    <h3><span class="icon">2</span> 找到适合的课程</h3>
+    <ol class="steps">
+      <li>登录后自动进入<strong>课程列表</strong>，展示所有可用课程</li>
+      <li>左侧边栏有<strong>筛选功能</strong>：按年龄段（如"8-9岁"）和难度筛选</li>
+      <li>找到目标课程后，点击卡片上的「进入详情」</li>
+    </ol>
+    <div class="tip"><strong>小技巧：</strong>筛选条件会自动记住，下次打开系统不用重新选。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">3</span> 了解课程内容</h3>
+    <ol class="steps">
+      <li>详情页展示课程的<strong>完整信息</strong>：适用年龄、难度、简介</li>
+      <li>下方是<strong>课次列表</strong>，每节课标注了时长、人数、AI 回合数</li>
+      <li>点击某节课右侧的「进入本课」，打开课程内容</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">4</span> 进入课堂</h3>
+    <ol class="steps">
+      <li>课程页面顶部显示<strong>课次目标</strong>和<strong>核心成果</strong></li>
+      <li>左侧有<strong>目录导航</strong>，点击可跳转到任意教学环节</li>
+      <li>滚动阅读时，目录会<strong>自动跟踪</strong>您当前所在的位置</li>
+      <li>底部边栏可以<strong>快速切换</strong>到同一课程的其他课次</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">5</span> 课堂实用工具</h3>
+    <ol class="steps">
+      <li><strong>复制 AI 模板</strong>：课程中的对话模板右上角有复制按钮，一键复制到剪贴板</li>
+      <li><strong>打印课程</strong>：点击顶部「打印本课」按钮，可打印纸质版或保存 PDF</li>
+      <li><strong>阅读进度</strong>：页面最顶部的进度条显示您的阅读进度</li>
+    </ol>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ 问 AI 助手 ══════════ -->
+  <div class="section-title">问 AI 助手</div>
+  <p class="section-subtitle">随时向 AI 提问，获取教学建议和专业解答</p>
+
+  <div class="card">
+    <h3><span class="icon">6</span> 新建对话</h3>
+    <ol class="steps">
+      <li>点击左侧边栏「问AI」进入对话页面</li>
+      <li>点击「新建对话」，选择模式：
+        <br><strong>通用模式</strong> — 问任何问题
+        <br><strong>课程设计模式</strong> — AI 懂课程设计，适合教学相关咨询
+      </li>
+      <li>在输入框打字，按 <kbd>Enter</kbd> 发送（<kbd>Shift</kbd>+<kbd>Enter</kbd> 换行）</li>
+      <li>AI 实时回复，支持多轮对话，历史自动保存</li>
+    </ol>
+    <div class="tip"><strong>联网搜索：</strong>AI 会自动判断是否需要联网搜索最新信息。搜索结果以 [1]、[2] 标注在回答中，底部附来源链接。</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">7</span> 管理对话</h3>
+    <ol class="steps">
+      <li>左侧对话列表显示所有历史对话，点击可继续对话</li>
+      <li>首轮对话后 AI 自动生成对话标题</li>
+      <li>AI 回复右下角有「复制」按钮，可复制完整回复内容</li>
+      <li>删除对话：点击对话项右侧 × 按钮，3 秒内再次点击确认</li>
+    </ol>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ 个人资料 ══════════ -->
+  <div class="section-title">个人资料</div>
+
+  <div class="card">
+    <h3><span class="icon">8</span> 修改个人信息</h3>
+    <ol class="steps">
+      <li>点击右上角<strong>头像</strong>，选择「个人资料」进入资料页</li>
+      <li>可修改：<strong>姓名</strong>、<strong>邮箱</strong>、<strong>手机</strong>、<strong>部门</strong></li>
+      <li>点击头像区域可从 <strong>60 个预设卡通头像</strong>中选择一个</li>
+      <li>修改密码：点击「修改密码」按钮，输入当前密码和新密码（至少 6 位）</li>
+    </ol>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════ FAQ ══════════ -->
+  <div class="section-title">我想做什么？</div>
+
+  <details class="faq-item" open>
+    <summary>我想注册一个新账号</summary>
+    <div class="faq-answer">
+      向管理员索取<strong>邀请码</strong>，然后在登录页点击底部「使用邀请码注册」链接。填写邀请码、用户名（登录用，创建后不可修改）、姓名和密码即可。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我想找适合 8 岁孩子的课程</summary>
+    <div class="faq-answer">
+      在左侧边栏点击「课程包列表」展开筛选树，选择对应的年龄段（如"A2｜8-9岁"），列表会自动过滤。还可以进一步选择难度等级。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我想在课堂上快速使用 AI 对话模板</summary>
+    <div class="faq-answer">
+      进入课程后，找到标有"AI 对话模板"的内容块，点击右上角的<strong>复制按钮</strong>，模板内容会复制到剪贴板。然后切换到 AI 工具中直接粘贴使用。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我想把课程打印出来备课</summary>
+    <div class="faq-answer">
+      进入课程后，点击页面顶部右侧的「打印本课」按钮。系统会自动优化排版：隐藏导航元素、展开所有折叠内容、切换为适合纸张的单栏布局。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我想问 AI 一个教学相关的问题</summary>
+    <div class="faq-answer">
+      点击左侧边栏「问AI」→ 新建对话 → 选择「课程设计模式」。这个模式下 AI 具备课程设计专业知识，还会自动联网搜索最新信息，回答中以引用标注来源。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我想修改头像和个人信息</summary>
+    <div class="faq-answer">
+      点击右上角头像 → 选择「个人资料」。在资料页中可以修改姓名、邮箱、手机、部门，还可以从 60 个卡通头像中选择自己喜欢的头像。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我忘记密码了</summary>
+    <div class="faq-answer">
+      请联系系统管理员，管理员可以在后台为您重置密码。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>我筛选后看不到任何课程了</summary>
+    <div class="faq-answer">
+      可能是筛选条件太精确。点击左侧筛选树最顶部的「全部课程」即可清除所有筛选条件。
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary>课程显示"未接入"无法点击</summary>
+    <div class="faq-answer">
+      这表示该课次的内容还没有录入系统。请联系教学主管或管理员了解进度。
+    </div>
+  </details>
+
+</div>
+
+<script>
+document.querySelectorAll('details.faq-item').forEach(d => d.setAttribute('open', ''));
+</script>
+</body>
+</html>
