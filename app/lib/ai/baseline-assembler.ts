@@ -9,6 +9,7 @@ export interface BaselineSet {
   orgForm: string;
   deliverable: string;
   matrix: string;
+  slideshow: string;
 }
 
 export interface AssembleBaselineParams {
@@ -69,6 +70,7 @@ export async function assembleBaselines(
   const conditions: { type: string; key: string }[] = [
     { type: "general", key: "general" },
     { type: "matrix", key: "matrix" },
+    { type: "slideshow", key: "slideshow_general" },
   ];
   if (params.ageRange) conditions.push({ type: "age", key: params.ageRange });
   if (params.level) conditions.push({ type: "level", key: params.level });
@@ -100,6 +102,7 @@ export async function assembleBaselines(
       ? (lookup.get(`deliverable:${params.deliverableType}`) ?? "")
       : "",
     matrix: lookup.get("matrix:matrix") ?? "",
+    slideshow: lookup.get("slideshow:slideshow_general") ?? "",
   };
 
   cache.set(key, { data: result, expiresAt: Date.now() + TTL_MS });

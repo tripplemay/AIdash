@@ -34,6 +34,7 @@ export const TEMPLATE_VARIABLES: readonly TemplateVariable[] = [
   { key: "组织形态基线", group: "基线", description: "组织形态基线" },
   { key: "产出物基线", group: "基线", description: "产出物基线" },
   { key: "分层规则矩阵", group: "基线", description: "分层规则矩阵" },
+  { key: "课件基线", group: "基线", description: "课件生成通用基线" },
 
   // ── 上下文 ──
   { key: "课程整体摘要", group: "上下文", description: "框架阶段的课程整体摘要" },
@@ -43,6 +44,10 @@ export const TEMPLATE_VARIABLES: readonly TemplateVariable[] = [
   { key: "当前课次方案", group: "上下文", description: "当前课次方案" },
   { key: "修改意见", group: "上下文", description: "修改意见" },
   { key: "目标板块", group: "上下文", description: "目标板块" },
+
+  // ── 课件生成 ──
+  { key: "课次完整内容", group: "课件生成", description: "当前课次的完整 contentData JSON" },
+  { key: "主题配置", group: "课件生成", description: "选中的 PPT 主题配置信息" },
 ] as const;
 
 export type TemplateVariableKey = (typeof TEMPLATE_VARIABLES)[number]["key"];

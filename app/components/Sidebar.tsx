@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu, Sparkles, Activity, MessageSquare, HelpCircle } from "lucide-react";
+import { BookOpen, Settings, Package, Users, FlaskConical, FileText, Cpu, Sparkles, Activity, MessageSquare, HelpCircle, Presentation } from "lucide-react";
 import type { Role } from "@/lib/roles";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import SidebarNavItem from "./SidebarNavItem";
@@ -169,6 +169,16 @@ export default function Sidebar({ userName, userRole }: SidebarProps) {
             />
           </div>
         )}
+
+        {/* 课件生成 */}
+        <div>
+          <SidebarNavItem
+            icon={Presentation}
+            label="课件生成"
+            href="/slideshow"
+            active={pathname.startsWith("/slideshow")}
+          />
+        </div>
 
         {/* 问AI */}
         <div>

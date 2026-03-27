@@ -1,11 +1,11 @@
 {
   "mode": "feature",
-  "status": "new",
+  "status": "reviewing",
   "project_snapshot": "project-snapshot.md",
-  "user_goal": "",
-  "total_features": 28,
-  "completed_features": 28,
-  "current_sprint": null,
-  "last_updated": "2026-03-26",
+  "user_goal": "课件生成功能 — AI 将教师备课内容转写为学生课堂展示 PPT",
+  "total_features": 42,
+  "completed_features": 42,
+  "current_sprint": "F042",
+  "last_updated": "2026-03-27",
   "evaluator_feedback": null
 }

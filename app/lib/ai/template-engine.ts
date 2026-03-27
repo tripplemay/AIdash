@@ -23,6 +23,9 @@ export interface TemplateContext {
   currentPlan?: string | null;
   feedback?: string | null;
   targetSection?: string | null;
+  // 课件生成
+  lessonContentData?: string | null;
+  themeConfig?: string | null;
 }
 
 // ── Label lookup helpers ──
@@ -93,6 +96,7 @@ function buildVariableMap(
     组织形态基线: baselines.orgForm || "未指定",
     产出物基线: baselines.deliverable || "未指定",
     分层规则矩阵: baselines.matrix || "未指定",
+    课件基线: baselines.slideshow || "未指定",
     // 上下文
     课程整体摘要: str(ctx.courseSummary),
     当前课次号: str(ctx.lessonNo),
@@ -101,6 +105,9 @@ function buildVariableMap(
     当前课次方案: str(ctx.currentPlan),
     修改意见: str(ctx.feedback),
     目标板块: str(ctx.targetSection),
+    // 课件生成
+    课次完整内容: str(ctx.lessonContentData),
+    主题配置: str(ctx.themeConfig),
   };
 }
 
@@ -198,7 +205,7 @@ export async function resolveLightPrompt(
   if (!template) return null;
 
   const labels = await loadLabels(context);
-  const emptyBaselines = { general: "", age: "", level: "", orgForm: "", deliverable: "", matrix: "" };
+  const emptyBaselines = { general: "", age: "", level: "", orgForm: "", deliverable: "", matrix: "", slideshow: "" };
   const variables = buildVariableMap(context, emptyBaselines, labels);
   return interpolate(template.content, variables);
 }

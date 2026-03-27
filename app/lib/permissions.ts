@@ -26,6 +26,8 @@ export const PERMISSIONS = {
   VIEW_AI_LOGS: "view_ai_logs",
   /** AI 对话 */
   ASK_AI: "ask_ai",
+  /** 课件生成 */
+  GENERATE_SLIDESHOW: "generate_slideshow",
 } as const;
 
 type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -37,6 +39,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.VIEW_AI_SETTINGS,
     PERMISSIONS.VIEW_PROMPT_CONFIG,
     PERMISSIONS.ASK_AI,
+    PERMISSIONS.GENERATE_SLIDESHOW,
   ],
   [ROLES.RD_MANAGER]: [
     PERMISSIONS.VIEW_COURSES,
@@ -47,6 +50,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.VIEW_PROMPT_CONFIG,
     PERMISSIONS.VIEW_AI_LOGS,
     PERMISSIONS.ASK_AI,
+    PERMISSIONS.GENERATE_SLIDESHOW,
   ],
   [ROLES.ADMIN]: [
     PERMISSIONS.VIEW_COURSES,
@@ -61,6 +65,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.VIEW_PROMPT_CONFIG,
     PERMISSIONS.VIEW_AI_LOGS,
     PERMISSIONS.ASK_AI,
+    PERMISSIONS.GENERATE_SLIDESHOW,
   ],
 };
 

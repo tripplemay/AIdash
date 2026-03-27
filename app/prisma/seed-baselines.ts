@@ -268,6 +268,80 @@ async function seedBaselines() {
     });
     console.log("  [matrix] 分层生成规则矩阵");
   }
+
+  // 7. Slideshow baseline — inline content (no file)
+  {
+    const content = `# 课件生成通用基线
+
+## 学生视角转写原则
+
+### 语言风格（按年龄段）
+- **A1（6-7岁）**：简短句子，多用感叹号和问号，大量使用"我们""一起"等词汇，配合emoji概念（如星星、火箭），避免抽象概念
+- **A2（8-9岁）**：清晰简洁的指令，可使用简单的因果关系，鼓励"试一试""想一想"，保持趣味性
+- **A3（10-11岁）**：可引入简单的专业术语（需附解释），允许更长的段落，鼓励独立思考和表达观点
+- **A4（12岁+）**：接近日常交流语言，可使用更复杂的句式和概念，注重启发而非简单指令
+
+### 通用转写规则
+1. 教学目标 → 转化为"今天我们要..."或"完成后你将..."的学生期待语
+2. 教师话术 → 不直接展示，转化为引导性问题或任务说明
+3. AI 模板 → 转化为"现在轮到你了！"的操作指引，保留核心 prompt 内容
+4. 学生产出模板 → 转化为创作任务说明，突出"你的作品"的归属感
+5. 教师准备事项/设备要求 → 不进入学生 PPT
+6. 学生卡点 → 转化为"小提示"或"如果遇到困难..."的友好提示
+
+## 课堂展示排版原则
+
+### 信息密度
+- 每页最多 1 个核心信息点
+- 正文不超过 50 字（低龄段不超过 30 字）
+- 要点列表每页不超过 4 项
+- 标题简短有力，不超过 10 个字
+
+### 图文比例
+- 封面页：标题为主，留出大面积视觉空间
+- 内容页：文字占 60%，预留 40% 图片空间
+- 互动页：操作指引为主，步骤清晰
+- 展示页：引导语简洁，留出展示空间
+
+## PPT 页面节奏
+
+### 节奏控制
+1. 封面页（1页）→ 引起兴趣
+2. 导入/热身（1-2页）→ 激活已有经验
+3. 核心内容（3-5页）→ 每个知识点/技能点一页
+4. 互动/实操（3-5页）→ 任务说明 + 操作步骤
+5. 展示/分享（1-2页）→ 成果展示引导
+6. 总结/结束（1页）→ 回顾收获 + 预告
+
+### 过渡设计
+- 环节之间用过渡页或引导问题衔接
+- 避免内容跳跃，保持学生注意力的连贯性
+- 互动环节前用激励语引导（"接下来是最精彩的部分！"）`;
+
+    const doc = await prisma.baselineDoc.upsert({
+      where: { type_key: { type: "slideshow", key: "slideshow_general" } },
+      update: { label: "课件生成通用基线", content, sortOrder: 0 },
+      create: {
+        type: "slideshow",
+        key: "slideshow_general",
+        label: "课件生成通用基线",
+        content,
+        sortOrder: 0,
+      },
+    });
+    await prisma.baselineDocVersion.upsert({
+      where: { baselineDocId_versionNo: { baselineDocId: doc.id, versionNo: 1 } },
+      update: { content },
+      create: {
+        baselineDocId: doc.id,
+        versionNo: 1,
+        content,
+        editedById: null,
+        editSummary: "系统初始导入",
+      },
+    });
+    console.log("  [slideshow] 课件生成通用基线");
+  }
 }
 
 // ─── Seed Prompt Templates ───
@@ -538,6 +612,106 @@ Style: {{图片风格描述}}
 The illustration should match the age group — use age-appropriate visual complexity, color palette, and character design.
 No text on the image.`,
   },
+  {
+    actionKey: "generate_slideshow",
+    actionLabel: "生成课件",
+    content: `你是一个专业的课件设计师，擅长将教师备课内容转化为学生课堂展示用的 PPT 课件。
+
+你的任务：将下面的教师备课内容（教学目标、流程、话术、AI 模板等），转写为学生在课堂上看到的展示内容。
+
+## 转写原则
+- 所有内容从"学生视角"撰写，语气亲切、鼓励、有趣
+- 根据目标年龄段调整语言复杂度和用词
+- 教师话术和备课提示不直接展示，转化为学生能理解的引导语
+- 每页信息量适中，避免文字堆砌
+- 保持课堂节奏感，内容有递进
+
+## PPT 主题风格
+{{主题配置}}
+
+## 输出格式（JSON）
+只输出 JSON，不要用 markdown 代码块包裹，不要输出其他文字。
+
+{
+  "slides": [
+    {
+      "type": "cover",
+      "title": "课程名称",
+      "subtitle": "本课副标题",
+      "body": null,
+      "bullets": null,
+      "imagePrompt": null,
+      "notes": "教师参考备注"
+    },
+    {
+      "type": "content",
+      "title": "页面标题",
+      "subtitle": null,
+      "body": "正文内容（支持简单 Markdown）",
+      "bullets": ["要点1", "要点2"],
+      "imagePrompt": null,
+      "notes": "教师参考备注"
+    },
+    {
+      "type": "interaction",
+      "title": "互动环节标题",
+      "subtitle": "任务说明",
+      "body": "学生操作指引",
+      "bullets": null,
+      "imagePrompt": null,
+      "notes": "教师参考备注"
+    },
+    {
+      "type": "showcase",
+      "title": "展示环节标题",
+      "subtitle": null,
+      "body": "展示引导语",
+      "bullets": ["展示要求1", "展示要求2"],
+      "imagePrompt": null,
+      "notes": "教师参考备注"
+    },
+    {
+      "type": "ending",
+      "title": "课程总结",
+      "subtitle": null,
+      "body": "总结语",
+      "bullets": ["收获1", "收获2"],
+      "imagePrompt": null,
+      "notes": "教师参考备注"
+    }
+  ]
+}
+
+## 页面类型说明
+- cover：封面页（1页），包含课程名和本课标题
+- content：内容页（多页），引导语、知识点、任务说明
+- interaction：互动页（多页），AI 提示、动手任务、学生操作指引
+- showcase：展示页（1-2页），学生作品展示引导、点评框架
+- ending：结束页（1页），总结 + 下节预告
+
+## 注意事项
+- 总页数控制在 10-20 页
+- notes 字段写给教师看的参考备注（不会展示给学生）
+- imagePrompt 留空（第一版不生成图片）
+- 确保每个教学环节都有对应的 PPT 页面
+
+# 课件生成基线（请严格遵循）
+{{课件基线}}
+
+# 课程设计基线（参考）
+{{通用基线}}
+{{年龄段基线}}
+
+# 当前课次信息
+课程名称：{{项目标题}}
+课次号：{{当前课次号}}
+课次标题：{{当前课次标题}}
+目标年龄段：{{年龄段标签}}
+难度级别：{{级别标签}}
+
+# 课次完整备课内容
+{{课次完整内容}}`,
+  },
 ];
 
 async function seedPromptTemplates() {
@@ -694,6 +868,71 @@ async function seedPresets() {
         {
           name: "课次标题图构图引导",
           value: "将所有主要元素集中在画面中央的水平带状区域内，画面上方和下方使用简洁的背景、渐变或留白填充，确保即使画面上下各裁切 30% 后，中央区域仍保留完整的核心内容和主体人物。避免在画面顶部和底部放置重要元素。",
+        },
+      ],
+    },
+    {
+      category: "slideshow_theme",
+      items: [
+        {
+          name: "科技蓝",
+          value: JSON.stringify({
+            description: "蓝紫渐变、简洁几何，适合 STEAM/编程/AI 类课程",
+            background: "#0F1B2D",
+            titleColor: "#7CB3FF",
+            bodyColor: "#E0E8F0",
+            accentColor: "#5B8DEF",
+            titleFont: "Microsoft YaHei",
+            bodyFont: "Microsoft YaHei",
+            titleFontSize: 36,
+            bodyFontSize: 18,
+            layoutStyle: "tech",
+          }),
+        },
+        {
+          name: "自然绿",
+          value: JSON.stringify({
+            description: "绿色系、柔和插画风，适合自然探索/生态类课程",
+            background: "#F5FAF0",
+            titleColor: "#2D6A4F",
+            bodyColor: "#344E41",
+            accentColor: "#52B788",
+            titleFont: "Microsoft YaHei",
+            bodyFont: "Microsoft YaHei",
+            titleFontSize: 36,
+            bodyFontSize: 18,
+            layoutStyle: "nature",
+          }),
+        },
+        {
+          name: "创意橙",
+          value: JSON.stringify({
+            description: "暖色活泼、圆角卡片，适合低龄段艺术/手工类课程",
+            background: "#FFF8F0",
+            titleColor: "#E85D04",
+            bodyColor: "#4A3728",
+            accentColor: "#F48C06",
+            titleFont: "Microsoft YaHei",
+            bodyFont: "Microsoft YaHei",
+            titleFontSize: 36,
+            bodyFontSize: 18,
+            layoutStyle: "creative",
+          }),
+        },
+        {
+          name: "简约白",
+          value: JSON.stringify({
+            description: "黑白灰、大留白，通用/高龄段/严肃主题",
+            background: "#FFFFFF",
+            titleColor: "#1A1A2E",
+            bodyColor: "#333333",
+            accentColor: "#4361EE",
+            titleFont: "Microsoft YaHei",
+            bodyFont: "Microsoft YaHei",
+            titleFontSize: 36,
+            bodyFontSize: 18,
+            layoutStyle: "minimal",
+          }),
         },
       ],
     },

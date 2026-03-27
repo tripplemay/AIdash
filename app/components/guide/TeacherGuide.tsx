@@ -5,6 +5,7 @@ import GuideFaq from "./GuideFaq";
 
 export const TEACHER_SECTIONS = [
   { id: "section-browse", title: "课程浏览" },
+  { id: "section-slideshow", title: "课件生成" },
   { id: "section-chat", title: "问AI助手" },
   { id: "section-settings", title: "个人设置" },
   { id: "section-faq", title: "常见问题" },
@@ -59,6 +60,30 @@ export default function TeacherGuide() {
             <li><strong>复制 AI 模板</strong>：课程中的对话模板右上角有复制按钮，一键复制到剪贴板</li>
             <li><strong>打印课程</strong>：点击顶部「打印本课」按钮，可打印纸质版或保存 PDF</li>
             <li><strong>阅读进度</strong>：页面最顶部的进度条显示您的阅读进度</li>
+          </ol>
+        </GuideCard>
+
+        <hr className="guide-divider" />
+
+        {/* ── 课件生成 ── */}
+        <div className="guide-section-title" id="section-slideshow">课件生成</div>
+
+        <GuideCard step={6} title="生成课堂 PPT 课件">
+          <ol className="guide-steps">
+            <li>点击左侧边栏「课件生成」进入课件生成页面</li>
+            <li>选择一个已发布的课程包</li>
+            <li>在页面顶部选择 PPT 模板主题（科技蓝/自然绿/创意橙/简约白）</li>
+            <li>点击课次旁的「生成课件」按钮，AI 会将备课内容转写为学生课堂展示用的 PPT</li>
+            <li>生成完成后点击「下载」获取 .pptx 文件</li>
+            <li>可在 PowerPoint 或 WPS 中打开并二次编辑</li>
+          </ol>
+        </GuideCard>
+
+        <GuideCard step={7} title="批量生成课件">
+          <ol className="guide-steps">
+            <li>点击「一键生成全部」按钮，系统会逐课次自动生成课件</li>
+            <li>生成过程中会显示进度（如"正在生成第 3/8 课"）</li>
+            <li>全部生成完成后，点击「下载全部」可逐个下载所有课件</li>
           </ol>
         </GuideCard>
 
