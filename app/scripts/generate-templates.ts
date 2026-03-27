@@ -11,6 +11,9 @@ import PptxGenJS from "pptxgenjs";
 import fs from "fs";
 import path from "path";
 
+const PLACEHOLDER_IMG = path.join(__dirname, "..", "templates", "slideshow", "placeholder.png");
+const placeholderData = `data:image/png;base64,${fs.readFileSync(PLACEHOLDER_IMG).toString("base64")}`;
+
 interface ThemeConfig {
   name: string;
   dir: string;
@@ -80,8 +83,8 @@ function buildTemplate(theme: ThemeConfig): void {
   {
     const s = pptx.addSlide();
     s.background = { color: theme.bg };
-    // Image placeholder area (will be replaced by pptx-automizer)
-    s.addShape("roundRect", { objectName: "BackgroundImage", x: 0, y: 0, w: 10, h: 5.63, rectRadius: 0, fill: { color: theme.accentLight, transparency: 80 } });
+    // Image placeholder (real image element, replaced by pptx-automizer)
+    s.addImage({ data: placeholderData, x: 0, y: 0, w: 10, h: 5.63, objectName: "BackgroundImage" } as Record<string, unknown>);
     // Decorative accent line
     s.addShape("rect", { x: 0, y: 0, w: "100%", h: 0.06, fill: { color: theme.accent } });
     s.addShape("rect", { x: 0, y: 5.57, w: "100%", h: 0.06, fill: { color: theme.accent } });
@@ -122,7 +125,7 @@ function buildTemplate(theme: ThemeConfig): void {
     s.addShape("rect", { x: 0.5, y: 1.15, w: 2, h: 0.04, fill: { color: theme.accent } });
     s.addText("{{body}}", { shape: "rect", objectName: "BodyShape", x: 0.5, y: 1.4, w: 5.2, h: 3.8, fontSize: 18, fontFace: "Microsoft YaHei", color: theme.bodyColor, valign: "top", lineSpacingMultiple: 1.4 });
     // Image placeholder (right side, portrait orientation)
-    s.addShape("roundRect", { objectName: "ImageShape", x: 6.2, y: 0.4, w: 3.4, h: 4.8, rectRadius: 0.15, fill: { color: theme.accentLight, transparency: 50 } });
+    s.addImage({ data: placeholderData, x: 6.2, y: 0.4, w: 3.4, h: 4.8, objectName: "ImageShape" } as Record<string, unknown>);
   }
 
   // ── Slide 5: content_image_bottom ──
@@ -133,7 +136,7 @@ function buildTemplate(theme: ThemeConfig): void {
     s.addText("{{title}}", { shape: "rect", objectName: "TitleShape", x: 0.5, y: 0.2, w: 9, h: 0.7, fontSize: 28, fontFace: "Microsoft YaHei", color: theme.titleColor, bold: true });
     s.addText("{{body}}", { shape: "rect", objectName: "BodyShape", x: 0.5, y: 1.0, w: 9, h: 1.5, fontSize: 16, fontFace: "Microsoft YaHei", color: theme.bodyColor, valign: "top", lineSpacingMultiple: 1.3 });
     // Image placeholder (bottom, landscape orientation)
-    s.addShape("roundRect", { objectName: "ImageShape", x: 0.5, y: 2.7, w: 9, h: 2.7, rectRadius: 0.15, fill: { color: theme.accentLight, transparency: 50 } });
+    s.addImage({ data: placeholderData, x: 0.5, y: 2.7, w: 9, h: 2.7, objectName: "ImageShape" } as Record<string, unknown>);
   }
 
   // ── Slide 6: interaction_card ──
@@ -156,7 +159,7 @@ function buildTemplate(theme: ThemeConfig): void {
     s.addShape("rect", { x: 4, y: 1.25, w: 2, h: 0.04, fill: { color: theme.accent } });
     s.addText("{{body}}", { shape: "rect", objectName: "BodyShape", x: 1, y: 1.5, w: 8, h: 1.2, fontSize: 18, fontFace: "Microsoft YaHei", color: theme.bodyColor, align: "center", valign: "top" });
     // Image placeholder (center, landscape)
-    s.addShape("roundRect", { objectName: "ImageShape", x: 1.5, y: 3, w: 7, h: 2.3, rectRadius: 0.15, fill: { color: theme.accentLight, transparency: 50 } });
+    s.addImage({ data: placeholderData, x: 1.5, y: 3, w: 7, h: 2.3, objectName: "ImageShape" } as Record<string, unknown>);
   }
 
   // ── Slide 8: ending_summary ──

@@ -1,11 +1,11 @@
 {
-  "mode": "feature",
+  "mode": "bugfix",
   "status": "done",
   "project_snapshot": "project-snapshot.md",
-  "user_goal": "课件版式升级 — pptx-automizer + 设计师模板 + AI 版式选择",
+  "user_goal": "修复课件 PPT 中图片不显示的 bug",
   "total_features": 57,
   "completed_features": 57,
   "current_sprint": null,
   "last_updated": "2026-03-27",
-  "evaluator_feedback": "7/7 PASS — TypeScript 零错误，82 套件 621 测试全通过"
+  "evaluator_feedback": "根因：模板中图片占位符是形状(roundRect)而非图片元素，pptx-automizer 无法替换。修复：改为 addImage + 占位图片。"
 }
