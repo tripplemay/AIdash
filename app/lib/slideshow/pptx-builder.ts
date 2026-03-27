@@ -1,193 +1,323 @@
 import fs from "node:fs";
 import path from "node:path";
-import Automizer, { modify, ModifyImageHelper, type ShapeModificationCallback } from "pptx-automizer";
-import type { SlideshowOutput, SlideshowLayout } from "@/types/slideshow";
+import PptxGenJS from "pptxgenjs";
+import type { SlideshowOutput, SlideshowLayout, Slide } from "@/types/slideshow";
 import { prisma } from "@/lib/prisma";
 
-const TEMPLATES_DIR = path.join(process.cwd(), "templates", "slideshow");
 const IMAGES_DIR = process.env.AI_IMAGES_DIR
   ?? path.join(process.cwd(), "public", "ai-images");
 
 /**
- * Build a .pptx Buffer from SlideshowOutput using pptx-automizer templates.
- * Each slide's `layout` field maps to a template slide via the slideshow_layout Preset.
+ * Build a .pptx Buffer from SlideshowOutput.
+ * Uses PptxGenJS with layout-aware rendering. Each slide's layout
+ * determines the visual arrangement (image position, text area).
  */
 export async function buildPptx(
   output: SlideshowOutput,
   themeKey: string,
   meta: { courseTitle: string; lessonTitle: string; lessonNo: number },
 ): Promise<Buffer> {
-  // Resolve theme directory
-  const themeDir = await resolveThemeDirForBuild(themeKey);
-  const templatePath = path.join(TEMPLATES_DIR, themeDir, "template.pptx");
-  const rootPath = path.join(TEMPLATES_DIR, "root.pptx");
-
-  if (!fs.existsSync(templatePath)) {
-    throw new Error(`模板文件不存在: ${templatePath}`);
-  }
-  if (!fs.existsSync(rootPath)) {
-    throw new Error(`根模板文件不存在: ${rootPath}`);
-  }
-
-  // Load layout definitions from DB
-  const layoutPresets = await prisma.preset.findMany({
-    where: {
-      category: "slideshow_layout",
-      isActive: true,
-      name: { startsWith: `${themeDir}/` },
-    },
+  // Load theme config
+  const themePreset = await prisma.preset.findUnique({
+    where: { category_name: { category: "slideshow_theme", name: themeKey } },
   });
+  if (!themePreset) throw new Error(`主题「${themeKey}」不存在`);
 
+  let theme: ThemeConfig;
+  try {
+    theme = JSON.parse(themePreset.value);
+  } catch {
+    throw new Error("主题配置格式错误");
+  }
+
+  // Load layout definitions
+  const themeDir = theme.templateDir ?? themeKey.toLowerCase().replace(/\s+/g, "-");
+  const layoutPresets = await prisma.preset.findMany({
+    where: { category: "slideshow_layout", isActive: true, name: { startsWith: `${themeDir}/` } },
+  });
   const layoutMap = new Map<string, SlideshowLayout>();
   for (const p of layoutPresets) {
-    const layoutKey = p.name.split("/")[1];
-    try {
-      layoutMap.set(layoutKey, JSON.parse(p.value));
-    } catch { /* skip invalid */ }
+    try { layoutMap.set(p.name.split("/")[1], JSON.parse(p.value)); } catch { /* skip */ }
   }
 
-  // Collect image files needed
-  const imageFiles: string[] = [];
+  const pptx = new PptxGenJS();
+  pptx.title = `${meta.courseTitle} - 第${meta.lessonNo}课 ${meta.lessonTitle}`;
+  pptx.subject = meta.courseTitle;
+  pptx.layout = "LAYOUT_16x9";
+
   for (const slide of output.slides) {
-    if (slide.imageUrl) {
-      const resolved = resolveImagePath(slide.imageUrl);
-      if (resolved) imageFiles.push(resolved);
-    }
+    const layout = layoutMap.get(slide.layout) ?? findFallbackLayout(slide.type, layoutMap);
+    const pptSlide = pptx.addSlide();
+    renderSlide(pptSlide, slide, layout, theme);
   }
 
-  // Initialize automizer
-  const automizer = new Automizer({
-    templateDir: TEMPLATES_DIR,
-    removeExistingSlides: true,
-    autoImportSlideMasters: true,
-    compression: 6,
-  });
-
-  const pres = automizer
-    .loadRoot(rootPath)
-    .load(templatePath, "tpl");
-
-  // Load media files
-  if (imageFiles.length > 0) {
-    for (const imgPath of imageFiles) {
-      pres.loadMedia(path.basename(imgPath), path.dirname(imgPath));
-    }
-  }
-
-  // Add slides
-  for (const slide of output.slides) {
-    const layout = layoutMap.get(slide.layout);
-    if (!layout) {
-      // Fallback: try to find any layout matching the slide type
-      const fallback = findFallbackLayout(slide.type, layoutMap);
-      if (!fallback) continue; // Skip slide if no layout found
-      addSlideFromLayout(pres, slide, fallback);
-    } else {
-      addSlideFromLayout(pres, slide, layout);
-    }
-  }
-
-  // Write to buffer
-  const jszip = await pres.getJSZip();
-  const buffer = await jszip.generateAsync({ type: "nodebuffer" });
-  return buffer as Buffer;
+  const data = await pptx.write({ outputType: "nodebuffer" });
+  return data as Buffer;
 }
 
-function addSlideFromLayout(
-  pres: ReturnType<typeof Automizer.prototype.loadRoot>,
-  slide: { title: string; subtitle?: string | null; body?: string | null; bullets?: string[] | null; imageUrl?: string | null; notes?: string | null },
-  layout: SlideshowLayout,
+// ── Theme config ──
+
+interface ThemeConfig {
+  background: string;
+  titleColor: string;
+  bodyColor: string;
+  accentColor: string;
+  titleFont: string;
+  bodyFont: string;
+  titleFontSize: number;
+  bodyFontSize: number;
+  templateDir?: string;
+}
+
+// ── Main slide renderer ──
+
+function renderSlide(
+  s: PptxGenJS.Slide,
+  slide: Slide,
+  layout: SlideshowLayout | null,
+  theme: ThemeConfig,
 ): void {
-  pres.addSlide("tpl", layout.slideIndex, (s) => {
-    // Replace title
-    if (layout.placeholders.title) {
-      s.modifyElement(layout.placeholders.title, [
-        modify.replaceText([{ replace: "title", by: { text: slide.title } }]),
-      ]);
-    }
+  const bg = theme.background.replace("#", "");
+  const title = theme.titleColor.replace("#", "");
+  const body = theme.bodyColor.replace("#", "");
+  const accent = theme.accentColor.replace("#", "");
+  const accentLight = lightenColor(accent, 0.85);
+  const imageData = resolveImageData(slide.imageUrl);
+  const layoutKey = slide.layout ?? "";
 
-    // Replace subtitle
-    if (layout.placeholders.subtitle && slide.subtitle) {
-      s.modifyElement(layout.placeholders.subtitle, [
-        modify.replaceText([{ replace: "subtitle", by: { text: slide.subtitle } }]),
-      ]);
-    }
+  s.background = { color: bg };
 
-    // Replace body — combine body text and bullets
-    if (layout.placeholders.body) {
-      const bodyContent = formatBodyContent(slide.body, slide.bullets);
-      if (bodyContent) {
-        s.modifyElement(layout.placeholders.body, [
-          modify.replaceText([{ replace: "body", by: { text: bodyContent } }]),
-        ]);
-      }
-    }
+  // Add speaker notes
+  if (slide.notes) s.addNotes(slide.notes);
 
-    // Replace image
-    if (layout.placeholders.image && slide.imageUrl) {
-      const imgPath = resolveImagePath(slide.imageUrl);
-      if (imgPath) {
-        s.modifyElement(layout.placeholders.image, [
-          ModifyImageHelper.setRelationTarget(path.basename(imgPath)) as unknown as ShapeModificationCallback,
-        ]);
-      }
-    }
-  });
-}
-
-function formatBodyContent(
-  body: string | null | undefined,
-  bullets: string[] | null | undefined,
-): string {
-  const parts: string[] = [];
-  if (body) parts.push(body);
-  if (bullets && bullets.length > 0) {
-    parts.push(bullets.map((b) => `• ${b}`).join("\n"));
+  // Route to layout-specific renderer
+  if (slide.type === "cover") {
+    renderCover(s, slide, theme, imageData);
+  } else if (slide.type === "ending") {
+    renderEnding(s, slide, theme, imageData);
+  } else if (layoutKey.includes("image_right")) {
+    renderContentImageRight(s, slide, theme, imageData);
+  } else if (layoutKey.includes("image_bottom")) {
+    renderContentImageBottom(s, slide, theme, imageData);
+  } else if (layoutKey.includes("showcase")) {
+    renderShowcase(s, slide, theme, imageData);
+  } else if (layoutKey.includes("interaction") || layoutKey.includes("card")) {
+    renderInteraction(s, slide, theme, accentLight);
+  } else {
+    renderContentTextOnly(s, slide, theme);
   }
-  return parts.join("\n\n");
 }
 
-function findFallbackLayout(
-  type: string,
-  layoutMap: Map<string, SlideshowLayout>,
-): SlideshowLayout | null {
+// ── Layout renderers ──
+
+function renderCover(s: PptxGenJS.Slide, slide: Slide, t: ThemeConfig, imageData: string | null): void {
+  const bg = t.background.replace("#", "");
+  const accent = t.accentColor.replace("#", "");
+  const titleC = t.titleColor.replace("#", "");
+  const bodyC = t.bodyColor.replace("#", "");
+
+  if (imageData) {
+    s.addImage({ data: imageData, x: 0, y: 0, w: 10, h: 5.63, sizing: { type: "cover", w: 10, h: 5.63 } });
+    s.addShape("rect", { x: 0, y: 0, w: "100%", h: "100%", fill: { color: bg, transparency: 45 } });
+  }
+  s.addShape("rect", { x: 0, y: 0, w: "100%", h: 0.06, fill: { color: accent } });
+  s.addShape("rect", { x: 0, y: 5.57, w: "100%", h: 0.06, fill: { color: accent } });
+  s.addText(slide.title, { x: 0.8, y: 1.6, w: 8.4, h: 1.4, fontSize: t.titleFontSize + 8, fontFace: t.titleFont, color: titleC, bold: true, align: "center", valign: "middle" });
+  if (slide.subtitle) {
+    s.addText(slide.subtitle, { x: 1.5, y: 3.2, w: 7, h: 0.8, fontSize: t.bodyFontSize + 4, fontFace: t.bodyFont, color: bodyC, align: "center", valign: "middle" });
+  }
+}
+
+function renderEnding(s: PptxGenJS.Slide, slide: Slide, t: ThemeConfig, imageData: string | null): void {
+  const bg = t.background.replace("#", "");
+  const accent = t.accentColor.replace("#", "");
+  const titleC = t.titleColor.replace("#", "");
+  const bodyC = t.bodyColor.replace("#", "");
+
+  if (imageData) {
+    s.addImage({ data: imageData, x: 0, y: 0, w: 10, h: 5.63, sizing: { type: "cover", w: 10, h: 5.63 } });
+    s.addShape("rect", { x: 0, y: 0, w: "100%", h: "100%", fill: { color: bg, transparency: 45 } });
+  }
+  s.addShape("rect", { x: 0, y: 5.57, w: "100%", h: 0.06, fill: { color: accent } });
+  s.addText(slide.title, { x: 1, y: 1.2, w: 8, h: 1, fontSize: t.titleFontSize + 4, fontFace: t.titleFont, color: titleC, bold: true, align: "center" });
+  if (slide.body) {
+    s.addText(slide.body, { x: 1.5, y: 2.5, w: 7, h: 1, fontSize: t.bodyFontSize + 2, fontFace: t.bodyFont, color: bodyC, align: "center", valign: "top" });
+  }
+  if (slide.bullets?.length) {
+    const bulletY = slide.body ? 3.7 : 2.8;
+    addBullets(s, slide.bullets, { x: 2, y: bulletY, w: 6, h: 1.5 }, t, "2B50");
+  }
+}
+
+function renderContentTextOnly(s: PptxGenJS.Slide, slide: Slide, t: ThemeConfig): void {
+  const accent = t.accentColor.replace("#", "");
+  const titleC = t.titleColor.replace("#", "");
+  const bodyC = t.bodyColor.replace("#", "");
+
+  s.addShape("rect", { x: 0, y: 0, w: 0.05, h: "100%", fill: { color: accent } });
+  s.addText(slide.title, { x: 0.5, y: 0.3, w: 9, h: 0.7, fontSize: t.titleFontSize, fontFace: t.titleFont, color: titleC, bold: true });
+  s.addShape("rect", { x: 0.5, y: 1.05, w: 2, h: 0.04, fill: { color: accent } });
+
+  let y = 1.3;
+  if (slide.subtitle) {
+    s.addText(slide.subtitle, { x: 0.5, y, w: 9, h: 0.5, fontSize: t.bodyFontSize + 2, fontFace: t.bodyFont, color: accent, italic: true });
+    y += 0.6;
+  }
+  if (slide.body) {
+    s.addText(slide.body, { x: 0.5, y, w: 9, h: 2, fontSize: t.bodyFontSize, fontFace: t.bodyFont, color: bodyC, valign: "top", lineSpacingMultiple: 1.4 });
+    y += 2.2;
+  }
+  if (slide.bullets?.length) {
+    addBullets(s, slide.bullets, { x: 0.5, y, w: 9, h: 3 }, t);
+  }
+}
+
+function renderContentImageRight(s: PptxGenJS.Slide, slide: Slide, t: ThemeConfig, imageData: string | null): void {
+  const accent = t.accentColor.replace("#", "");
+  const titleC = t.titleColor.replace("#", "");
+  const bodyC = t.bodyColor.replace("#", "");
+  const textW = imageData ? 5.2 : 9;
+
+  s.addShape("rect", { x: 0, y: 0, w: 0.05, h: "100%", fill: { color: accent } });
+  s.addText(slide.title, { x: 0.5, y: 0.3, w: textW, h: 0.7, fontSize: t.titleFontSize, fontFace: t.titleFont, color: titleC, bold: true });
+  s.addShape("rect", { x: 0.5, y: 1.05, w: 2, h: 0.04, fill: { color: accent } });
+
+  let y = 1.3;
+  if (slide.body) {
+    s.addText(slide.body, { x: 0.5, y, w: textW, h: 2, fontSize: t.bodyFontSize, fontFace: t.bodyFont, color: bodyC, valign: "top", lineSpacingMultiple: 1.4 });
+    y += 2.2;
+  }
+  if (slide.bullets?.length) {
+    addBullets(s, slide.bullets, { x: 0.5, y, w: textW, h: 2.5 }, t);
+  }
+  if (imageData) {
+    s.addImage({ data: imageData, x: 6, y: 0.4, w: 3.7, h: 4.8, sizing: { type: "cover", w: 3.7, h: 4.8 }, rounding: true });
+  }
+}
+
+function renderContentImageBottom(s: PptxGenJS.Slide, slide: Slide, t: ThemeConfig, imageData: string | null): void {
+  const accent = t.accentColor.replace("#", "");
+  const titleC = t.titleColor.replace("#", "");
+  const bodyC = t.bodyColor.replace("#", "");
+
+  s.addShape("rect", { x: 0, y: 0, w: "100%", h: 0.05, fill: { color: accent } });
+  s.addText(slide.title, { x: 0.5, y: 0.2, w: 9, h: 0.7, fontSize: t.titleFontSize - 2, fontFace: t.titleFont, color: titleC, bold: true });
+
+  if (slide.body) {
+    s.addText(slide.body, { x: 0.5, y: 1.0, w: 9, h: 1.2, fontSize: t.bodyFontSize, fontFace: t.bodyFont, color: bodyC, valign: "top", lineSpacingMultiple: 1.3 });
+  }
+  if (imageData) {
+    s.addImage({ data: imageData, x: 0.5, y: 2.5, w: 9, h: 2.8, sizing: { type: "cover", w: 9, h: 2.8 }, rounding: true });
+  }
+}
+
+function renderInteraction(s: PptxGenJS.Slide, slide: Slide, t: ThemeConfig, accentLight: string): void {
+  const accent = t.accentColor.replace("#", "");
+  const titleC = t.titleColor.replace("#", "");
+  const bodyC = t.bodyColor.replace("#", "");
+
+  s.addShape("rect", { x: 0, y: 0, w: "100%", h: 1.2, fill: { color: accent } });
+  s.addText(slide.title, { x: 0.5, y: 0.2, w: 9, h: 0.8, fontSize: t.titleFontSize, fontFace: t.titleFont, color: isLightColor(accent) ? "333333" : "FFFFFF", bold: true });
+  // Card
+  s.addShape("roundRect", { x: 0.8, y: 1.5, w: 8.4, h: 3.6, rectRadius: 0.2, fill: { color: accentLight }, shadow: { type: "outer", blur: 4, offset: 2, angle: 135, color: "000000", opacity: 0.1 } });
+
+  let y = 1.8;
+  if (slide.subtitle) {
+    s.addText(slide.subtitle, { x: 1.2, y, w: 7.6, h: 0.5, fontSize: t.bodyFontSize + 2, fontFace: t.bodyFont, color: titleC, bold: true });
+    y += 0.6;
+  }
+  if (slide.body) {
+    s.addText(slide.body, { x: 1.2, y, w: 7.6, h: 2.2, fontSize: t.bodyFontSize, fontFace: t.bodyFont, color: bodyC, valign: "top", lineSpacingMultiple: 1.4 });
+    y += 2.3;
+  }
+  if (slide.bullets?.length) {
+    addBullets(s, slide.bullets, { x: 1.2, y, w: 7.6, h: 1.5 }, t);
+  }
+}
+
+function renderShowcase(s: PptxGenJS.Slide, slide: Slide, t: ThemeConfig, imageData: string | null): void {
+  const accent = t.accentColor.replace("#", "");
+  const titleC = t.titleColor.replace("#", "");
+  const bodyC = t.bodyColor.replace("#", "");
+
+  s.addText(slide.title, { x: 0.5, y: 0.4, w: 9, h: 0.7, fontSize: t.titleFontSize, fontFace: t.titleFont, color: titleC, bold: true, align: "center" });
+  s.addShape("rect", { x: 4, y: 1.15, w: 2, h: 0.04, fill: { color: accent } });
+
+  if (slide.body) {
+    s.addText(slide.body, { x: 1, y: 1.4, w: 8, h: 0.8, fontSize: t.bodyFontSize + 2, fontFace: t.bodyFont, color: bodyC, align: "center", valign: "top" });
+  }
+  if (imageData) {
+    s.addImage({ data: imageData, x: 1.5, y: 2.5, w: 7, h: 2.8, sizing: { type: "cover", w: 7, h: 2.8 }, rounding: true });
+  }
+  if (slide.bullets?.length) {
+    const bulletY = imageData ? 5.0 : 2.5;
+    addBullets(s, slide.bullets, { x: 1.5, y: bulletY, w: 7, h: 1.5 }, t, "2713");
+  }
+}
+
+// ── Helpers ──
+
+function addBullets(
+  s: PptxGenJS.Slide,
+  bullets: string[],
+  pos: { x: number; y: number; w: number; h: number },
+  t: ThemeConfig,
+  bulletCode = "2022",
+): void {
+  const items = bullets.map((b) => ({
+    text: b,
+    options: {
+      fontSize: t.bodyFontSize,
+      fontFace: t.bodyFont,
+      color: t.bodyColor.replace("#", ""),
+      bullet: { code: bulletCode as "2022" },
+      lineSpacingMultiple: 1.5,
+    },
+  }));
+  s.addText(items, { x: pos.x, y: pos.y, w: pos.w, h: pos.h, valign: "top" as const });
+}
+
+function resolveImageData(imageUrl: string | null | undefined): string | null {
+  if (!imageUrl) return null;
+  try {
+    if (imageUrl.startsWith("/api/ai-images/")) {
+      const rel = imageUrl.replace("/api/ai-images/", "");
+      const fp = path.join(IMAGES_DIR, rel);
+      if (fs.existsSync(fp)) {
+        const buf = fs.readFileSync(fp);
+        const ext = path.extname(fp).slice(1) || "png";
+        return `data:image/${ext};base64,${buf.toString("base64")}`;
+      }
+      return null;
+    }
+    if (imageUrl.startsWith("data:") || imageUrl.startsWith("http")) return imageUrl;
+    if (fs.existsSync(imageUrl)) {
+      const buf = fs.readFileSync(imageUrl);
+      return `data:image/png;base64,${buf.toString("base64")}`;
+    }
+    return null;
+  } catch { return null; }
+}
+
+function isLightColor(hex: string): boolean {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+}
+
+function lightenColor(hex: string, factor: number): string {
+  const c = hex.replace("#", "");
+  const r = Math.min(255, Math.round(parseInt(c.substring(0, 2), 16) + (255 - parseInt(c.substring(0, 2), 16)) * factor));
+  const g = Math.min(255, Math.round(parseInt(c.substring(2, 4), 16) + (255 - parseInt(c.substring(2, 4), 16)) * factor));
+  const b = Math.min(255, Math.round(parseInt(c.substring(4, 6), 16) + (255 - parseInt(c.substring(4, 6), 16)) * factor));
+  return `${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
+
+function findFallbackLayout(type: string, layoutMap: Map<string, SlideshowLayout>): SlideshowLayout | null {
   for (const layout of layoutMap.values()) {
     if (layout.type === type) return layout;
   }
-  // Last resort: use first available layout
-  const first = layoutMap.values().next();
-  return first.done ? null : first.value;
-}
-
-/**
- * Resolve a slide imageUrl to a local file path.
- * Returns null if not found.
- */
-function resolveImagePath(imageUrl: string | null | undefined): string | null {
-  if (!imageUrl) return null;
-
-  // /api/ai-images/slideshow/abc123.png → IMAGES_DIR/slideshow/abc123.png
-  if (imageUrl.startsWith("/api/ai-images/")) {
-    const relativePath = imageUrl.replace("/api/ai-images/", "");
-    const filePath = path.join(IMAGES_DIR, relativePath);
-    return fs.existsSync(filePath) ? filePath : null;
-  }
-
-  // Absolute path
-  if (fs.existsSync(imageUrl)) return imageUrl;
-
   return null;
-}
-
-async function resolveThemeDirForBuild(themeKey: string): Promise<string> {
-  const preset = await prisma.preset.findUnique({
-    where: { category_name: { category: "slideshow_theme", name: themeKey } },
-  });
-  if (preset) {
-    try {
-      const val = JSON.parse(preset.value);
-      if (val.templateDir) return val.templateDir;
-    } catch { /* ignore */ }
-  }
-  return themeKey.toLowerCase().replace(/\s+/g, "-");
 }

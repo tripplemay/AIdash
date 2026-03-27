@@ -1,11 +1,11 @@
 {
-  "mode": "refactor",
-  "status": "done",
+  "mode": "bugfix",
+  "status": "new",
   "project_snapshot": "project-snapshot.md",
-  "user_goal": "修复剩余 5 个硬编码允许列表 — 课次板块/进度/审核/图片类型/年龄难度选项",
+  "user_goal": "分析生成的课件 PPT 的质量问题",
   "total_features": 63,
   "completed_features": 63,
   "current_sprint": null,
   "last_updated": "2026-03-27",
-  "evaluator_feedback": "6/6 PASS — 82 套件 621 测试全通过"
+  "evaluator_feedback": null
 }
