@@ -1,0 +1,91 @@
+{
+  "name": "创意橙",
+  "source": "Auto-generated (replace with SlidesCarnival template)",
+  "license": "CC-BY-4.0",
+  "layouts": {
+    "cover_fullimage": {
+      "slideIndex": 1,
+      "description": "全屏背景图 + 半透明遮罩 + 居中大标题",
+      "type": "cover",
+      "placeholders": {
+        "title": "TitleShape",
+        "subtitle": "SubtitleShape",
+        "image": "BackgroundImage"
+      },
+      "imageOrientation": "landscape"
+    },
+    "cover_gradient": {
+      "slideIndex": 2,
+      "description": "渐变背景 + 装饰圆形 + 居中标题",
+      "type": "cover",
+      "placeholders": {
+        "title": "TitleShape",
+        "subtitle": "SubtitleShape"
+      },
+      "imageOrientation": null
+    },
+    "content_text_only": {
+      "slideIndex": 3,
+      "description": "左侧强调线 + 标题 + 正文/要点列表",
+      "type": "content",
+      "placeholders": {
+        "title": "TitleShape",
+        "body": "BodyShape"
+      },
+      "imageOrientation": null
+    },
+    "content_image_right": {
+      "slideIndex": 4,
+      "description": "左侧文字 + 右侧竖向图片",
+      "type": "content",
+      "placeholders": {
+        "title": "TitleShape",
+        "body": "BodyShape",
+        "image": "ImageShape"
+      },
+      "imageOrientation": "portrait"
+    },
+    "content_image_bottom": {
+      "slideIndex": 5,
+      "description": "上方标题/正文 + 下方横向图片",
+      "type": "content",
+      "placeholders": {
+        "title": "TitleShape",
+        "body": "BodyShape",
+        "image": "ImageShape"
+      },
+      "imageOrientation": "landscape"
+    },
+    "interaction_card": {
+      "slideIndex": 6,
+      "description": "强调色标题栏 + 卡片式内容区",
+      "type": "interaction",
+      "placeholders": {
+        "title": "TitleShape",
+        "body": "BodyShape"
+      },
+      "imageOrientation": null
+    },
+    "showcase_centered": {
+      "slideIndex": 7,
+      "description": "居中标题 + 正文 + 横向图片展示区",
+      "type": "showcase",
+      "placeholders": {
+        "title": "TitleShape",
+        "body": "BodyShape",
+        "image": "ImageShape"
+      },
+      "imageOrientation": "landscape"
+    },
+    "ending_summary": {
+      "slideIndex": 8,
+      "description": "装饰背景 + 居中大标题 + 总结文字",
+      "type": "ending",
+      "placeholders": {
+        "title": "TitleShape",
+        "body": "BodyShape"
+      },
+      "imageOrientation": null
+    }
+  }
+}

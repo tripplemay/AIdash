@@ -1,11 +1,11 @@
 {
   "mode": "feature",
-  "status": "done",
+  "status": "building",
   "project_snapshot": "project-snapshot.md",
-  "user_goal": "课件生成功能优化 — 图片支持 + 后台任务模式 + 进度显示",
-  "total_features": 50,
-  "completed_features": 50,
-  "current_sprint": null,
+  "user_goal": "课件版式升级 — pptx-automizer + 设计师模板 + AI 版式选择",
+  "total_features": 57,
+  "completed_features": 51,
+  "current_sprint": "F052",
   "last_updated": "2026-03-27",
-  "evaluator_feedback": "8/8 PASS — 全部验收通过"
+  "evaluator_feedback": null
 }
