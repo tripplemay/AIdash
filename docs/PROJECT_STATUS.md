@@ -1,6 +1,6 @@
 # AI Dash 教师授课系统 — 项目进度总览
 
-> 最后更新：2026-03-19
+> 最后更新：2026-03-27
 
 ---
 
@@ -19,6 +19,7 @@
 **阶段十一：管理后台扩展（v2）** ✅ 已完成
 **阶段十二：质量与体验打磨** ✅ 已完成
 **阶段十三：问 AI 对话模块** ✅ 已完成
+**阶段十四：课件生成模块** ✅ 已完成
 
 ---
 
@@ -302,6 +303,41 @@
 | 13.6 | AI 回复一键复制 | ✅ 已完成 | — |
 | 13.7 | 费用追踪（复用 AiCallLog） | ✅ 已完成 | pageKey="chat" |
 | 13.8 | 测试覆盖 | ✅ 已完成 | 11 个测试用例 |
+
+---
+
+### 阶段十四：课件生成模块（2026-03-27）
+
+> 技术方案：[slideshow-generation-plan.md](tech/slideshow-generation-plan.md)
+
+| # | 任务 | 状态 | 备注 |
+|---|------|------|------|
+| **Phase 0** | **数据库 + 依赖** | ✅ 已完成 | — |
+| 14.1 | 新增 SlideshowDraft 模型 + migration | ✅ 已完成 | per user per lesson 唯一 |
+| 14.2 | 安装 pptxgenjs | ✅ 已完成 | 纯 Node.js PPT 生成库 |
+| **Phase 1** | **Prompt/基线/预设种子数据** | ✅ 已完成 | — |
+| 14.3 | 课件生成通用基线（slideshow_general） | ✅ 已完成 | 语言风格 + 排版原则 + 页面节奏 |
+| 14.4 | generate_slideshow Prompt 模板 | ✅ 已完成 | 5 种页面类型 + JSON 输出格式 |
+| 14.5 | 4 套 PPT 主题预设（slideshow_theme） | ✅ 已完成 | 科技蓝/自然绿/创意橙/简约白 |
+| **Phase 2** | **AI 转写服务层** | ✅ 已完成 | — |
+| 14.6 | template-engine 扩展课件变量 | ✅ 已完成 | 课件基线 + 课次完整内容 + 主题配置 |
+| 14.7 | 课件生成核心逻辑 | ✅ 已完成 | lib/slideshow/generate.ts |
+| **Phase 3** | **PPT 组装服务** | ✅ 已完成 | — |
+| 14.8 | pptx-builder（5 种页面类型 + 主题） | ✅ 已完成 | lib/slideshow/pptx-builder.ts |
+| **Phase 4** | **API 路由** | ✅ 已完成 | — |
+| 14.9 | POST /api/slideshow/generate | ✅ 已完成 | AI 转写 + 持久化 + 费用记录 |
+| 14.10 | GET /api/slideshow/download | ✅ 已完成 | 从已有 JSON 组装 .pptx |
+| 14.11 | GET /api/slideshow/status | ✅ 已完成 | 课次课件状态查询 |
+| 14.12 | GET /api/slideshow/download-all | ✅ 已完成 | zip 打包批量下载 |
+| **Phase 5** | **前端页面** | ✅ 已完成 | — |
+| 14.13 | 课程包选择页 /slideshow | ✅ 已完成 | 已发布课程包卡片 |
+| 14.14 | 课次列表页 /slideshow/[slug] | ✅ 已完成 | 主题选择 + 生成/下载/重新生成 |
+| 14.15 | 一键生成全部 + 下载全部 | ✅ 已完成 | 逐课次串行 + zip 打包 |
+| **Phase 6** | **集成** | ✅ 已完成 | — |
+| 14.16 | Sidebar 入口 + 权限矩阵 | ✅ 已完成 | 三角色均可用 |
+| 14.17 | 使用指南更新 | ✅ 已完成 | TeacherGuide + RdManagerGuide |
+| **Phase 7** | **测试** | ✅ 已完成 | — |
+| 14.18 | API + lib 测试 | ✅ 已完成 | 21 个测试用例，81 套件 617 测试全通过 |
 
 ---
 

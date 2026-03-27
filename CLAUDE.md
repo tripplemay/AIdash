@@ -9,11 +9,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-**AI Dash — 智能课程系统**。面向老师、教学主管（rd_manager）和管理员，包含三大模块：
+**AI Dash — 智能课程系统**。面向老师、教学主管（rd_manager）和管理员，包含五大模块：
 1. **教师授课系统**：课程包管理、课次内容渲染（v2 JSON → LessonRenderer）
 2. **课程研发模块**：AI 驱动的课程设计工作台（方向确认 → 详细方案 → 定稿发布）
-3. **问AI模块**：类 ChatGPT 对话界面，支持通用模式和课程设计模式（注入基线知识），支持联网搜索（Tavily）
-4. **使用指南**：按角色显示的操作指南（教师版/主管版），内嵌 TOC 导航
+3. **课件生成模块**：从已发布课程中选择课次，AI 将教师备课内容转写为学生课堂展示 PPT（pptxgenjs 生成 .pptx）
+4. **问AI模块**：类 ChatGPT 对话界面，支持通用模式和课程设计模式（注入基线知识），支持联网搜索（Tavily）
+5. **使用指南**：按角色显示的操作指南（教师版/主管版），内嵌 TOC 导航
 
 ## 技术栈
 
@@ -63,6 +64,9 @@ app/
     │   ├── page.tsx                      # /course-rnd — 研发进度看板
     │   ├── [projectId]/page.tsx          # /course-rnd/:id — 方向确认
     │   └── [projectId]/workbench/page.tsx # /course-rnd/:id/workbench — 工作台
+    ├── slideshow/                         # 课件生成模块
+    │   ├── page.tsx                      # /slideshow — 课程包选择
+    │   └── [slug]/page.tsx              # /slideshow/:slug — 课次列表 + 课件操作
     ├── chat/page.tsx                     # /chat — 问AI对话（联网搜索 + 引用标注）
     ├── guide/page.tsx                    # /guide — 使用指南（按角色显示）
     ├── profile/page.tsx                  # /profile — 个人资料
@@ -120,6 +124,8 @@ AppShell (client component, 常驻)
 
 **组织管理表**（2张）：`Department`（部门） / `InviteCode`（邀请码，含 maxUses/usedCount/expiresAt）
 
+**课件生成表**（1张）：`SlideshowDraft`（课件草稿，per user per lesson 唯一，存 AI 转写 JSON）
+
 **系统表**（2张）：`OperationLog` / `SystemConfig`（key-value，存汇率等）
 
 ### AI 服务架构
@@ -141,7 +147,9 @@ AppShell (client component, 常驻)
 - `lib/ai/chat-with-tools.ts` — 联网搜索编排器（LLM 调用→Tavily 搜索→二次 LLM 调用，支持 function calling + prompt fallback）
 - `lib/ai/tavily.ts` — Tavily API 客户端（API Key 从 SystemConfig 加密读取）
 - `lib/ai/web-search-tools.ts` — 搜索工具定义 + 结果格式化 + 引用指令
-- `lib/ai/template-variables.ts` — 28 个预定义模板变量元数据
+- `lib/ai/template-variables.ts` — 31 个预定义模板变量元数据
+- `lib/slideshow/generate.ts` — 课件生成核心逻辑（AI 转写 + 持久化 + 费用记录）
+- `lib/slideshow/pptx-builder.ts` — PPT 组装服务（pptxgenjs，5 种页面类型 + 主题配置）
 - `lib/proxy-fetch.ts` — SOCKS5/HTTP 代理支持（用 node:https，非原生 fetch）
 - `lib/crypto.ts` — AES-256-GCM 加密 API Key
 
@@ -163,15 +171,15 @@ AI 调用时：getSystemPrompt("generate_framework", context)
            → 返回最终 prompt
 ```
 
-**基线维度**：通用(1) + 年龄段 A1-A4(4) + 难度 L1-L4(4) + 组织形态 S1-S2(2) + 产出物 P1-P11(11) + 矩阵(1) = 23 条。按项目属性自动拼装，只注入匹配维度。
+**基线维度**：通用(1) + 年龄段 A1-A4(4) + 难度 L1-L4(4) + 组织形态 S1-S2(2) + 产出物 P1-P11(11) + 矩阵(1) + 课件(1) = 24 条。按项目属性自动拼装，只注入匹配维度。
 
-**Prompt 模板**：9 个动作（generate_framework / revise_framework / regenerate_lesson / revise_lesson / rewrite_field / rewrite_teaching_talk / validate_lesson / package_cover / generate_title），支持 `{{变量名}}` 插值，管理员可在 /admin/prompt-config 编辑。
+**Prompt 模板**：10 个动作（generate_framework / revise_framework / regenerate_lesson / revise_lesson / rewrite_field / rewrite_teaching_talk / validate_lesson / package_cover / generate_title / generate_slideshow），支持 `{{变量名}}` 插值，管理员可在 /admin/prompt-config 编辑。
 
 **版本管理**：基线和模板每次编辑自动创建版本记录，支持回滚和逐行 diff 对比。
 
 **零行为变化保障**：DB 无模板时 `getSystemPrompt()` 返回 null，调用方 fallback 到 `prompts.ts` 中的硬编码 prompt。
 
-**种子数据**：`npx tsx prisma/seed-baselines.ts` — 从 `docs/baseline/` 导入 23 条基线 + 9 个默认模板（含基线变量） + 34 个预设。种子脚本**只创建不覆盖**已有模板，保护管理员的修改。
+**种子数据**：`npx tsx prisma/seed-baselines.ts` — 从 `docs/baseline/` 导入 24 条基线 + 10 个默认模板（含基线变量） + 38 个预设（含 4 套课件主题）。种子脚本**只创建不覆盖**已有模板，保护管理员的修改。
 
 **Prompt 审计**：每次 AI 调用记录完整的 `promptLog`（system prompt）和 `messageLog`（user message）到 `CourseRndAiCallLog`，可在 `/admin/ai-logs` 查看。
 
@@ -218,6 +226,11 @@ Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 和 `/ap
 - **对话 system prompt 注入当前日期**：避免 LLM 幻觉日期，格式如"2026年3月19日，星期四"。
 - **联网搜索来源嵌入消息内容**：`<!-- sources::[...] -->` HTML 注释方式，零 schema 变更，前端解析后渲染。
 - **使用指南内容同步维护**：新增/调整功能时必须同步更新 `TeacherGuide.tsx` 和 `RdManagerGuide.tsx`，内容顺序与侧边栏菜单一致。
+- **课件生成是内容再创作，非模板填充**：AI 将教师备课视角的 contentData 转写为学生课堂展示视角的 PPT 内容，不是简单字段提取。
+- **课件草稿 per user per lesson 唯一**：每个用户对每个课次最多一条 SlideshowDraft，重新生成覆盖自己的记录，不影响其他用户。
+- **PPT 主题预设走 Preset 表**：category=slideshow_theme，管理员后台维护，不硬编码。
+- **课件下载无需调用 AI**：从已有 SlideshowDraft.contentJson 组装 PPT，AI 只在生成/重新生成时调用。
+- **AIGC 配置禁止硬编码**：所有提示词、基线、模板样式都必须存储在数据库中，通过管理后台维护。
 
 ## 工作流约定
 
@@ -235,8 +248,9 @@ Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 和 `/ap
 - 基线与 Prompt 配置 PRD：`docs/product/baseline-prompt-config-prd.md`
 - 管理员模块需求（v1 + v2）：`docs/product/admin-module-requirements*.md`
 - 基线与 Prompt 技术方案：`docs/tech/baseline-prompt-template-implementation-plan.md`
-- 数据库设计（21 个模型）：`docs/tech/database/schema.md`
-- API 路由总览（53 个）：`docs/tech/api/overview.md`
+- 课件生成技术方案：`docs/tech/slideshow-generation-plan.md`
+- 数据库设计（22 个模型）：`docs/tech/database/schema.md`
+- API 路由总览（57 个）：`docs/tech/api/overview.md`
 - 课程设计基线文档（v3 + 分维度）：`docs/baseline/`
 - 视觉设计规范：`docs/design/guidelines/`
 - 项目进度：`docs/PROJECT_STATUS.md`
