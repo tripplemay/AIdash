@@ -96,10 +96,7 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
   };
 
   const downloadAll = () => {
-    const withDrafts = lessons.filter((l) => l.hasDraft);
-    for (const l of withDrafts) {
-      downloadOne(l.lessonId);
-    }
+    window.open(`/api/slideshow/download-all?slug=${packageSlug}`, "_blank");
   };
 
   const allHaveDrafts = lessons.length > 0 && lessons.every((l) => !l.hasContent || l.hasDraft);
