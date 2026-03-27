@@ -12,7 +12,7 @@ interface Baseline {
   content: string;
 }
 
-const TYPE_ORDER = ["general", "age", "level", "org_form", "deliverable", "matrix"] as const;
+const TYPE_ORDER = ["general", "age", "level", "org_form", "deliverable", "matrix", "slideshow"] as const;
 const TYPE_LABELS: Record<string, string> = {
   general: "通用",
   age: "年龄段",
@@ -20,6 +20,7 @@ const TYPE_LABELS: Record<string, string> = {
   org_form: "组织形态",
   deliverable: "产出物",
   matrix: "矩阵",
+  slideshow: "课件生成",
 };
 
 interface Props {
