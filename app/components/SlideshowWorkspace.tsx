@@ -49,6 +49,10 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
   }, [fetchStatus]);
 
   const generateOne = async (lessonId: string) => {
+    if (!selectedTheme) {
+      alert("请先选择模板主题");
+      return false;
+    }
     setGeneratingIds((prev) => new Set(prev).add(lessonId));
     try {
       const res = await fetch("/api/slideshow/generate", {
@@ -135,12 +139,19 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
         )}
       </div>
 
+      {/* No themes warning */}
+      {themes.length === 0 && (
+        <div className="toast toast--error" style={{ marginBottom: "var(--sp-4)" }}>
+          暂无可用的 PPT 主题模板。请管理员运行种子脚本或在后台添加 slideshow_theme 预设。
+        </div>
+      )}
+
       {/* Batch actions */}
       <div style={{ display: "flex", gap: "var(--sp-3)", marginBottom: "var(--sp-4)" }}>
         <button
           className="btn"
           onClick={generateAll}
-          disabled={batchGenerating || generatingIds.size > 0}
+          disabled={batchGenerating || generatingIds.size > 0 || !selectedTheme}
         >
           {batchGenerating ? (
             <>
