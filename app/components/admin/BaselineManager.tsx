@@ -12,7 +12,12 @@ interface Baseline {
   content: string;
 }
 
-const TYPE_ORDER = ["general", "age", "level", "org_form", "deliverable", "matrix", "slideshow"] as const;
+/** 已知类型的排序权重（越小越前），未知类型排最后 */
+const TYPE_SORT_ORDER: Record<string, number> = {
+  general: 0, age: 1, level: 2, org_form: 3, deliverable: 4, matrix: 5, slideshow: 6,
+};
+
+/** 已知类型的中文标签，未知类型 fallback 到 type 原始值 */
 const TYPE_LABELS: Record<string, string> = {
   general: "通用",
   age: "年龄段",
@@ -95,11 +100,17 @@ export default function BaselineManager({ canEdit }: Props) {
     }
   }
 
-  const grouped = TYPE_ORDER.map((type) => ({
-    type,
-    label: TYPE_LABELS[type] ?? type,
-    items: baselines.filter((b) => b.type === type),
-  })).filter((g) => g.items.length > 0);
+  // 从数据中动态提取类型并分组，按已知顺序排列，未知类型追加到末尾
+  const grouped = (() => {
+    const typeSet = new Set(baselines.map((b) => b.type));
+    return [...typeSet]
+      .sort((a, b) => (TYPE_SORT_ORDER[a] ?? 999) - (TYPE_SORT_ORDER[b] ?? 999))
+      .map((type) => ({
+        type,
+        label: TYPE_LABELS[type] ?? type,
+        items: baselines.filter((b) => b.type === type),
+      }));
+  })();
 
   return (
     <div className="baseline-mgr">

@@ -38,19 +38,11 @@ interface PricingInfo {
   lastUpdated: string | null;
 }
 
-const DEFAULT_ACTIONS = [
-  { key: "generate_framework", label: "生成课程框架", type: "text" },
-  { key: "revise_framework", label: "调整框架", type: "text" },
-  { key: "regenerate_lesson", label: "生成/重新生成课次", type: "text" },
-  { key: "revise_lesson", label: "按意见修改课次", type: "text" },
-  { key: "rewrite_field", label: "单字段改写", type: "text" },
-  { key: "validate_lesson", label: "课次审核", type: "text" },
-  { key: "generate_slideshow", label: "生成课件", type: "text" },
-  { key: "lesson_cover", label: "课次封面图", type: "image" },
-  { key: "lesson_illustration", label: "课内插图", type: "image" },
-  { key: "package_cover", label: "课程包封面图", type: "image" },
-  { key: "chat", label: "AI 对话", type: "text" },
-];
+interface RegisteredAction {
+  key: string;
+  label: string;
+  type: string;
+}
 
 interface SystemConfigEntry {
   key: string;
@@ -61,6 +53,7 @@ interface SystemConfigEntry {
 export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }) {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [actions, setActions] = useState<ActionConfig[]>([]);
+  const [registeredActions, setRegisteredActions] = useState<RegisteredAction[]>([]);
   const [pricingInfo, setPricingInfo] = useState<PricingInfo | null>(null);
   const [showAddProvider, setShowAddProvider] = useState(false);
   const [newProvider, setNewProvider] = useState({ name: "", baseUrl: "", apiKey: "", supportText: true, supportImage: false, proxyUrl: "" });
@@ -85,6 +78,7 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
   useEffect(() => {
     fetch("/api/admin/ai-providers").then(r => r.json()).then(d => setProviders(d.data ?? [])).catch(() => {});
     fetch("/api/admin/ai-actions").then(r => r.json()).then(d => setActions(d.data ?? [])).catch(() => {});
+    fetch("/api/admin/ai-actions/registry").then(r => r.json()).then(d => setRegisteredActions(d.data ?? [])).catch(() => {});
     fetch("/api/admin/refresh-pricing").then(r => r.json()).then(d => setPricingInfo(d.data ?? null)).catch(() => {});
     fetch("/api/admin/system-config").then(r => r.json()).then(json => {
       const configs: SystemConfigEntry[] = json.data ?? [];
@@ -469,7 +463,7 @@ export default function AiSettingsPage({ canEdit = true }: { canEdit?: boolean }
         </div>
 
         <div style={{ display: "grid", gap: "var(--sp-3)" }}>
-          {DEFAULT_ACTIONS.map(da => {
+          {registeredActions.map(da => {
             const existing = actions.find(a => a.actionKey === da.key);
             return (
               <ActionMappingRow

@@ -239,6 +239,33 @@ Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 和 `/ap
 - Schema 修改必须同时创建 migration（`npx prisma migrate dev --name xxx`）
 - 生产服务器可通过 `ssh -p 45605 root@38.175.193.100` 访问
 
+### AIGC 功能上线检查清单
+
+新增 AI 功能（新动作/新基线/新预设）时，逐项核对：
+
+**数据层**
+- [ ] 数据库模型 + migration（如需新表）
+- [ ] `seed-baselines.ts` 种子数据（基线 / Prompt 模板 / 预设）
+- [ ] `seed-baselines.ts` 动作注册表（`ai_action_registry` Preset）
+- [ ] `deploy-remote.sh` 已包含 seed-baselines.ts 执行（已配置，仅需确认）
+
+**AI 服务层**
+- [ ] `template-engine.ts` TemplateContext + buildVariableMap 变量扩展
+- [ ] `template-variables.ts` 新增变量元数据
+- [ ] `baseline-assembler.ts` BaselineSet 扩展（如有新基线维度）
+
+**前端 + 权限**
+- [ ] 前端页面 + Sidebar 入口
+- [ ] `permissions.ts` 权限矩阵
+- [ ] 使用指南（TeacherGuide + RdManagerGuide）
+
+**验证**
+- [ ] TypeScript 编译零错误
+- [ ] 测试全部通过
+- [ ] 种子脚本可正常执行
+
+> 注意：基线管理页和 AI 服务配置页已改为数据驱动，新增基线类型和动作无需修改前端代码。
+
 ## 关键参考文档
 
 - 教师授课系统 PRD：`docs/product/teacher-system-prd.md`

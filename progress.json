@@ -1,11 +1,11 @@
 {
-  "mode": "feature",
+  "mode": "refactor",
   "status": "done",
   "project_snapshot": "project-snapshot.md",
-  "user_goal": "课件生成功能 — AI 将教师备课内容转写为学生课堂展示 PPT",
-  "total_features": 42,
-  "completed_features": 42,
+  "user_goal": "消除管理后台 UI 硬编码允许列表 + 新增 AIGC 功能上线检查清单",
+  "total_features": 48,
+  "completed_features": 48,
   "current_sprint": null,
   "last_updated": "2026-03-27",
-  "evaluator_feedback": "14/14 PASS — F039 zip 打包已修复，全部验收通过"
+  "evaluator_feedback": "6/6 PASS — 全部验收通过"
 }

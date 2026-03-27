@@ -936,6 +936,22 @@ async function seedPresets() {
         },
       ],
     },
+    {
+      category: "ai_action_registry",
+      items: [
+        { name: "generate_framework", value: JSON.stringify({ label: "生成课程框架", type: "text" }) },
+        { name: "revise_framework", value: JSON.stringify({ label: "调整框架", type: "text" }) },
+        { name: "regenerate_lesson", value: JSON.stringify({ label: "生成/重新生成课次", type: "text" }) },
+        { name: "revise_lesson", value: JSON.stringify({ label: "按意见修改课次", type: "text" }) },
+        { name: "rewrite_field", value: JSON.stringify({ label: "单字段改写", type: "text" }) },
+        { name: "validate_lesson", value: JSON.stringify({ label: "课次审核", type: "text" }) },
+        { name: "generate_slideshow", value: JSON.stringify({ label: "生成课件", type: "text" }) },
+        { name: "lesson_cover", value: JSON.stringify({ label: "课次封面图", type: "image" }) },
+        { name: "lesson_illustration", value: JSON.stringify({ label: "课内插图", type: "image" }) },
+        { name: "package_cover", value: JSON.stringify({ label: "课程包封面图", type: "image" }) },
+        { name: "chat", value: JSON.stringify({ label: "AI 对话", type: "text" }) },
+      ],
+    },
   ];
 
   for (const group of presets) {

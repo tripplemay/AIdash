@@ -335,6 +335,60 @@
       "status": "completed",
       "acceptance": "API 测试（生成/下载/状态）+ lib 测试（pptx-builder/generate）全部通过，覆盖权限校验和边界情况",
       "notes": "Phase 7"
+    },
+    {
+      "id": "R01",
+      "title": "重构 — CLAUDE.md 追加 AIGC 检查清单",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "CLAUDE.md 工作流约定中有完整的 AIGC 功能上线检查清单，覆盖数据层/服务层/管理后台/前端/验证",
+      "notes": "CLAUDE.md"
+    },
+    {
+      "id": "R02",
+      "title": "重构 — BaselineManager 分组逻辑改为数据驱动",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "BaselineManager 不依赖 TYPE_ORDER 过滤数据；新增任意基线类型后无需改前端代码即可在后台可见；TYPE_LABELS 仅做显示增强",
+      "notes": "BaselineManager.tsx"
+    },
+    {
+      "id": "R03",
+      "title": "重构 — 新增动作注册表种子数据",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "seed-baselines.ts 包含 ai_action_registry Preset 类别，覆盖全部动作，可正常导入",
+      "notes": "seed-baselines.ts"
+    },
+    {
+      "id": "R04",
+      "title": "重构 — 新增动作注册表 API",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "GET /api/admin/ai-actions/registry 返回全部已注册动作及其配置状态",
+      "notes": "app/api/admin/ai-actions/registry/route.ts"
+    },
+    {
+      "id": "R05",
+      "title": "重构 — AiSettingsPage 改为从 API 加载动作列表",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "AiSettingsPage 无 DEFAULT_ACTIONS 硬编码；新增动作只需在种子数据中添加 Preset 记录即可在后台可见",
+      "notes": "AiSettingsPage.tsx"
+    },
+    {
+      "id": "R06",
+      "title": "重构 — 测试覆盖",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "注册表 API 测试通过，现有测试无回归",
+      "notes": "__tests__/"
     }
   ]
 }
