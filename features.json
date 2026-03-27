@@ -466,7 +466,7 @@
       "id": "F052",
       "title": "版式升级 — 版式组件注册",
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "acceptance": "seed-baselines.ts 含 slideshow_layout Preset 类别，覆盖 4 套主题的全部版式组件，种子可正常导入",
       "notes": "Phase 1"
     },
@@ -474,7 +474,7 @@
       "id": "F053",
       "title": "版式升级 — AI 输出格式 + Prompt 更新",
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "acceptance": "Slide 类型含 layout 字段，generate_slideshow 模板注入可用版式列表，AI 输出每页指定 layout",
       "notes": "Phase 2"
     },
@@ -482,7 +482,7 @@
       "id": "F054",
       "title": "版式升级 — pptx-builder 重写",
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "acceptance": "pptx-builder 用 pptx-automizer 从模板组装 PPT，替换文字/图片占位符，输出保留模板渐变/阴影/样式",
       "notes": "Phase 3"
     },
@@ -490,7 +490,7 @@
       "id": "F055",
       "title": "版式升级 — 图片尺寸优化",
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "acceptance": "image-processor 根据版式 imageOrientation 指定生成尺寸（landscape/portrait/square），图片和框比例匹配",
       "notes": "Phase 4"
     },
@@ -498,7 +498,7 @@
       "id": "F056",
       "title": "版式升级 — 前端 + CC BY 4.0 署名",
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "acceptance": "主题选择关联模板包，应用关于页或页脚含 SlidesCarnival CC BY 4.0 署名",
       "notes": "Phase 5"
     },
@@ -506,7 +506,7 @@
       "id": "F057",
       "title": "版式升级 — 测试覆盖",
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "acceptance": "pptx-builder + API 测试全部通过，现有测试无回归",
       "notes": "Phase 6"
     }

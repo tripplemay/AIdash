@@ -85,6 +85,7 @@ export default function TeacherGuide() {
             <li>生成过程中会显示进度（如"正在生成第 3/8 课"）</li>
             <li>全部生成完成后，点击「下载全部」可逐个下载所有课件</li>
           </ol>
+          <div className="guide-tip">课件模板基于 <a href="https://www.slidescarnival.com/" target="_blank" rel="noopener noreferrer">SlidesCarnival</a> 设计，采用 CC BY 4.0 许可。</div>
         </GuideCard>
 
         <hr className="guide-divider" />
@@ -92,7 +93,7 @@ export default function TeacherGuide() {
         {/* ── 问AI助手 ── */}
         <div className="guide-section-title" id="section-chat">问AI助手</div>
 
-        <GuideCard step={6} title="使用 AI 对话">
+        <GuideCard step={8} title="使用 AI 对话">
           <ol className="guide-steps">
             <li>点击左侧边栏「问AI」进入对话页面</li>
             <li>点击「新建对话」，选择模式：

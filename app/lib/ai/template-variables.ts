@@ -48,6 +48,7 @@ export const TEMPLATE_VARIABLES: readonly TemplateVariable[] = [
   // ── 课件生成 ──
   { key: "课次完整内容", group: "课件生成", description: "当前课次的完整 contentData JSON" },
   { key: "主题配置", group: "课件生成", description: "选中的 PPT 主题配置信息" },
+  { key: "可用版式", group: "课件生成", description: "当前主题的可用版式列表及描述" },
 ] as const;
 
 export type TemplateVariableKey = (typeof TEMPLATE_VARIABLES)[number]["key"];

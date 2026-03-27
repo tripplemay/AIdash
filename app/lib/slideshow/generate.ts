@@ -3,9 +3,23 @@ import { getProviderAndModel } from "@/lib/ai/provider";
 import { resolveTemplate, type TemplateContext } from "@/lib/ai/template-engine";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { processSlideImages } from "./image-processor";
-import type { SlideshowOutput, SlideshowProgress } from "@/types/slideshow";
+import type { SlideshowOutput, SlideshowProgress, SlideshowLayout } from "@/types/slideshow";
 
 const ACTION_KEY = "generate_slideshow";
+
+/** Resolve theme display name to template directory name from DB */
+async function resolveThemeDir(themeKey: string): Promise<string> {
+  const preset = await prisma.preset.findUnique({
+    where: { category_name: { category: "slideshow_theme", name: themeKey } },
+  });
+  if (preset) {
+    try {
+      const val = JSON.parse(preset.value);
+      if (val.templateDir) return val.templateDir;
+    } catch { /* ignore */ }
+  }
+  return themeKey.toLowerCase().replace(/\s+/g, "-");
+}
 
 export interface GenerateSlideshowParams {
   lessonId: string;
@@ -90,6 +104,27 @@ async function executeGeneration(
     // Step 1: AI text generation
     await updateProgress({ step: 1, total: 2, message: "正在转写课件内容..." });
 
+    // Load available layouts for this theme
+    const themeDir = await resolveThemeDir(themeKey);
+    const layoutPresets = await prisma.preset.findMany({
+      where: {
+        category: "slideshow_layout",
+        isActive: true,
+        name: { startsWith: `${themeDir}/` },
+      },
+      orderBy: { sortOrder: "asc" },
+    });
+
+    const layoutDescriptions = layoutPresets.map((p) => {
+      const layoutKey = p.name.split("/")[1];
+      try {
+        const val = JSON.parse(p.value);
+        return `- ${layoutKey}（${val.type}）：${val.description}${val.imageOrientation ? `，图片方向：${val.imageOrientation}` : "，无图片"}`;
+      } catch {
+        return `- ${layoutKey}`;
+      }
+    }).join("\n");
+
     const context: TemplateContext = {
       title: lesson.package.title,
       ageRange: lesson.package.ageRange,
@@ -98,6 +133,7 @@ async function executeGeneration(
       lessonTitle: lesson.title,
       lessonContentData: lesson.contentData,
       themeConfig: `主题名称：${themeKey}\n${themeValue}`,
+      availableLayouts: layoutDescriptions || "无可用版式",
     };
 
     const templateResult = await resolveTemplate(ACTION_KEY, context);
@@ -144,9 +180,16 @@ async function executeGeneration(
       heroImageUrl = contentData.hero?.imageUrl ?? null;
     } catch { /* ignore */ }
 
+    // Build layout map for image orientation
+    const layoutMapForImages = new Map<string, SlideshowLayout>();
+    for (const lp of layoutPresets) {
+      const layoutKey = lp.name.split("/")[1];
+      try { layoutMapForImages.set(layoutKey, JSON.parse(lp.value)); } catch { /* skip */ }
+    }
+
     const slidesWithImages = await processSlideImages(
       slideshowOutput.slides,
-      { heroImageUrl, ageRange: lesson.package.ageRange, userId },
+      { heroImageUrl, ageRange: lesson.package.ageRange, userId, layoutMap: layoutMapForImages },
       async (step, total, message) => {
         await updateProgress({ step: step + 1, total: total + 1, message });
       },
@@ -202,6 +245,7 @@ function parseSlideshowOutput(raw: string): SlideshowOutput {
     return {
       slides: parsed.slides.map((slide: Record<string, unknown>) => ({
         type: slide.type ?? "content",
+        layout: slide.layout ?? `${slide.type ?? "content"}_text_only`,
         title: slide.title ?? "",
         subtitle: slide.subtitle ?? null,
         body: slide.body ?? null,

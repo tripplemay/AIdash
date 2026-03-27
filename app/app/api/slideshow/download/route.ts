@@ -3,7 +3,7 @@ import { requireRole, forbiddenResponse } from "@/lib/auth-utils";
 import { VALID_ROLES } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { buildPptx } from "@/lib/slideshow/pptx-builder";
-import type { SlideshowOutput, SlideshowTheme } from "@/types/slideshow";
+import type { SlideshowOutput } from "@/types/slideshow";
 
 export async function GET(req: NextRequest) {
   const session = await requireRole(VALID_ROLES);
@@ -34,20 +34,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "课件正在生成中，请稍后再试" }, { status: 409 });
   }
 
-  // Load theme
-  const themePreset = await prisma.preset.findUnique({
-    where: { category_name: { category: "slideshow_theme", name: draft.themeKey } },
-  });
-
-  if (!themePreset) {
-    return NextResponse.json({ error: `主题「${draft.themeKey}」不存在` }, { status: 404 });
-  }
-
   try {
     const slideshowOutput: SlideshowOutput = JSON.parse(draft.contentJson);
-    const theme: SlideshowTheme = JSON.parse(themePreset.value);
 
-    const buffer = await buildPptx(slideshowOutput, theme, {
+    const buffer = await buildPptx(slideshowOutput, draft.themeKey, {
       courseTitle: draft.lesson.package.title,
       lessonTitle: draft.lesson.title,
       lessonNo: draft.lesson.lessonNo,

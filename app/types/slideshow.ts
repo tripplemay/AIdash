@@ -8,6 +8,7 @@ export type SlideType = "cover" | "content" | "interaction" | "showcase" | "endi
 /** 单页幻灯片 */
 export interface Slide {
   type: SlideType;
+  layout: string;              // 版式 key，如 "cover_fullimage"
   title: string;
   subtitle?: string | null;
   body?: string | null;
@@ -15,6 +16,18 @@ export interface Slide {
   imagePrompt?: string | null;
   imageUrl?: string | null;
   notes?: string | null;
+}
+
+/** 版式组件定义（存储在 Preset.value JSON 中） */
+export interface SlideshowLayout {
+  label: string;
+  themeKey: string;
+  templateDir: string;
+  type: string;
+  slideIndex: number;
+  placeholders: Record<string, string>;
+  imageOrientation: "landscape" | "portrait" | "square" | null;
+  description: string;
 }
 
 /** 生成进度 */

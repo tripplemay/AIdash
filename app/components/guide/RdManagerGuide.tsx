@@ -120,6 +120,7 @@ export default function RdManagerGuide() {
             <li>每位用户的课件数据独立，不会互相影响</li>
             <li>如需导出 PDF，请下载 PPT 后在 PowerPoint 中另存为 PDF</li>
           </ol>
+          <div className="guide-tip">课件模板基于 <a href="https://www.slidescarnival.com/" target="_blank" rel="noopener noreferrer">SlidesCarnival</a> 设计，采用 CC BY 4.0 许可。</div>
         </GuideCard>
 
         <hr className="guide-divider" />

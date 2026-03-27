@@ -1,11 +1,11 @@
 {
   "mode": "feature",
-  "status": "building",
+  "status": "done",
   "project_snapshot": "project-snapshot.md",
   "user_goal": "课件版式升级 — pptx-automizer + 设计师模板 + AI 版式选择",
   "total_features": 57,
-  "completed_features": 51,
-  "current_sprint": "F052",
+  "completed_features": 57,
+  "current_sprint": null,
   "last_updated": "2026-03-27",
-  "evaluator_feedback": null
+  "evaluator_feedback": "7/7 PASS — TypeScript 零错误，82 套件 621 测试全通过"
 }

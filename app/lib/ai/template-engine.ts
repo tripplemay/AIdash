@@ -26,6 +26,7 @@ export interface TemplateContext {
   // 课件生成
   lessonContentData?: string | null;
   themeConfig?: string | null;
+  availableLayouts?: string | null;
 }
 
 // ── Label lookup helpers ──
@@ -108,6 +109,7 @@ function buildVariableMap(
     // 课件生成
     课次完整内容: str(ctx.lessonContentData),
     主题配置: str(ctx.themeConfig),
+    可用版式: str(ctx.availableLayouts),
   };
 }
 

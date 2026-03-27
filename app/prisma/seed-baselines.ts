@@ -653,6 +653,11 @@ No text on the image.`,
 ## PPT 主题风格
 {{主题配置}}
 
+## 可用版式列表
+你必须从以下版式中选择每页的 layout 值：
+
+{{可用版式}}
+
 ## 输出格式（JSON）
 只输出 JSON，不要用 markdown 代码块包裹，不要输出其他文字。
 
@@ -660,6 +665,7 @@ No text on the image.`,
   "slides": [
     {
       "type": "cover",
+      "layout": "cover_fullimage",
       "title": "课程名称",
       "subtitle": "本课副标题",
       "body": null,
@@ -669,15 +675,27 @@ No text on the image.`,
     },
     {
       "type": "content",
+      "layout": "content_image_right",
       "title": "页面标题",
       "subtitle": null,
-      "body": "正文内容（支持简单 Markdown）",
+      "body": "正文内容",
       "bullets": ["要点1", "要点2"],
-      "imagePrompt": "描述与本页内容相关的具体场景（英文），或 null 表示不需要图片",
+      "imagePrompt": "具体场景描述（英文），或 null 表示不需要图片",
+      "notes": "教师参考备注"
+    },
+    {
+      "type": "content",
+      "layout": "content_text_only",
+      "title": "纯文字页面标题",
+      "subtitle": null,
+      "body": "不需要图片时选择纯文字版式",
+      "bullets": ["要点1"],
+      "imagePrompt": null,
       "notes": "教师参考备注"
     },
     {
       "type": "interaction",
+      "layout": "interaction_card",
       "title": "互动环节标题",
       "subtitle": "任务说明",
       "body": "学生操作指引",
@@ -687,15 +705,17 @@ No text on the image.`,
     },
     {
       "type": "showcase",
+      "layout": "showcase_centered",
       "title": "展示环节标题",
       "subtitle": null,
       "body": "展示引导语",
       "bullets": ["展示要求1", "展示要求2"],
-      "imagePrompt": "Children proudly showing their creative works to classmates, cartoon style, no text",
+      "imagePrompt": "Children proudly showing their creative works, cartoon style, no text",
       "notes": "教师参考备注"
     },
     {
       "type": "ending",
+      "layout": "ending_summary",
       "title": "课程总结",
       "subtitle": null,
       "body": "总结语",
@@ -706,12 +726,12 @@ No text on the image.`,
   ]
 }
 
-## 页面类型说明
-- cover：封面页（1页），包含课程名和本课标题，必须有 imagePrompt
-- content：内容页（多页），引导语、知识点、任务说明
-- interaction：互动页（多页），AI 提示、动手任务、学生操作指引
-- showcase：展示页（1-2页），学生作品展示引导、点评框架
-- ending：结束页（1页），总结 + 下节预告，必须有 imagePrompt
+## layout 选择规则
+- 每页必须指定 layout，值为上方可用版式列表中的 key
+- layout 的 type 必须与 slide 的 type 匹配（如 cover 类型只能用 cover_* 版式）
+- 有 imagePrompt 的页面应选择含图片占位符的版式（如 content_image_right、content_image_bottom）
+- 无 imagePrompt 的页面应选择纯文字版式（如 content_text_only）
+- 同类型的不同页面应尽量选择不同版式，增加视觉多样性
 
 ## imagePrompt 规则
 - 封面页（cover）和结束页（ending）：必须填写 imagePrompt
@@ -909,6 +929,7 @@ async function seedPresets() {
           name: "科技蓝",
           value: JSON.stringify({
             description: "蓝紫渐变、简洁几何，适合 STEAM/编程/AI 类课程",
+            templateDir: "tech-blue",
             background: "#0F1B2D",
             titleColor: "#7CB3FF",
             bodyColor: "#E0E8F0",
@@ -924,6 +945,7 @@ async function seedPresets() {
           name: "自然绿",
           value: JSON.stringify({
             description: "绿色系、柔和插画风，适合自然探索/生态类课程",
+            templateDir: "nature-green",
             background: "#F5FAF0",
             titleColor: "#2D6A4F",
             bodyColor: "#344E41",
@@ -939,6 +961,7 @@ async function seedPresets() {
           name: "创意橙",
           value: JSON.stringify({
             description: "暖色活泼、圆角卡片，适合低龄段艺术/手工类课程",
+            templateDir: "creative-orange",
             background: "#FFF8F0",
             titleColor: "#E85D04",
             bodyColor: "#4A3728",
@@ -954,6 +977,7 @@ async function seedPresets() {
           name: "简约白",
           value: JSON.stringify({
             description: "黑白灰、大留白，通用/高龄段/严肃主题",
+            templateDir: "minimal-white",
             background: "#FFFFFF",
             titleColor: "#1A1A2E",
             bodyColor: "#333333",
@@ -983,6 +1007,46 @@ async function seedPresets() {
         { name: "package_cover", value: JSON.stringify({ label: "课程包封面图", type: "image" }) },
         { name: "chat", value: JSON.stringify({ label: "AI 对话", type: "text" }) },
       ],
+    },
+    {
+      category: "slideshow_layout",
+      items: (() => {
+        const themes = [
+          { dir: "tech-blue", themeKey: "科技蓝" },
+          { dir: "nature-green", themeKey: "自然绿" },
+          { dir: "creative-orange", themeKey: "创意橙" },
+          { dir: "minimal-white", themeKey: "简约白" },
+        ];
+        const layouts = [
+          { key: "cover_fullimage", label: "封面 — 全屏背景图", type: "cover", slideIndex: 1, placeholders: { title: "TitleShape", subtitle: "SubtitleShape", image: "BackgroundImage" }, imageOrientation: "landscape", description: "全屏背景图 + 半透明遮罩 + 居中大标题" },
+          { key: "cover_gradient", label: "封面 — 渐变装饰", type: "cover", slideIndex: 2, placeholders: { title: "TitleShape", subtitle: "SubtitleShape" }, imageOrientation: null, description: "渐变背景 + 装饰圆形 + 居中标题" },
+          { key: "content_text_only", label: "内容 — 纯文字", type: "content", slideIndex: 3, placeholders: { title: "TitleShape", body: "BodyShape" }, imageOrientation: null, description: "左侧强调线 + 标题 + 正文/要点列表" },
+          { key: "content_image_right", label: "内容 — 右侧竖图", type: "content", slideIndex: 4, placeholders: { title: "TitleShape", body: "BodyShape", image: "ImageShape" }, imageOrientation: "portrait", description: "左侧文字 + 右侧竖向图片" },
+          { key: "content_image_bottom", label: "内容 — 底部横图", type: "content", slideIndex: 5, placeholders: { title: "TitleShape", body: "BodyShape", image: "ImageShape" }, imageOrientation: "landscape", description: "上方标题/正文 + 下方横向图片" },
+          { key: "interaction_card", label: "互动 — 卡片式", type: "interaction", slideIndex: 6, placeholders: { title: "TitleShape", body: "BodyShape" }, imageOrientation: null, description: "强调色标题栏 + 卡片式内容区" },
+          { key: "showcase_centered", label: "展示 — 居中图文", type: "showcase", slideIndex: 7, placeholders: { title: "TitleShape", body: "BodyShape", image: "ImageShape" }, imageOrientation: "landscape", description: "居中标题 + 正文 + 横向图片展示区" },
+          { key: "ending_summary", label: "结束 — 总结", type: "ending", slideIndex: 8, placeholders: { title: "TitleShape", body: "BodyShape" }, imageOrientation: null, description: "装饰背景 + 居中大标题 + 总结文字" },
+        ];
+        const items: Array<{ name: string; value: string }> = [];
+        for (const theme of themes) {
+          for (const layout of layouts) {
+            items.push({
+              name: `${theme.dir}/${layout.key}`,
+              value: JSON.stringify({
+                label: layout.label,
+                themeKey: theme.themeKey,
+                templateDir: theme.dir,
+                type: layout.type,
+                slideIndex: layout.slideIndex,
+                placeholders: layout.placeholders,
+                imageOrientation: layout.imageOrientation,
+                description: layout.description,
+              }),
+            });
+          }
+        }
+        return items;
+      })(),
     },
   ];
 

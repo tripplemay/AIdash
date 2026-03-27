@@ -2,15 +2,23 @@ import { prisma } from "@/lib/prisma";
 import { getProviderAndModel } from "@/lib/ai/provider";
 import { saveAiImage } from "@/lib/ai/image-store";
 import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
-import type { Slide } from "@/types/slideshow";
+import type { Slide, SlideshowLayout } from "@/types/slideshow";
 
 const IMAGE_ACTION_KEY = "slideshow_image";
+
+/** Image sizes by orientation */
+const IMAGE_SIZES: Record<string, string> = {
+  landscape: "1792x1024",
+  portrait: "1024x1536",
+  square: "1024x1024",
+};
 
 interface ImageContext {
   heroImageUrl?: string | null;
   ageRange?: string | null;
   imageStylePrompt?: string | null;
   userId: string;
+  layoutMap: Map<string, SlideshowLayout>;
 }
 
 /**
@@ -18,6 +26,7 @@ interface ImageContext {
  * - Cover: reuse hero image or generate
  * - Ending: reuse cover image
  * - Middle slides: AI-generate if imagePrompt present
+ * Image size is determined by the layout's imageOrientation.
  * Returns updated slides with imageUrl filled in.
  */
 export async function processSlideImages(
@@ -48,6 +57,11 @@ export async function processSlideImages(
 
     await onProgress(stepNum, totalSteps, `正在生成第 ${index + 1} 页图片 (${stepNum}/${totalSteps})...`);
 
+    // Determine image size from layout orientation
+    const layout = context.layoutMap.get(slide.layout);
+    const orientation = layout?.imageOrientation ?? "landscape";
+    const size = IMAGE_SIZES[orientation] ?? IMAGE_SIZES.landscape;
+
     try {
       let imageUrl: string | null = null;
 
@@ -55,17 +69,17 @@ export async function processSlideImages(
         // Cover: reuse hero image if available
         imageUrl = context.heroImageUrl
           ? context.heroImageUrl
-          : await generateAndSaveImage(imageConfig, slide.imagePrompt!, context);
+          : await generateAndSaveImage(imageConfig, slide.imagePrompt!, context, size);
         coverImageUrl = imageUrl;
       } else if (slide.type === "ending") {
         // Ending: reuse cover image
         imageUrl = coverImageUrl;
         if (!imageUrl && slide.imagePrompt) {
-          imageUrl = await generateAndSaveImage(imageConfig, slide.imagePrompt, context);
+          imageUrl = await generateAndSaveImage(imageConfig, slide.imagePrompt, context, size);
         }
       } else {
         // Middle slides: AI generate
-        imageUrl = await generateAndSaveImage(imageConfig, slide.imagePrompt!, context);
+        imageUrl = await generateAndSaveImage(imageConfig, slide.imagePrompt!, context, size);
       }
 
       if (imageUrl) {
@@ -83,6 +97,7 @@ async function generateAndSaveImage(
   imageConfig: { provider: { generateImage?: (params: { prompt: string; model: string; size?: string }) => Promise<{ url: string; model: string }> }; model: string },
   imagePrompt: string,
   context: ImageContext,
+  size: string,
 ): Promise<string> {
   const ageHint = context.ageRange ? `Designed for ${context.ageRange} age group. ` : "";
   const stylePrefix = context.imageStylePrompt ? `Style: ${context.imageStylePrompt}. ` : "";
@@ -91,6 +106,7 @@ async function generateAndSaveImage(
   const img = await imageConfig.provider.generateImage!({
     prompt: finalPrompt,
     model: imageConfig.model,
+    size,
   });
 
   const imageUrl = await saveAiImage(img.url, "slideshow");

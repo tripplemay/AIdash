@@ -4,7 +4,6 @@ jest.mock("@/auth", () => ({ auth: jest.fn() }));
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     slideshowDraft: { findUnique: jest.fn() },
-    preset: { findUnique: jest.fn() },
   },
 }));
 jest.mock("@/lib/slideshow/pptx-builder", () => ({
@@ -17,7 +16,6 @@ import { buildPptx } from "@/lib/slideshow/pptx-builder";
 
 const mockAuth = auth as jest.Mock;
 const mockDraftFind = prisma.slideshowDraft.findUnique as jest.Mock;
-const mockPresetFind = prisma.preset.findUnique as jest.Mock;
 const mockBuildPptx = buildPptx as jest.Mock;
 
 const session = { user: { id: "u-1", role: "teacher" }, expires: "" };
@@ -70,33 +68,22 @@ describe("GET /api/slideshow/download", () => {
       id: "d-1",
       status: "completed",
       themeKey: "科技蓝",
-      contentJson: JSON.stringify({ slides: [{ type: "cover", title: "Test" }] }),
+      contentJson: JSON.stringify({ slides: [{ type: "cover", layout: "cover_fullimage", title: "Test" }] }),
       lesson: {
         lessonNo: 1,
         title: "色彩的秘密",
         package: { title: "创意课程" },
       },
     });
-    mockPresetFind.mockResolvedValue({
-      name: "科技蓝",
-      value: JSON.stringify({
-        description: "蓝紫",
-        background: "#0F1B2D",
-        titleColor: "#7CB3FF",
-        bodyColor: "#E0E8F0",
-        accentColor: "#5B8DEF",
-        titleFont: "Microsoft YaHei",
-        bodyFont: "Microsoft YaHei",
-        titleFontSize: 36,
-        bodyFontSize: 18,
-        layoutStyle: "tech",
-      }),
-    });
     mockBuildPptx.mockResolvedValue(Buffer.from("fake-pptx-data"));
 
     const res = await GET(makeRequest("lessonId=l-1"));
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("presentationml");
-    expect(mockBuildPptx).toHaveBeenCalled();
+    expect(mockBuildPptx).toHaveBeenCalledWith(
+      expect.objectContaining({ slides: expect.any(Array) }),
+      "科技蓝",
+      expect.objectContaining({ courseTitle: "创意课程" }),
+    );
   });
 });
