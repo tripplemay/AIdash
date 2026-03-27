@@ -23,18 +23,21 @@ interface ProgressState {
   streamText?: string;
 }
 
-const SECTION_LABELS = [
-  "本课核心信息",
-  "AI 环节价值说明",
-  "课前备课提示单",
-  "AI 工具方案",
-  "课堂执行清单",
-  "学生卡点应对表",
-  "本课附件与模板",
-  "课后复盘记录区",
-];
+/** 已知板块 ID → 中文标签映射，未知板块 fallback 到 ID */
+const SECTION_LABEL_MAP: Record<string, string> = {
+  core: "本课核心信息",
+  ai_value: "AI 环节价值说明",
+  prep: "课前备课提示单",
+  tool_plan: "AI 工具方案",
+  flow: "课堂执行清单",
+  issues: "学生卡点应对表",
+  materials: "本课附件与模板",
+  review: "课后复盘记录区",
+};
 
-const SECTION_IDS = ["core", "ai_value", "prep", "flow", "issues", "materials", "review"];
+function getSectionLabel(id: string): string {
+  return SECTION_LABEL_MAP[id] ?? id;
+}
 
 export interface PendingFeedback {
   id: string;
@@ -215,7 +218,8 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
               </div>
             )}
 
-            {SECTION_LABELS.map((label, i) => {
+            {/* 动态步骤列表：用 progress.total 决定总步数，progress.label 显示当前步骤 */}
+            {Array.from({ length: progress.total }, (_, i) => {
               const stepNo = i + 1;
               const isDone = stepNo < progress.step;
               const isCurrent = stepNo === progress.step;
@@ -225,24 +229,14 @@ export default function LessonDraftCard({ draft, projectId, onRevise, onRegenera
                 : "ai-progress__step--pending";
               if (progress.step === 0 && isPending) return null;
               return (
-                <div key={label} className={`ai-progress__step ${cls}`}>
+                <div key={stepNo} className={`ai-progress__step ${cls}`}>
                   <span style={{ width: 20, display: "flex", justifyContent: "center" }}>
                     {isDone ? "✓" : isCurrent ? <span className="ai-progress__spinner" /> : "○"}
                   </span>
-                  {label}
+                  {isCurrent ? progress.label : `步骤 ${stepNo}`}
                 </div>
               );
             })}
-
-            {/* 7步完成后的额外阶段（如封面图生成） */}
-            {progress.step > SECTION_LABELS.length && (
-              <div className="ai-progress__step ai-progress__step--current">
-                <span style={{ width: 20, display: "flex", justifyContent: "center" }}>
-                  <span className="ai-progress__spinner" />
-                </span>
-                {progress.label}
-              </div>
-            )}
 
             {/* 流式文本输出预览 */}
             {progress.streamText && (

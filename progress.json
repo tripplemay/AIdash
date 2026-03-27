@@ -1,11 +1,11 @@
 {
-  "mode": "bugfix",
+  "mode": "refactor",
   "status": "done",
   "project_snapshot": "project-snapshot.md",
-  "user_goal": "预设管理页面看不到课件主题/版式/动作注册等新增类别",
-  "total_features": 57,
-  "completed_features": 57,
+  "user_goal": "修复剩余 5 个硬编码允许列表 — 课次板块/进度/审核/图片类型/年龄难度选项",
+  "total_features": 63,
+  "completed_features": 63,
   "current_sprint": null,
   "last_updated": "2026-03-27",
-  "evaluator_feedback": "根因：PresetManager CATEGORIES 硬编码 5 个类别，同 BaselineManager/AiSettingsPage 同类问题。修复：改为从 API 动态加载。"
+  "evaluator_feedback": "6/6 PASS — 82 套件 621 测试全通过"
 }

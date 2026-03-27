@@ -11,20 +11,21 @@ import { resolveTemplate, type TemplateContext } from "@/lib/ai/template-engine"
 import { loadFrameworkContext } from "@/lib/ai/lesson-context";
 
 /** 12 个固定检查项名称 */
-const VALIDATION_CRITERIA = [
-  "课次目标清晰度",
-  "AI 环节实际价值",
-  "课堂流程时间分配",
-  "学生卡点充分性",
-  "成果模板可操作性",
-  "年龄段适配性",
-  "课次间递进关系",
-  "作品感",
-  "课次独立性",
-  "禁止跑偏检查",
-  "AI 工具落地可执行性",
-  "工具降级与备选方案",
-];
+/** 已知审核项标签映射（展示用，新增项 fallback 到 AI 返回的名称） */
+const VALIDATION_CRITERION_LABELS: Record<number, string> = {
+  1: "课次目标清晰度",
+  2: "AI 环节实际价值",
+  3: "课堂流程时间分配",
+  4: "学生卡点充分性",
+  5: "成果模板可操作性",
+  6: "年龄段适配性",
+  7: "课次间递进关系",
+  8: "作品感",
+  9: "课次独立性",
+  10: "禁止跑偏检查",
+  11: "AI 工具落地可执行性",
+  12: "工具降级与备选方案",
+};
 
 interface DraftJson {
   title?: string;
@@ -141,7 +142,7 @@ function parseValidationLine(line: string): {
 
   const indexStr = trimmed.slice(0, pipes[0]).trim();
   const index = parseInt(indexStr, 10);
-  if (isNaN(index) || index < 1 || index > VALIDATION_CRITERIA.length) return null;
+  if (isNaN(index) || index < 1) return null;
 
   const segment2 = trimmed.slice(pipes[0] + 1, pipes[1]).trim();
 
@@ -151,7 +152,7 @@ function parseValidationLine(line: string): {
     return {
       type: "item",
       index,
-      criterion: VALIDATION_CRITERIA[index - 1] ?? `检查项 ${index}`,
+      criterion: VALIDATION_CRITERION_LABELS[index] ?? `检查项 ${index}`,
       status: segment2.toLowerCase(),
       detail: trimmed.slice(pipes[1] + 1).trim(),
     };
@@ -165,7 +166,7 @@ function parseValidationLine(line: string): {
   return {
     type: "item",
     index,
-    criterion: segment2 || (VALIDATION_CRITERIA[index - 1] ?? `检查项 ${index}`),
+    criterion: segment2 || (VALIDATION_CRITERION_LABELS[index] ?? `检查项 ${index}`),
     status,
     detail: trimmed.slice(pipes[2] + 1).trim(),
   };
@@ -391,7 +392,7 @@ export async function POST(
                   const item = report.items[i];
                   const collected = {
                     index: i + 1,
-                    criterion: item.criterion ?? VALIDATION_CRITERIA[i] ?? `检查项 ${i + 1}`,
+                    criterion: item.criterion ?? VALIDATION_CRITERION_LABELS[i + 1] ?? `检查项 ${i + 1}`,
                     status: item.status ?? "warning",
                     detail: item.detail ?? "",
                   };

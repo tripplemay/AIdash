@@ -22,21 +22,10 @@ const STATUS_MAP: Record<string, { text: string; cls: string }> = {
   draft:     { text: "草稿",   cls: "badge-status badge-status--draft" },
 };
 
-const AGE_OPTIONS = [
-  { value: "A1", label: "A1｜6-7岁" },
-  { value: "A2", label: "A2｜8-9岁" },
-  { value: "A3", label: "A3｜10-12岁" },
-  { value: "A4", label: "A4｜13-15岁" },
-];
-
-const LEVEL_OPTIONS = [
-  { value: "L1", label: "L1" },
-  { value: "L2", label: "L2" },
-  { value: "L3", label: "L3" },
-  { value: "L4", label: "L4" },
-];
-
-export default function AdminPackageList({ packages, ageRangeLabels }: { packages: PackageRow[]; ageRangeLabels?: Record<string, string> }) {
+export default function AdminPackageList({ packages, ageRangeLabels, levelLabels }: { packages: PackageRow[]; ageRangeLabels?: Record<string, string>; levelLabels?: Record<string, string> }) {
+  // 从传入的标签映射动态构建选项
+  const AGE_OPTIONS = Object.entries(ageRangeLabels ?? {}).map(([value, label]) => ({ value, label }));
+  const LEVEL_OPTIONS = Object.entries(levelLabels ?? {}).map(([value]) => ({ value, label: value }));
   const router = useRouter();
   const [confirm, setConfirm] = useState<{ type: "delete" | "offline" | "online"; slug: string; title: string } | null>(null);
   const [loading, setLoading] = useState<string | null>(null);

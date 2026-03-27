@@ -9,21 +9,22 @@ import { calculateCallCostFromDb } from "@/lib/ai/pricing-service";
 import { saveAiImage } from "@/lib/ai/image-store";
 import { buildContentData, type AiLessonOutput } from "@/lib/ai/build-content-data";
 
-type ImageType = "hero" | "illustration" | "template";
-
-const IMAGE_ACTION_MAP: Record<ImageType, string> = {
+/** 图片类型 → 动作 key 映射（开放式，新增类型自动 fallback） */
+const IMAGE_ACTION_MAP: Record<string, string> = {
   hero: "lesson_cover",
   illustration: "lesson_illustration",
   template: "lesson_illustration",
 };
 
-const IMAGE_PROMPT_FIELD: Record<ImageType, keyof AiLessonOutput> = {
+/** 图片类型 → AI 输出中 prompt 字段名映射 */
+const IMAGE_PROMPT_FIELD: Record<string, string> = {
   hero: "hero_image_prompt",
   illustration: "illustration_prompt",
   template: "template_image_prompt",
 };
 
-const IMAGE_URL_FIELD: Record<ImageType, keyof AiLessonOutput> = {
+/** 图片类型 → AI 输出中 URL 字段名映射 */
+const IMAGE_URL_FIELD: Record<string, string> = {
   hero: "hero_image_url",
   illustration: "illustration_url",
   template: "template_image_url",
@@ -42,10 +43,10 @@ export async function POST(
   const lessonNoInt = parseInt(lessonNo, 10);
 
   const body = await request.json();
-  const imageType = body.imageType as ImageType;
+  const imageType = body.imageType as string;
 
   if (!imageType || !IMAGE_ACTION_MAP[imageType]) {
-    return NextResponse.json({ error: "无效的图片类型" }, { status: 400 });
+    return NextResponse.json({ error: `无效的图片类型: ${imageType ?? "未指定"}` }, { status: 400 });
   }
 
   // 读取项目和草稿
@@ -66,7 +67,7 @@ export async function POST(
   }
 
   const promptField = IMAGE_PROMPT_FIELD[imageType];
-  const prompt = aiOutput[promptField] as string | undefined;
+  const prompt = (aiOutput as unknown as Record<string, unknown>)[promptField] as string | undefined;
   if (!prompt) {
     return NextResponse.json({ error: "该课次没有对应的图片描述，请先重新生成课次内容" }, { status: 400 });
   }

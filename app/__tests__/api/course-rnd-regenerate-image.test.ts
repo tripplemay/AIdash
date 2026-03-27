@@ -87,7 +87,7 @@ describe("POST /api/course-rnd/projects/[id]/lessons/[lessonNo]/regenerate-image
     const res = await POST(makeRequest({}), makeParams("p1", "1"));
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toBe("无效的图片类型");
+    expect(json.error).toContain("无效的图片类型");
   });
 
   it("returns 400 when imageType is invalid", async () => {

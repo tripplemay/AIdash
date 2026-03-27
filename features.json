@@ -509,6 +509,60 @@
       "status": "completed",
       "acceptance": "pptx-builder + API 测试全部通过，现有测试无回归",
       "notes": "Phase 6"
+    },
+    {
+      "id": "R07",
+      "title": "重构 — 课次板块 SECTION_IDS/LABELS 改为数据驱动",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "LessonDraftCard 从 contentData 的实际 sections 动态渲染板块，不依赖硬编码列表",
+      "notes": "LessonDraftCard.tsx"
+    },
+    {
+      "id": "R08",
+      "title": "重构 — 生成进度 SECTION_STEPS 改为数据驱动",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "regenerate/route.ts 的 SECTION_STEPS 改为 Preset 或从模板动态获取，detectSectionStep 兼容新板块",
+      "notes": "regenerate/route.ts"
+    },
+    {
+      "id": "R09",
+      "title": "重构 — 审核项 VALIDATION_CRITERIA 改为数据驱动",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "validate/route.ts 不限制审核项数量，从 Prompt 模板中由 AI 决定检查项，解析时不做上限校验",
+      "notes": "validate/route.ts"
+    },
+    {
+      "id": "R10",
+      "title": "重构 — 图片类型 IMAGE_ACTION_MAP 改为数据驱动",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "regenerate-image/route.ts 的图片类型映射改为 Preset 或从 AiLessonOutput 类型推导，新增图片类型无需改代码",
+      "notes": "regenerate-image/route.ts"
+    },
+    {
+      "id": "R11",
+      "title": "重构 — AGE/LEVEL_OPTIONS 改为从 DB 加载",
+      "priority": "medium",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "AdminPackageList 的年龄段和难度选项从 BaselineDoc 动态加载，新增 A5/L5 无需改前端",
+      "notes": "AdminPackageList.tsx"
+    },
+    {
+      "id": "R12",
+      "title": "重构 — 测试覆盖",
+      "priority": "high",
+      "status": "completed",
+      "type": "refactor",
+      "acceptance": "所有重构无回归，现有测试全部通过",
+      "notes": "__tests__/"
     }
   ]
 }

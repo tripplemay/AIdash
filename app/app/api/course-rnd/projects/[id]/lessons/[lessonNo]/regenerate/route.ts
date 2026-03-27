@@ -11,18 +11,19 @@ import { resolveTemplate, type TemplateContext } from "@/lib/ai/template-engine"
 import { saveAiImage } from "@/lib/ai/image-store";
 import { loadFrameworkContext, buildLessonListWithOverview, buildGeneratedLessonsSummary, buildRegenerateUserMessage } from "@/lib/ai/lesson-context";
 
-const SECTION_STEPS = [
-  { id: "core", label: "本课核心信息" },
-  { id: "ai_value", label: "AI 环节价值说明" },
-  { id: "prep", label: "课前备课提示单" },
-  { id: "tool_plan", label: "AI 工具方案" },
-  { id: "flow", label: "课堂执行清单" },
-  { id: "issues", label: "学生卡点应对表" },
-  { id: "materials", label: "本课附件与模板" },
-  { id: "review", label: "课后复盘记录区" },
-];
+/** 板块步骤标签（展示用，新增板块 fallback 到 ID） */
+const SECTION_STEP_LABELS: Record<number, string> = {
+  1: "本课核心信息",
+  2: "AI 环节价值说明",
+  3: "课前备课提示单",
+  4: "AI 工具方案",
+  5: "课堂执行清单",
+  6: "学生卡点应对表",
+  7: "本课附件与模板",
+  8: "课后复盘记录区",
+};
 
-const TOTAL_STEPS = SECTION_STEPS.length; // 8
+const TOTAL_STEPS = Object.keys(SECTION_STEP_LABELS).length;
 
 /** 根据已接收的 JSON 文本检测当前正在生成哪个板块 */
 function detectSectionStep(content: string): number {
@@ -251,7 +252,7 @@ export async function POST(
                 sendEvent("progress", {
                   step,
                   total: TOTAL_STEPS,
-                  label: `正在生成「${SECTION_STEPS[step]?.label ?? ""}」...`,
+                  label: `正在生成「${SECTION_STEP_LABELS[step] ?? `步骤 ${step}`}」...`,
                   tokenCount: Math.round(chunk.totalChars / 2.5),
                   textDelta,
                   totalChars: chunk.totalChars,
@@ -267,7 +268,7 @@ export async function POST(
                 sendEvent("progress", {
                   step: currentStep,
                   total: TOTAL_STEPS,
-                  label: `正在生成「${SECTION_STEPS[currentStep]?.label ?? ""}」...`,
+                  label: `正在生成「${SECTION_STEP_LABELS[currentStep] ?? `步骤 ${currentStep}`}」...`,
                   tokenCount: currentStep * 300,
                 });
               }
