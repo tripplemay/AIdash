@@ -2,10 +2,10 @@
   "mode": "bugfix",
   "status": "done",
   "project_snapshot": "project-snapshot.md",
-  "user_goal": "修复课件 PPT 中图片不显示的 bug",
+  "user_goal": "预设管理页面看不到课件主题/版式/动作注册等新增类别",
   "total_features": 57,
   "completed_features": 57,
   "current_sprint": null,
   "last_updated": "2026-03-27",
-  "evaluator_feedback": "根因：模板中图片占位符是形状(roundRect)而非图片元素，pptx-automizer 无法替换。修复：改为 addImage + 占位图片。"
+  "evaluator_feedback": "根因：PresetManager CATEGORIES 硬编码 5 个类别，同 BaselineManager/AiSettingsPage 同类问题。修复：改为从 API 动态加载。"
 }

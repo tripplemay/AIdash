@@ -13,13 +13,17 @@ interface Preset {
   sortOrder: number;
 }
 
-const CATEGORIES = [
-  { key: "course_direction", label: "课程方向" },
-  { key: "image_style", label: "图片风格" },
-  { key: "image_composition", label: "图片构图引导" },
-  { key: "core_needs_tag", label: "核心诉求标签" },
-  { key: "constraints_tag", label: "补充约束标签" },
-] as const;
+/** 已知类别的排序权重和中文标签，未知类别追加到末尾 */
+const CATEGORY_META: Record<string, { order: number; label: string }> = {
+  course_direction: { order: 0, label: "课程方向" },
+  image_style: { order: 1, label: "图片风格" },
+  image_composition: { order: 2, label: "图片构图引导" },
+  core_needs_tag: { order: 3, label: "核心诉求标签" },
+  constraints_tag: { order: 4, label: "补充约束标签" },
+  slideshow_theme: { order: 5, label: "课件主题" },
+  slideshow_layout: { order: 6, label: "课件版式" },
+  ai_action_registry: { order: 7, label: "动作注册表" },
+};
 
 interface Props {
   canEdit: boolean;
@@ -27,7 +31,8 @@ interface Props {
 
 export default function PresetManager({ canEdit }: Props) {
   const { showToast } = useToast();
-  const [activeCategory, setActiveCategory] = useState<string>(CATEGORIES[0].key);
+  const [categories, setCategories] = useState<Array<{ key: string; label: string }>>([]);
+  const [activeCategory, setActiveCategory] = useState<string>("");
   const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -60,7 +65,26 @@ export default function PresetManager({ canEdit }: Props) {
     }
   }, [showToast, selectedId]);
 
+  // Load distinct categories from DB on mount
   useEffect(() => {
+    fetch("/api/admin/presets")
+      .then((r) => r.json())
+      .then((json) => {
+        const allPresets: Preset[] = json.data ?? [];
+        const catSet = new Set(allPresets.map((p) => p.category));
+        const cats = [...catSet]
+          .sort((a, b) => (CATEGORY_META[a]?.order ?? 999) - (CATEGORY_META[b]?.order ?? 999))
+          .map((key) => ({ key, label: CATEGORY_META[key]?.label ?? key }));
+        setCategories(cats);
+        if (cats.length > 0 && !activeCategory) {
+          setActiveCategory(cats[0].key);
+        }
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!activeCategory) return;
     setSelectedId(null);
     setAddingNew(false);
     fetchPresets(activeCategory);
@@ -190,13 +214,13 @@ export default function PresetManager({ canEdit }: Props) {
   }
 
   const selected = presets.find((p) => p.id === selectedId);
-  const categoryLabel = CATEGORIES.find((c) => c.key === activeCategory)?.label ?? "";
+  const categoryLabel = categories.find((c) => c.key === activeCategory)?.label ?? "";
 
   return (
     <div className="baseline-mgr">
       {/* 左侧：分类 + 预设项列表 */}
       <div className="baseline-mgr__sidebar">
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <div key={cat.key} className="baseline-mgr__type-group">
             <div
               className="baseline-mgr__type-label"
