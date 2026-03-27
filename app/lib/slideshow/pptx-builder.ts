@@ -213,8 +213,9 @@ function renderContentImageBottom(s: PptxGenJS.Slide, slide: Slide, t: ThemeConf
 
 function renderInteraction(s: PptxGenJS.Slide, slide: Slide, t: ThemeConfig, accentLight: string): void {
   const accent = t.accentColor.replace("#", "");
-  const titleC = t.titleColor.replace("#", "");
-  const bodyC = t.bodyColor.replace("#", "");
+  // Card text colors: auto-detect based on card background brightness
+  const cardTitleC = isLightColor(accentLight) ? "1A1A2E" : "FFFFFF";
+  const cardBodyC = isLightColor(accentLight) ? "333333" : "E0E8F0";
 
   s.addShape("rect", { x: 0, y: 0, w: "100%", h: 1.2, fill: { color: accent } });
   s.addText(slide.title, { x: 0.5, y: 0.2, w: 9, h: 0.8, fontSize: t.titleFontSize, fontFace: t.titleFont, color: isLightColor(accent) ? "333333" : "FFFFFF", bold: true });
@@ -223,15 +224,15 @@ function renderInteraction(s: PptxGenJS.Slide, slide: Slide, t: ThemeConfig, acc
 
   let y = 1.8;
   if (slide.subtitle) {
-    s.addText(slide.subtitle, { x: 1.2, y, w: 7.6, h: 0.5, fontSize: t.bodyFontSize + 2, fontFace: t.bodyFont, color: titleC, bold: true });
+    s.addText(slide.subtitle, { x: 1.2, y, w: 7.6, h: 0.5, fontSize: t.bodyFontSize + 2, fontFace: t.bodyFont, color: cardTitleC, bold: true });
     y += 0.6;
   }
   if (slide.body) {
-    s.addText(slide.body, { x: 1.2, y, w: 7.6, h: 2.2, fontSize: t.bodyFontSize, fontFace: t.bodyFont, color: bodyC, valign: "top", lineSpacingMultiple: 1.4 });
+    s.addText(slide.body, { x: 1.2, y, w: 7.6, h: 2.2, fontSize: t.bodyFontSize, fontFace: t.bodyFont, color: cardBodyC, valign: "top", lineSpacingMultiple: 1.4 });
     y += 2.3;
   }
   if (slide.bullets?.length) {
-    addBullets(s, slide.bullets, { x: 1.2, y, w: 7.6, h: 1.5 }, t);
+    addBullets(s, slide.bullets, { x: 1.2, y, w: 7.6, h: 1.5 }, { ...t, bodyColor: `#${cardBodyC}` });
   }
 }
 
