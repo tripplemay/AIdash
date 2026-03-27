@@ -170,6 +170,7 @@ npm ci
 npx prisma generate
 npx prisma migrate deploy
 npm run seed
+npx tsx prisma/seed-baselines.ts
 export DATABASE_URL="${DATABASE_URL}"
 export AUTH_SECRET="${AUTH_SECRET}"
 export NODE_ENV="production"
