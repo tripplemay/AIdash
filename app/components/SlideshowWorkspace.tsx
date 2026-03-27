@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Download, RefreshCw, FileSliders, Loader2, PackageCheck } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Download, RefreshCw, FileSliders, Loader2, PackageCheck, AlertCircle } from "lucide-react";
 
 interface Theme {
   name: string;
   description: string;
+}
+
+interface LessonProgress {
+  step: number;
+  total: number;
+  message: string;
 }
 
 interface LessonStatus {
@@ -14,6 +20,9 @@ interface LessonStatus {
   title: string;
   hasContent: boolean;
   hasDraft: boolean;
+  status: "idle" | "generating" | "completed" | "failed";
+  progress: LessonProgress | null;
+  errorMessage: string | null;
   themeKey: string | null;
   updatedAt: string | null;
 }
@@ -24,13 +33,15 @@ interface Props {
   themes: Theme[];
 }
 
+const POLL_INTERVAL = 2000;
+
 export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }: Props) {
   const [selectedTheme, setSelectedTheme] = useState(themes[0]?.name ?? "");
   const [lessons, setLessons] = useState<LessonStatus[]>([]);
   const [loading, setLoading] = useState(true);
-  const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
   const [batchGenerating, setBatchGenerating] = useState(false);
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -44,16 +55,37 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
     }
   }, [packageSlug]);
 
+  // Initial load
   useEffect(() => {
     fetchStatus();
   }, [fetchStatus]);
 
-  const generateOne = async (lessonId: string) => {
+  // Poll while any lesson is generating
+  useEffect(() => {
+    const hasGenerating = lessons.some((l) => l.status === "generating");
+    if (hasGenerating) {
+      if (!pollTimerRef.current) {
+        pollTimerRef.current = setInterval(fetchStatus, POLL_INTERVAL);
+      }
+    } else {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, [lessons, fetchStatus]);
+
+  const triggerGenerate = async (lessonId: string) => {
     if (!selectedTheme) {
       alert("请先选择模板主题");
-      return false;
+      return;
     }
-    setGeneratingIds((prev) => new Set(prev).add(lessonId));
     try {
       const res = await fetch("/api/slideshow/generate", {
         method: "POST",
@@ -63,24 +95,21 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
       if (!res.ok) {
         const json = await res.json();
         alert(json.error ?? "生成失败");
-        return false;
+        return;
       }
+      // Immediately refresh status to start polling
       await fetchStatus();
-      return true;
     } catch {
       alert("网络错误");
-      return false;
-    } finally {
-      setGeneratingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(lessonId);
-        return next;
-      });
     }
   };
 
   const generateAll = async () => {
-    const eligible = lessons.filter((l) => l.hasContent);
+    if (!selectedTheme) {
+      alert("请先选择模板主题");
+      return;
+    }
+    const eligible = lessons.filter((l) => l.hasContent && l.status !== "generating");
     if (eligible.length === 0) return;
 
     setBatchGenerating(true);
@@ -88,11 +117,19 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
 
     for (let i = 0; i < eligible.length; i++) {
       setBatchProgress({ current: i + 1, total: eligible.length });
-      const success = await generateOne(eligible[i].lessonId);
-      if (!success) break;
+      try {
+        await fetch("/api/slideshow/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lessonId: eligible[i].lessonId, themeKey: selectedTheme }),
+        });
+      } catch {
+        break;
+      }
     }
 
     setBatchGenerating(false);
+    await fetchStatus();
   };
 
   const downloadOne = (lessonId: string) => {
@@ -103,7 +140,8 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
     window.open(`/api/slideshow/download-all?slug=${packageSlug}`, "_blank");
   };
 
-  const allHaveDrafts = lessons.length > 0 && lessons.every((l) => !l.hasContent || l.hasDraft);
+  const hasAnyCompleted = lessons.some((l) => l.status === "completed");
+  const hasAnyGenerating = lessons.some((l) => l.status === "generating");
 
   if (loading) {
     return (
@@ -151,12 +189,12 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
         <button
           className="btn"
           onClick={generateAll}
-          disabled={batchGenerating || generatingIds.size > 0 || !selectedTheme}
+          disabled={batchGenerating || hasAnyGenerating || !selectedTheme}
         >
           {batchGenerating ? (
             <>
               <Loader2 size={16} className="spin" />{" "}
-              正在生成第 {batchProgress.current}/{batchProgress.total} 课...
+              正在提交第 {batchProgress.current}/{batchProgress.total} 课...
             </>
           ) : (
             <>
@@ -164,7 +202,7 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
             </>
           )}
         </button>
-        {allHaveDrafts && (
+        {hasAnyCompleted && (
           <button className="btn btn--soft" onClick={downloadAll}>
             <PackageCheck size={16} /> 下载全部
           </button>
@@ -173,65 +211,73 @@ export default function SlideshowWorkspace({ packageSlug, packageTitle, themes }
 
       {/* Lesson list */}
       <div className="slideshow-lesson-list">
-        {lessons.map((lesson) => {
-          const isGenerating = generatingIds.has(lesson.lessonId);
-          return (
-            <div key={lesson.lessonId} className="slideshow-lesson-item">
-              <div className="slideshow-lesson-item__info">
-                <span className="slideshow-lesson-item__no">第{lesson.lessonNo}课</span>
-                <span className="slideshow-lesson-item__title">{lesson.title}</span>
-                {!lesson.hasContent && (
-                  <span className="pill pill--muted" style={{ fontSize: 11 }}>无内容</span>
-                )}
-                {lesson.hasDraft && (
-                  <span className="pill pill--ok" style={{ fontSize: 11 }}>已生成</span>
-                )}
-              </div>
-              <div className="slideshow-lesson-item__actions">
-                {!lesson.hasContent ? (
-                  <span className="muted small">课次无内容数据</span>
-                ) : lesson.hasDraft ? (
-                  <>
-                    <button
-                      className="btn btn--sm btn--soft"
-                      onClick={() => downloadOne(lesson.lessonId)}
-                    >
-                      <Download size={14} /> 下载
-                    </button>
-                    <button
-                      className="btn btn--sm btn--soft"
-                      onClick={() => generateOne(lesson.lessonId)}
-                      disabled={isGenerating}
-                    >
-                      {isGenerating ? (
-                        <Loader2 size={14} className="spin" />
-                      ) : (
-                        <RefreshCw size={14} />
-                      )}{" "}
-                      重新生成
-                    </button>
-                  </>
-                ) : (
+        {lessons.map((lesson) => (
+          <div key={lesson.lessonId} className="slideshow-lesson-item">
+            <div className="slideshow-lesson-item__info">
+              <span className="slideshow-lesson-item__no">第{lesson.lessonNo}课</span>
+              <span className="slideshow-lesson-item__title">{lesson.title}</span>
+              {!lesson.hasContent && (
+                <span className="pill pill--muted" style={{ fontSize: 11 }}>无内容</span>
+              )}
+              {lesson.status === "completed" && (
+                <span className="pill pill--ok" style={{ fontSize: 11 }}>已生成</span>
+              )}
+              {lesson.status === "generating" && (
+                <span className="pill pill--info" style={{ fontSize: 11 }}>
+                  <Loader2 size={10} className="spin" style={{ marginRight: 4 }} />
+                  {lesson.progress?.message ?? "生成中..."}
+                </span>
+              )}
+              {lesson.status === "failed" && (
+                <span className="pill pill--danger" style={{ fontSize: 11 }}>
+                  <AlertCircle size={10} style={{ marginRight: 4 }} />
+                  失败
+                </span>
+              )}
+            </div>
+            <div className="slideshow-lesson-item__actions">
+              {!lesson.hasContent ? (
+                <span className="muted small">课次无内容数据</span>
+              ) : lesson.status === "generating" ? (
+                <span className="muted small">{lesson.progress?.message ?? "生成中..."}</span>
+              ) : lesson.status === "completed" ? (
+                <>
+                  <button
+                    className="btn btn--sm btn--soft"
+                    onClick={() => downloadOne(lesson.lessonId)}
+                  >
+                    <Download size={14} /> 下载
+                  </button>
+                  <button
+                    className="btn btn--sm btn--soft"
+                    onClick={() => triggerGenerate(lesson.lessonId)}
+                  >
+                    <RefreshCw size={14} /> 重新生成
+                  </button>
+                </>
+              ) : lesson.status === "failed" ? (
+                <>
+                  <span className="muted small" title={lesson.errorMessage ?? ""}>
+                    {lesson.errorMessage ?? "生成失败"}
+                  </span>
                   <button
                     className="btn btn--sm"
-                    onClick={() => generateOne(lesson.lessonId)}
-                    disabled={isGenerating}
+                    onClick={() => triggerGenerate(lesson.lessonId)}
                   >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 size={14} className="spin" /> 生成中...
-                      </>
-                    ) : (
-                      <>
-                        <FileSliders size={14} /> 生成课件
-                      </>
-                    )}
+                    <RefreshCw size={14} /> 重试
                   </button>
-                )}
-              </div>
+                </>
+              ) : (
+                <button
+                  className="btn btn--sm"
+                  onClick={() => triggerGenerate(lesson.lessonId)}
+                >
+                  <FileSliders size={14} /> 生成课件
+                </button>
+              )}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

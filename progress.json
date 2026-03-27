@@ -1,11 +1,11 @@
 {
-  "mode": "refactor",
+  "mode": "feature",
   "status": "done",
   "project_snapshot": "project-snapshot.md",
-  "user_goal": "消除管理后台 UI 硬编码允许列表 + 新增 AIGC 功能上线检查清单",
-  "total_features": 48,
-  "completed_features": 48,
+  "user_goal": "课件生成功能优化 — 图片支持 + 后台任务模式 + 进度显示",
+  "total_features": 50,
+  "completed_features": 50,
   "current_sprint": null,
   "last_updated": "2026-03-27",
-  "evaluator_feedback": "6/6 PASS — 全部验收通过"
+  "evaluator_feedback": "8/8 PASS — 全部验收通过"
 }

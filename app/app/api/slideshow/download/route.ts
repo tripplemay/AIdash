@@ -30,6 +30,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "课件未生成，请先生成课件" }, { status: 404 });
   }
 
+  if (draft.status !== "completed") {
+    return NextResponse.json({ error: "课件正在生成中，请稍后再试" }, { status: 409 });
+  }
+
   // Load theme
   const themePreset = await prisma.preset.findUnique({
     where: { category_name: { category: "slideshow_theme", name: draft.themeKey } },

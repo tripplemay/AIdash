@@ -53,7 +53,7 @@ describe("GET /api/slideshow/status", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns lesson status correctly", async () => {
+  it("returns lesson status with progress info", async () => {
     mockAuth.mockResolvedValue(session);
     mockPkgFind.mockResolvedValue({
       slug: "test-pkg",
@@ -62,23 +62,30 @@ describe("GET /api/slideshow/status", () => {
       lessons: [
         { id: "l-1", lessonNo: 1, title: "第一课", contentData: '{"hero":{}}' },
         { id: "l-2", lessonNo: 2, title: "第二课", contentData: null },
+        { id: "l-3", lessonNo: 3, title: "第三课", contentData: '{"hero":{}}' },
       ],
     });
     mockDraftFindMany.mockResolvedValue([
-      { lessonId: "l-1", updatedAt: "2026-03-27T00:00:00Z", themeKey: "科技蓝" },
+      { lessonId: "l-1", updatedAt: "2026-03-27", themeKey: "科技蓝", status: "completed", progress: null, errorMessage: null },
+      { lessonId: "l-3", updatedAt: "2026-03-27", themeKey: "科技蓝", status: "generating", progress: '{"step":2,"total":5,"message":"正在生成第 3 页图片..."}', errorMessage: null },
     ]);
 
     const res = await GET(makeRequest("slug=test-pkg"));
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.data.packageTitle).toBe("测试课程");
-    expect(json.data.lessons).toHaveLength(2);
+    expect(json.data.lessons).toHaveLength(3);
 
-    const [l1, l2] = json.data.lessons;
+    const [l1, l2, l3] = json.data.lessons;
+    // l1: completed
     expect(l1.hasDraft).toBe(true);
-    expect(l1.hasContent).toBe(true);
-    expect(l1.themeKey).toBe("科技蓝");
+    expect(l1.status).toBe("completed");
+    // l2: no content, no draft
     expect(l2.hasDraft).toBe(false);
+    expect(l2.status).toBe("idle");
     expect(l2.hasContent).toBe(false);
+    // l3: generating with progress
+    expect(l3.hasDraft).toBe(false); // hasDraft only true when completed
+    expect(l3.status).toBe("generating");
+    expect(l3.progress).toEqual({ step: 2, total: 5, message: "正在生成第 3 页图片..." });
   });
 });

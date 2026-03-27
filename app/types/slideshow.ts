@@ -13,7 +13,15 @@ export interface Slide {
   body?: string | null;
   bullets?: string[] | null;
   imagePrompt?: string | null;
+  imageUrl?: string | null;
   notes?: string | null;
+}
+
+/** 生成进度 */
+export interface SlideshowProgress {
+  step: number;
+  total: number;
+  message: string;
 }
 
 /** AI 转写输出的完整结构 */

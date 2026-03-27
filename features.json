@@ -389,6 +389,70 @@
       "type": "refactor",
       "acceptance": "注册表 API 测试通过，现有测试无回归",
       "notes": "__tests__/"
+    },
+    {
+      "id": "F043",
+      "title": "课件优化 — 数据模型变更",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "SlideshowDraft 新增 status/progress/errorMessage 字段 + migration，Slide 类型新增 imageUrl",
+      "notes": "Phase 0"
+    },
+    {
+      "id": "F044",
+      "title": "课件优化 — Prompt/基线/动作注册更新",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "课件基线含图片判断指引，generate_slideshow 模板含 imagePrompt 输出说明，slideshow_image 动作已注册",
+      "notes": "Phase 1"
+    },
+    {
+      "id": "F045",
+      "title": "课件优化 — 后台任务核心逻辑",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "triggerGeneration 同步创建 draft 立即返回，executeGeneration 异步后台执行，每步更新 progress",
+      "notes": "Phase 2.1"
+    },
+    {
+      "id": "F046",
+      "title": "课件优化 — 图片处理模块",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "image-processor 支持复用课次已有图片 + AI 生成新图片 + saveAiImage 存储，封面复用 hero 图，结束页复用封面",
+      "notes": "Phase 2.2"
+    },
+    {
+      "id": "F047",
+      "title": "课件优化 — API 改造",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "POST generate 改为触发后台任务立即返回，GET status 返回 status/progress 字段，download 仅 completed 可用",
+      "notes": "Phase 3"
+    },
+    {
+      "id": "F048",
+      "title": "课件优化 — 前端轮询进度",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "SlideshowWorkspace 展示 4 种状态（未生成/生成中/已完成/失败），生成中每 2 秒轮询显示步骤进度，离开页面不中断后台",
+      "notes": "Phase 4"
+    },
+    {
+      "id": "F049",
+      "title": "课件优化 — PPT builder 支持图片",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "pptx-builder 读取 slide.imageUrl 下载图片并插入 PPT 对应页面",
+      "notes": "Phase 5"
+    },
+    {
+      "id": "F050",
+      "title": "课件优化 — 测试覆盖",
+      "priority": "high",
+      "status": "completed",
+      "acceptance": "后台任务 + 图片处理 + 进度轮询 + API 改造测试全部通过，现有测试无回归",
+      "notes": "Phase 6"
     }
   ]
 }

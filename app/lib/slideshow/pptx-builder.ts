@@ -1,5 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import PptxGenJS from "pptxgenjs";
 import type { SlideshowOutput, SlideshowTheme, Slide, SlideType } from "@/types/slideshow";
+
+const IMAGES_DIR = process.env.AI_IMAGES_DIR
+  ?? path.join(process.cwd(), "public", "ai-images");
 
 /**
  * Build a .pptx Buffer from SlideshowOutput + theme config.
@@ -56,6 +61,16 @@ function renderCover(
   slide: Slide,
   theme: SlideshowTheme,
 ): void {
+  // Background image (if available)
+  if (slide.imageUrl) {
+    addSlideImage(pptSlide, slide.imageUrl, { x: 0, y: 0, w: 10, h: 5.63 });
+    // Semi-transparent overlay for text readability
+    pptSlide.addShape("rect", {
+      x: 0, y: 0, w: "100%", h: "100%",
+      fill: { color: theme.background.replace("#", ""), transparency: 50 },
+    });
+  }
+
   // Accent bar at top
   pptSlide.addShape("rect", {
     x: 0, y: 0, w: "100%", h: 0.08,
@@ -97,6 +112,14 @@ function renderContent(
   slide: Slide,
   theme: SlideshowTheme,
 ): void {
+  const hasImage = !!slide.imageUrl;
+  const contentWidth = hasImage ? 5.5 : 9;
+
+  // Image on right (if present)
+  if (hasImage) {
+    addSlideImage(pptSlide, slide.imageUrl, { x: 6.2, y: 0.3, w: 3.5, h: 4.8 });
+  }
+
   // Left accent bar
   pptSlide.addShape("rect", {
     x: 0, y: 0, w: 0.06, h: "100%",
@@ -105,7 +128,7 @@ function renderContent(
 
   // Title
   pptSlide.addText(slide.title, {
-    x: 0.5, y: 0.3, w: 9, h: 0.7,
+    x: 0.5, y: 0.3, w: contentWidth, h: 0.7,
     fontSize: theme.titleFontSize,
     fontFace: theme.titleFont,
     color: theme.titleColor.replace("#", ""),
@@ -123,7 +146,7 @@ function renderContent(
   // Subtitle
   if (slide.subtitle) {
     pptSlide.addText(slide.subtitle, {
-      x: 0.5, y: yPos, w: 9, h: 0.5,
+      x: 0.5, y: yPos, w: contentWidth, h: 0.5,
       fontSize: theme.bodyFontSize + 2,
       fontFace: theme.bodyFont,
       color: theme.accentColor.replace("#", ""),
@@ -135,7 +158,7 @@ function renderContent(
   // Body text
   if (slide.body) {
     pptSlide.addText(slide.body, {
-      x: 0.5, y: yPos, w: 9, h: 2,
+      x: 0.5, y: yPos, w: contentWidth, h: 2,
       fontSize: theme.bodyFontSize,
       fontFace: theme.bodyFont,
       color: theme.bodyColor.replace("#", ""),
@@ -158,7 +181,7 @@ function renderContent(
       },
     }));
     pptSlide.addText(bulletTexts, {
-      x: 0.5, y: yPos, w: 9, h: 3,
+      x: 0.5, y: yPos, w: contentWidth, h: 3,
       valign: "top",
     });
   }
@@ -169,6 +192,11 @@ function renderInteraction(
   slide: Slide,
   theme: SlideshowTheme,
 ): void {
+  // Image on right (if present)
+  if (slide.imageUrl) {
+    addSlideImage(pptSlide, slide.imageUrl, { x: 6.2, y: 1.5, w: 3.5, h: 3.5 });
+  }
+
   // Accent background strip
   pptSlide.addShape("rect", {
     x: 0, y: 0, w: "100%", h: 1.2,
@@ -184,12 +212,13 @@ function renderInteraction(
     bold: true,
   });
 
+  const interactionContentWidth = slide.imageUrl ? 5.5 : 9;
   let yPos = 1.5;
 
   // Subtitle / task description
   if (slide.subtitle) {
     pptSlide.addText(slide.subtitle, {
-      x: 0.5, y: yPos, w: 9, h: 0.5,
+      x: 0.5, y: yPos, w: interactionContentWidth, h: 0.5,
       fontSize: theme.bodyFontSize + 2,
       fontFace: theme.bodyFont,
       color: theme.titleColor.replace("#", ""),
@@ -201,7 +230,7 @@ function renderInteraction(
   // Body — operation guide
   if (slide.body) {
     pptSlide.addText(slide.body, {
-      x: 0.5, y: yPos, w: 9, h: 2.5,
+      x: 0.5, y: yPos, w: interactionContentWidth, h: 2.5,
       fontSize: theme.bodyFontSize,
       fontFace: theme.bodyFont,
       color: theme.bodyColor.replace("#", ""),
@@ -216,6 +245,11 @@ function renderShowcase(
   slide: Slide,
   theme: SlideshowTheme,
 ): void {
+  // Image on right (if present)
+  if (slide.imageUrl) {
+    addSlideImage(pptSlide, slide.imageUrl, { x: 6.2, y: 1.2, w: 3.5, h: 3.8 });
+  }
+
   // Title
   pptSlide.addText(slide.title, {
     x: 0.5, y: 0.5, w: 9, h: 0.7,
@@ -266,6 +300,15 @@ function renderEnding(
   slide: Slide,
   theme: SlideshowTheme,
 ): void {
+  // Background image (if available) — same treatment as cover
+  if (slide.imageUrl) {
+    addSlideImage(pptSlide, slide.imageUrl, { x: 0, y: 0, w: 10, h: 5.63 });
+    pptSlide.addShape("rect", {
+      x: 0, y: 0, w: "100%", h: "100%",
+      fill: { color: theme.background.replace("#", ""), transparency: 50 },
+    });
+  }
+
   // Accent bar at bottom
   pptSlide.addShape("rect", {
     x: 0, y: 5.55, w: "100%", h: 0.08,
@@ -324,4 +367,64 @@ function isLightColor(hex: string): boolean {
   const g = parseInt(c.substring(2, 4), 16);
   const b = parseInt(c.substring(4, 6), 16);
   return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+}
+
+/**
+ * Resolve a slide imageUrl to base64 data URI for pptxgenjs.
+ * Handles /api/ai-images/... paths by reading from disk.
+ * Returns null if image cannot be loaded.
+ */
+function resolveImageData(imageUrl: string | null | undefined): string | null {
+  if (!imageUrl) return null;
+
+  try {
+    // /api/ai-images/slideshow/abc123.png → IMAGES_DIR/slideshow/abc123.png
+    if (imageUrl.startsWith("/api/ai-images/")) {
+      const relativePath = imageUrl.replace("/api/ai-images/", "");
+      const filePath = path.join(IMAGES_DIR, relativePath);
+      if (fs.existsSync(filePath)) {
+        const buffer = fs.readFileSync(filePath);
+        const ext = path.extname(filePath).slice(1) || "png";
+        return `data:image/${ext};base64,${buffer.toString("base64")}`;
+      }
+      return null;
+    }
+
+    // Already a data URI or HTTP URL — pass through
+    if (imageUrl.startsWith("data:") || imageUrl.startsWith("http")) {
+      return imageUrl;
+    }
+
+    // Local file path
+    if (fs.existsSync(imageUrl)) {
+      const buffer = fs.readFileSync(imageUrl);
+      return `data:image/png;base64,${buffer.toString("base64")}`;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Add an image to a slide at the specified position.
+ * Silently skips if image cannot be resolved.
+ */
+function addSlideImage(
+  pptSlide: PptxGenJS.Slide,
+  imageUrl: string | null | undefined,
+  opts: { x: number; y: number; w: number; h: number },
+): void {
+  const data = resolveImageData(imageUrl);
+  if (!data) return;
+
+  pptSlide.addImage({
+    data,
+    x: opts.x,
+    y: opts.y,
+    w: opts.w,
+    h: opts.h,
+    sizing: { type: "cover", w: opts.w, h: opts.h },
+  });
 }

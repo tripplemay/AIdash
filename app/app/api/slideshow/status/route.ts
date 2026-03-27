@@ -49,6 +49,9 @@ export async function GET(req: NextRequest) {
       lessonId: true,
       updatedAt: true,
       themeKey: true,
+      status: true,
+      progress: true,
+      errorMessage: true,
     },
   });
 
@@ -56,12 +59,19 @@ export async function GET(req: NextRequest) {
 
   const lessons = pkg.lessons.map((l) => {
     const draft = draftMap.get(l.id);
+    let progress = null;
+    if (draft?.progress) {
+      try { progress = JSON.parse(draft.progress); } catch { /* ignore */ }
+    }
     return {
       lessonId: l.id,
       lessonNo: l.lessonNo,
       title: l.title,
       hasContent: !!l.contentData,
-      hasDraft: !!draft,
+      hasDraft: draft?.status === "completed",
+      status: draft?.status ?? "idle",
+      progress,
+      errorMessage: draft?.errorMessage ?? null,
       themeKey: draft?.themeKey ?? null,
       updatedAt: draft?.updatedAt ?? null,
     };

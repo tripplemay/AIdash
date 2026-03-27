@@ -316,7 +316,31 @@ async function seedBaselines() {
 ### 过渡设计
 - 环节之间用过渡页或引导问题衔接
 - 避免内容跳跃，保持学生注意力的连贯性
-- 互动环节前用激励语引导（"接下来是最精彩的部分！"）`;
+- 互动环节前用激励语引导（"接下来是最精彩的部分！"）
+
+## 课件配图原则
+
+### 何时需要配图
+- 封面页：必须配图（课程主视觉）
+- 结束页：必须配图（课程回顾氛围）
+- 引导观察的页面（如"看看这些作品"）：需要配图帮助学生理解
+- 展示成果的页面（如"你的作品应该像这样"）：需要配图提供视觉参考
+- 激发兴趣的页面（如课程导入、新概念引入）：需要配图吸引注意力
+- 场景描述的页面（如故事情境、实验场景）：需要配图营造氛围
+
+### 何时不需要配图
+- 纯操作指引页面（如"打开工具，输入以下内容"）
+- 纯文字任务说明页面（如"按照以下步骤完成"）
+- 要点列表/总结页面（文字已足够清晰）
+- 过渡页/引导问题页面（简短文字即可）
+
+### imagePrompt 描述规范
+- 使用英文撰写，描述具体可视化场景
+- 匹配课程目标年龄段的视觉复杂度
+- 描述应与当前页面教学内容直接相关
+- 避免抽象概念，描述具体的人物、物品、场景
+- 不要包含文字在图片中（no text in the image）
+- 示例："A group of children aged 8-9 excitedly looking at colorful paintings on a classroom wall, cartoon style, bright colors"`;
 
     const doc = await prisma.baselineDoc.upsert({
       where: { type_key: { type: "slideshow", key: "slideshow_general" } },
@@ -640,7 +664,7 @@ No text on the image.`,
       "subtitle": "本课副标题",
       "body": null,
       "bullets": null,
-      "imagePrompt": null,
+      "imagePrompt": "A vibrant classroom scene with children discovering the topic, cartoon style, bright colors, no text",
       "notes": "教师参考备注"
     },
     {
@@ -649,7 +673,7 @@ No text on the image.`,
       "subtitle": null,
       "body": "正文内容（支持简单 Markdown）",
       "bullets": ["要点1", "要点2"],
-      "imagePrompt": null,
+      "imagePrompt": "描述与本页内容相关的具体场景（英文），或 null 表示不需要图片",
       "notes": "教师参考备注"
     },
     {
@@ -667,7 +691,7 @@ No text on the image.`,
       "subtitle": null,
       "body": "展示引导语",
       "bullets": ["展示要求1", "展示要求2"],
-      "imagePrompt": null,
+      "imagePrompt": "Children proudly showing their creative works to classmates, cartoon style, no text",
       "notes": "教师参考备注"
     },
     {
@@ -676,23 +700,30 @@ No text on the image.`,
       "subtitle": null,
       "body": "总结语",
       "bullets": ["收获1", "收获2"],
-      "imagePrompt": null,
+      "imagePrompt": "A cheerful closing scene matching the course theme, cartoon style, no text",
       "notes": "教师参考备注"
     }
   ]
 }
 
 ## 页面类型说明
-- cover：封面页（1页），包含课程名和本课标题
+- cover：封面页（1页），包含课程名和本课标题，必须有 imagePrompt
 - content：内容页（多页），引导语、知识点、任务说明
 - interaction：互动页（多页），AI 提示、动手任务、学生操作指引
 - showcase：展示页（1-2页），学生作品展示引导、点评框架
-- ending：结束页（1页），总结 + 下节预告
+- ending：结束页（1页），总结 + 下节预告，必须有 imagePrompt
+
+## imagePrompt 规则
+- 封面页（cover）和结束页（ending）：必须填写 imagePrompt
+- 中间页面（content/interaction/showcase）：根据内容自主判断是否需要配图
+  - 需要配图的场景：引导观察、展示成果、激发兴趣、场景描述
+  - 不需要配图的场景：纯操作指引、纯文字任务说明、要点列表
+- imagePrompt 用英文撰写，描述具体可视化场景，匹配目标年龄段
+- 不需要图片的页面将 imagePrompt 设为 null
 
 ## 注意事项
 - 总页数控制在 10-20 页
 - notes 字段写给教师看的参考备注（不会展示给学生）
-- imagePrompt 留空（第一版不生成图片）
 - 确保每个教学环节都有对应的 PPT 页面
 
 # 课件生成基线（请严格遵循）
@@ -946,6 +977,7 @@ async function seedPresets() {
         { name: "rewrite_field", value: JSON.stringify({ label: "单字段改写", type: "text" }) },
         { name: "validate_lesson", value: JSON.stringify({ label: "课次审核", type: "text" }) },
         { name: "generate_slideshow", value: JSON.stringify({ label: "生成课件", type: "text" }) },
+        { name: "slideshow_image", value: JSON.stringify({ label: "课件配图", type: "image" }) },
         { name: "lesson_cover", value: JSON.stringify({ label: "课次封面图", type: "image" }) },
         { name: "lesson_illustration", value: JSON.stringify({ label: "课内插图", type: "image" }) },
         { name: "package_cover", value: JSON.stringify({ label: "课程包封面图", type: "image" }) },

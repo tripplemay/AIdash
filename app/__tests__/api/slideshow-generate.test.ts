@@ -6,31 +6,20 @@ jest.mock("@/lib/prisma", () => ({
     lesson: { findUnique: jest.fn() },
     preset: { findUnique: jest.fn() },
     slideshowDraft: { upsert: jest.fn() },
-    courseRndAiCallLog: { create: jest.fn() },
   },
 }));
-jest.mock("@/lib/ai/provider", () => ({
-  getProviderAndModel: jest.fn(),
-}));
-jest.mock("@/lib/ai/template-engine", () => ({
-  resolveTemplate: jest.fn(),
-}));
-jest.mock("@/lib/ai/pricing-service", () => ({
-  calculateCallCostFromDb: jest.fn(() => 0.05),
+// Mock the entire generate module to avoid async background execution in tests
+jest.mock("@/lib/slideshow/generate", () => ({
+  triggerGeneration: jest.fn(),
 }));
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getProviderAndModel } from "@/lib/ai/provider";
-import { resolveTemplate } from "@/lib/ai/template-engine";
+import { triggerGeneration } from "@/lib/slideshow/generate";
 
 const mockAuth = auth as jest.Mock;
 const mockLessonFind = prisma.lesson.findUnique as jest.Mock;
-const mockPresetFind = prisma.preset.findUnique as jest.Mock;
-const mockDraftUpsert = prisma.slideshowDraft.upsert as jest.Mock;
-const mockLogCreate = prisma.courseRndAiCallLog.create as jest.Mock;
-const mockGetProvider = getProviderAndModel as jest.Mock;
-const mockResolveTemplate = resolveTemplate as jest.Mock;
+const mockTrigger = triggerGeneration as jest.Mock;
 
 const session = { user: { id: "u-1", role: "rd_manager" }, expires: "" };
 
@@ -58,86 +47,29 @@ describe("POST /api/slideshow/generate", () => {
     expect(json.error).toContain("缺少必填参数");
   });
 
-  it("returns 500 when lesson not found", async () => {
+  it("triggers generation and returns immediately", async () => {
     mockAuth.mockResolvedValue(session);
-    mockLessonFind.mockResolvedValue(null);
-    const res = await POST(makeRequest({ lessonId: "l-1", themeKey: "科技蓝" }));
-    expect(res.status).toBe(500);
-    const json = await res.json();
-    expect(json.error).toContain("课次不存在");
-  });
-
-  it("returns 500 when package not published", async () => {
-    mockAuth.mockResolvedValue(session);
-    mockLessonFind.mockResolvedValue({
-      id: "l-1",
-      contentData: '{"hero":{}}',
-      package: { title: "Test", status: "draft", ageRange: "A2", level: "L2" },
-    });
-    const res = await POST(makeRequest({ lessonId: "l-1", themeKey: "科技蓝" }));
-    expect(res.status).toBe(500);
-    const json = await res.json();
-    expect(json.error).toContain("未发布");
-  });
-
-  it("generates slideshow successfully", async () => {
-    mockAuth.mockResolvedValue(session);
-    mockLessonFind.mockResolvedValue({
-      id: "l-1",
-      lessonNo: 1,
-      title: "色彩的秘密",
-      contentData: '{"hero":{"title":"色彩的秘密"},"sections":[]}',
-      package: { title: "创意课程", status: "published", ageRange: "A2", level: "L2" },
-    });
-    mockPresetFind.mockResolvedValue({ name: "科技蓝", value: '{"description":"蓝紫渐变"}' });
-    mockResolveTemplate.mockResolvedValue({
-      prompt: "resolved system prompt",
-      templateId: "t-1",
-      templateVersionNo: 1,
-    });
-    mockGetProvider.mockResolvedValue({
-      provider: {
-        chat: jest.fn().mockResolvedValue({
-          content: JSON.stringify({
-            slides: [
-              { type: "cover", title: "色彩的秘密" },
-              { type: "content", title: "什么是色彩" },
-            ],
-          }),
-          inputTokens: 1000,
-          outputTokens: 500,
-          model: "gpt-4o",
-        }),
-      },
-      model: "gpt-4o",
-    });
-    mockDraftUpsert.mockResolvedValue({ id: "d-1" });
-    mockLogCreate.mockResolvedValue({});
+    mockTrigger.mockResolvedValue({ draftId: "d-1" });
 
     const res = await POST(makeRequest({ lessonId: "l-1", themeKey: "科技蓝" }));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.data.draftId).toBe("d-1");
-    expect(json.data.slideCount).toBe(2);
-    expect(mockDraftUpsert).toHaveBeenCalled();
-    expect(mockLogCreate).toHaveBeenCalled();
+    expect(json.data.status).toBe("generating");
+    expect(mockTrigger).toHaveBeenCalledWith({
+      lessonId: "l-1",
+      userId: "u-1",
+      themeKey: "科技蓝",
+    });
   });
 
-  it("returns 500 when prompt template not configured", async () => {
+  it("returns 500 when triggerGeneration throws", async () => {
     mockAuth.mockResolvedValue(session);
-    mockLessonFind.mockResolvedValue({
-      id: "l-1",
-      lessonNo: 1,
-      title: "色彩的秘密",
-      contentData: '{"hero":{}}',
-      package: { title: "创意课程", status: "published", ageRange: "A2", level: "L2" },
-    });
-    mockPresetFind.mockResolvedValue({ name: "科技蓝", value: '{"description":"蓝紫渐变"}' });
-    mockResolveTemplate.mockResolvedValue(null);
+    mockTrigger.mockRejectedValue(new Error("课次不存在"));
 
     const res = await POST(makeRequest({ lessonId: "l-1", themeKey: "科技蓝" }));
     expect(res.status).toBe(500);
     const json = await res.json();
-    expect(json.error).toContain("Prompt 模板未配置");
+    expect(json.error).toContain("课次不存在");
   });
 });
