@@ -124,7 +124,7 @@ AppShell (client component, 常驻)
 
 **组织管理表**（2张）：`Department`（部门） / `InviteCode`（邀请码，含 maxUses/usedCount/expiresAt）
 
-**课件生成表**（1张）：`SlideshowDraft`（课件草稿，per user per lesson 唯一，存 AI 转写 JSON）
+**课件生成表**（1张）：`SlideshowDraft`（课件草稿，per user per lesson 唯一，含 status/progress/errorMessage，后台任务模式）
 
 **系统表**（2张）：`OperationLog` / `SystemConfig`（key-value，存汇率等）
 
@@ -147,9 +147,10 @@ AppShell (client component, 常驻)
 - `lib/ai/chat-with-tools.ts` — 联网搜索编排器（LLM 调用→Tavily 搜索→二次 LLM 调用，支持 function calling + prompt fallback）
 - `lib/ai/tavily.ts` — Tavily API 客户端（API Key 从 SystemConfig 加密读取）
 - `lib/ai/web-search-tools.ts` — 搜索工具定义 + 结果格式化 + 引用指令
-- `lib/ai/template-variables.ts` — 31 个预定义模板变量元数据
-- `lib/slideshow/generate.ts` — 课件生成核心逻辑（AI 转写 + 持久化 + 费用记录）
-- `lib/slideshow/pptx-builder.ts` — PPT 组装服务（pptxgenjs，5 种页面类型 + 主题配置）
+- `lib/ai/template-variables.ts` — 32 个预定义模板变量元数据
+- `lib/slideshow/generate.ts` — 课件生成核心逻辑（后台任务模式：triggerGeneration + executeGeneration）
+- `lib/slideshow/pptx-builder.ts` — PPT 组装服务（pptx-automizer 模板驱动，从版式组件库组装）
+- `lib/slideshow/image-processor.ts` — 课件图片处理（复用课次已有图片 + AI 生成，按版式方向定尺寸）
 - `lib/proxy-fetch.ts` — SOCKS5/HTTP 代理支持（用 node:https，非原生 fetch）
 - `lib/crypto.ts` — AES-256-GCM 加密 API Key
 
@@ -162,12 +163,12 @@ AppShell (client component, 常驻)
 ### 基线与 Prompt 模板架构
 
 ```
-管理端配置：BaselineDoc（23条，按维度拆分） + PromptTemplate（6个动作） + Preset（34个预设）
+管理端配置：BaselineDoc（24条，按维度拆分） + PromptTemplate（10个动作） + Preset（含版式组件/主题/动作注册等）
                                                 ↓
 AI 调用时：getSystemPrompt("generate_framework", context)
            → 加载 PromptTemplate（DB 优先，fallback 硬编码）
            → assembleBaselines（按项目 ageRange/level/orgForm/deliverableType 匹配维度）
-           → 替换 {{变量名}}（28 个预定义变量）
+           → 替换 {{变量名}}（32 个预定义变量）
            → 返回最终 prompt
 ```
 
@@ -228,9 +229,13 @@ Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 和 `/ap
 - **使用指南内容同步维护**：新增/调整功能时必须同步更新 `TeacherGuide.tsx` 和 `RdManagerGuide.tsx`，内容顺序与侧边栏菜单一致。
 - **课件生成是内容再创作，非模板填充**：AI 将教师备课视角的 contentData 转写为学生课堂展示视角的 PPT 内容，不是简单字段提取。
 - **课件草稿 per user per lesson 唯一**：每个用户对每个课次最多一条 SlideshowDraft，重新生成覆盖自己的记录，不影响其他用户。
-- **PPT 主题预设走 Preset 表**：category=slideshow_theme，管理员后台维护，不硬编码。
+- **PPT 主题预设走 Preset 表**：category=slideshow_theme（含 templateDir），管理员后台维护，不硬编码。
+- **课件版式组件库**：category=slideshow_layout，每个版式对应模板 .pptx 中的一页，AI 根据内容选择 layout，pptx-automizer 从模板组装。
+- **课件生成后台任务模式**：triggerGeneration 同步创建 draft 立即返回，executeGeneration 异步后台执行，前端轮询进度，关闭页面不中断生成。
+- **课件图片复用优先**：封面复用 hero 图，结束页复用封面，中间页 AI 判断是否配图，根据版式 imageOrientation 指定生成尺寸。
 - **课件下载无需调用 AI**：从已有 SlideshowDraft.contentJson 组装 PPT，AI 只在生成/重新生成时调用。
-- **AIGC 配置禁止硬编码**：所有提示词、基线、模板样式都必须存储在数据库中，通过管理后台维护。
+- **课件模板来源**：SlidesCarnival（CC BY 4.0），署名在使用指南页。可用 SlidesCarnival 模板替换初始模板提升视觉质量。
+- **AIGC 配置禁止硬编码**：所有提示词、基线、模板样式、版式组件、动作注册都必须存储在数据库中，通过管理后台维护。
 
 ## 工作流约定
 
@@ -276,6 +281,8 @@ Nginx 配置在 `deploy-remote.sh` 中自动生成，`/api/course-rnd/` 和 `/ap
 - 管理员模块需求（v1 + v2）：`docs/product/admin-module-requirements*.md`
 - 基线与 Prompt 技术方案：`docs/tech/baseline-prompt-template-implementation-plan.md`
 - 课件生成技术方案：`docs/tech/slideshow-generation-plan.md`
+- 课件优化技术方案：`docs/tech/slideshow-optimization-plan.md`
+- 课件版式升级方案：`docs/tech/slideshow-layout-upgrade-plan.md`
 - 数据库设计（22 个模型）：`docs/tech/database/schema.md`
 - API 路由总览（57 个）：`docs/tech/api/overview.md`
 - 课程设计基线文档（v3 + 分维度）：`docs/baseline/`

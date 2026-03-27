@@ -20,6 +20,9 @@
 **阶段十二：质量与体验打磨** ✅ 已完成
 **阶段十三：问 AI 对话模块** ✅ 已完成
 **阶段十四：课件生成模块** ✅ 已完成
+**阶段十五：课件功能优化（图片 + 后台任务 + 进度）** ✅ 已完成
+**阶段十六：课件版式升级（pptx-automizer + 模板）** ✅ 已完成
+**阶段十七：管理后台重构（消除硬编码）** ✅ 已完成
 
 ---
 
@@ -338,6 +341,52 @@
 | 14.17 | 使用指南更新 | ✅ 已完成 | TeacherGuide + RdManagerGuide |
 | **Phase 7** | **测试** | ✅ 已完成 | — |
 | 14.18 | API + lib 测试 | ✅ 已完成 | 21 个测试用例，81 套件 617 测试全通过 |
+
+---
+
+### 阶段十五：课件功能优化（2026-03-27）
+
+> 技术方案：[slideshow-optimization-plan.md](tech/slideshow-optimization-plan.md)
+
+| # | 任务 | 状态 | 备注 |
+|---|------|------|------|
+| 15.1 | SlideshowDraft 新增 status/progress/errorMessage | ✅ 已完成 | 后台任务状态追踪 |
+| 15.2 | 课件基线图片判断指引 + Prompt 模板 imagePrompt 规范 | ✅ 已完成 | — |
+| 15.3 | 后台任务模式（triggerGeneration + executeGeneration） | ✅ 已完成 | 关闭页面不中断 |
+| 15.4 | 图片处理模块（复用 hero 图 + AI 生成） | ✅ 已完成 | image-processor.ts |
+| 15.5 | API 改造（POST 触发即返 + status 进度 + download 状态校验） | ✅ 已完成 | — |
+| 15.6 | 前端轮询进度（4 种状态 + 2 秒轮询） | ✅ 已完成 | — |
+| 15.7 | PPT builder 支持图片插入 | ✅ 已完成 | — |
+| 15.8 | 测试覆盖 | ✅ 已完成 | 82 套件 621 测试 |
+
+---
+
+### 阶段十六：课件版式升级（2026-03-27）
+
+> 技术方案：[slideshow-layout-upgrade-plan.md](tech/slideshow-layout-upgrade-plan.md)
+
+| # | 任务 | 状态 | 备注 |
+|---|------|------|------|
+| 16.1 | 安装 pptx-automizer + 4 套模板 + manifest.json | ✅ 已完成 | templates/slideshow/ |
+| 16.2 | 32 个版式组件注册（slideshow_layout Preset） | ✅ 已完成 | 4 主题 × 8 版式 |
+| 16.3 | Slide 新增 layout 字段 + Prompt 注入版式列表 | ✅ 已完成 | AI 自主选版式 |
+| 16.4 | pptx-builder 重写为 pptx-automizer 模板组装 | ✅ 已完成 | 替代 pptxgenjs 渲染 |
+| 16.5 | 图片尺寸按版式方向优化 | ✅ 已完成 | landscape/portrait/square |
+| 16.6 | CC BY 4.0 署名 + 使用指南更新 | ✅ 已完成 | SlidesCarnival |
+| 16.7 | 测试覆盖 | ✅ 已完成 | 82 套件 621 测试 |
+
+---
+
+### 阶段十七：管理后台重构（2026-03-27）
+
+| # | 任务 | 状态 | 备注 |
+|---|------|------|------|
+| 17.1 | CLAUDE.md 追加 AIGC 功能上线检查清单 | ✅ 已完成 | — |
+| 17.2 | BaselineManager 分组逻辑改为数据驱动 | ✅ 已完成 | 新类型无需改前端 |
+| 17.3 | 新增 ai_action_registry 动作注册表 Preset | ✅ 已完成 | 12 个动作 |
+| 17.4 | 新增动作注册表 API | ✅ 已完成 | GET /api/admin/ai-actions/registry |
+| 17.5 | AiSettingsPage 改为从 API 加载动作列表 | ✅ 已完成 | 删除 DEFAULT_ACTIONS |
+| 17.6 | 测试覆盖 | ✅ 已完成 | 5 个新测试 |
 
 ---
 
